@@ -11,8 +11,31 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Google Analytics (GA4) via Vite env: set VITE_GA_ID (e.g., G-XXXXXXX) -->
+    <script type="module">
+      const GA_ID = import.meta.env.VITE_GA_ID
+      if (GA_ID) {
+        const s = document.createElement('script')
+        s.async = true
+        s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
+        document.head.appendChild(s)
+        window.dataLayer = window.dataLayer || []
+        function gtag(){ window.dataLayer.push(arguments) }
+        window.gtag = gtag
+        gtag('js', new Date())
+        gtag('config', GA_ID)
+      }
+      const GTM_ID = import.meta.env.VITE_GTM_ID
+      if (GTM_ID) {
+        (function(w,d,s,l,i){
+          w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});
+          const f=d.getElementsByTagName(s)[0];
+          const j=d.createElement(s); const dl=l!='dataLayer'?'&l='+l:'';
+          j.async=true; j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl; f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer',GTM_ID)
+      }
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
   
 </html>
-
