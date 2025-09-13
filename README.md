@@ -20,7 +20,7 @@ Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布�
 
 ## 技术栈
 - 构建：Vite + Vue 3
-- 编辑器：Vditor（WYSIWYG/Markdown）
+- 编辑器：[toast-ui/editor](https://github.com/nhn/tui.editor)
 - 导出图片：html-to-image
 - 样式：原子化的自定义 CSS + 主题变量
 
@@ -45,6 +45,10 @@ Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布�
 ## 使用提示
 - 复制为公众号格式：现代浏览器支持以 `text/html` 粘贴来保留样式；如遇限制将回退为纯文本复制。
 - 分页策略：按段落/图片等块元素进行近似分页，尽量避免单块被切割；如内容密度差异较大，可适当调整文案以获得更佳版式。
+
+## 当前状态
+
+**项目处于开发中，功能尚不可完全使用!**
 
 ## 许可证
 本项目采用 Apache License 2.0，详见 `LICENSE`。
