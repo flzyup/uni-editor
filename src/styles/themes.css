@@ -8,22 +8,22 @@
   --ed-accent:#7c5cff;
   --ed-code-bg:#0b0e14;
   --ed-quote:#8fb3ff;
-  --ed-h-font: Inter, "Noto Serif SC", serif;
-  --ed-body-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif;
+  --ed-body-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif;
 }
 
 /* 1. Classic */
-.editor-theme.classic { --ed-bg:#10131a; --ed-text:#e8eaed; --ed-muted:#aab0bb; --ed-accent:#7c5cff; --ed-quote:#8fb3ff; --ed-code-bg:#0b0e14; --ed-h-font: Inter, "Noto Serif SC", serif; }
+.editor-theme.classic { --ed-bg:#10131a; --ed-text:#e8eaed; --ed-muted:#aab0bb; --ed-accent:#7c5cff; --ed-quote:#8fb3ff; --ed-code-bg:#0b0e14; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
 /* 2. Minimal */
-.editor-theme.minimal { --ed-bg:#0e0f12; --ed-text:#eef1f5; --ed-muted:#a0a6af; --ed-accent:#3cc8a6; --ed-quote:#66e0c8; --ed-code-bg:#0a0b0d; --ed-h-font: Inter, sans-serif; }
+.editor-theme.minimal { --ed-bg:#0e0f12; --ed-text:#eef1f5; --ed-muted:#a0a6af; --ed-accent:#3cc8a6; --ed-quote:#66e0c8; --ed-code-bg:#0a0b0d; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
 /* 3. Night */
-.editor-theme.night { --ed-bg:#0b0c0f; --ed-text:#f1f5f9; --ed-muted:#94a3b8; --ed-accent:#60a5fa; --ed-quote:#93c5fd; --ed-code-bg:#0a0f18; --ed-h-font: Inter, sans-serif; }
+.editor-theme.night { --ed-bg:#0b0c0f; --ed-text:#f1f5f9; --ed-muted:#94a3b8; --ed-accent:#60a5fa; --ed-quote:#93c5fd; --ed-code-bg:#0a0f18; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
 /* 4. Coffee */
-.editor-theme.coffee { --ed-bg:#12100e; --ed-text:#f3efe7; --ed-muted:#c8c0b6; --ed-accent:#d4a373; --ed-quote:#e9c46a; --ed-code-bg:#1a1714; --ed-h-font: "Noto Serif SC", serif; }
+.editor-theme.coffee { --ed-bg:#12100e; --ed-text:#f3efe7; --ed-muted:#c8c0b6; --ed-accent:#d4a373; --ed-quote:#e9c46a; --ed-code-bg:#1a1714; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
 /* 5. Paper */
-.editor-theme.paper { --ed-bg:#f7f7f2; --ed-text:#2b2b2b; --ed-muted:#5c5c5c; --ed-accent:#0f766e; --ed-quote:#0ea5a4; --ed-code-bg:#efefe8; --ed-h-font: "Noto Serif SC", serif; --invert:1; }
+.editor-theme.paper { --ed-bg:#f7f7f2; --ed-text:#2b2b2b; --ed-muted:#5c5c5c; --ed-accent:#0f766e; --ed-quote:#0ea5a4; --ed-code-bg:#efefe8; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; --invert:1; }
 /* 6. Pop */
-.editor-theme.pop { --ed-bg:#0f0b19; --ed-text:#f6f5ff; --ed-muted:#c7c4ff; --ed-accent:#ff6ad5; --ed-quote:#ffd166; --ed-code-bg:#140e24; --ed-h-font: Inter, sans-serif; }
+.editor-theme.pop { --ed-bg:#0f0b19; --ed-text:#f6f5ff; --ed-muted:#c7c4ff; --ed-accent:#ff6ad5; --ed-quote:#ffd166; --ed-code-bg:#140e24; --ed-h-font: "Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif; }
 
 .editor-shell { height: calc(100dvh - 56px - 44px); display:flex; flex-direction:column; }
 .editor-toolbar { display:flex; gap:10px; padding:12px; border-bottom:1px solid var(--border); background: #0d1117; }

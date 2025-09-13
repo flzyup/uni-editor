@@ -25,9 +25,9 @@ function getThemeVars(theme = 'classic') {
     codeBg: cs.getPropertyValue('--ed-code-bg').trim() || '#f4f4f6',
     bg: cs.getPropertyValue('--ed-bg').trim() || '#ffffff',
 
-    // 字体变量
-    hFont: cs.getPropertyValue('--ed-h-font').trim() || 'Inter, system-ui, sans-serif',
-    bodyFont: cs.getPropertyValue('--ed-body-font').trim() || 'Inter, system-ui, sans-serif',
+    // 字体变量 - 针对微信平台优化字体
+    hFont: cs.getPropertyValue('--ed-h-font').trim() || '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
+    bodyFont: cs.getPropertyValue('--ed-body-font').trim() || '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
 
     // 其他可能的主题变量
     border: cs.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.08)',
@@ -209,22 +209,39 @@ function buildThemeCssFromVars(theme = 'classic') {
       border-collapse:collapse;
       width:100%;
       margin:16px 0;
+      border:1px solid #e5e7eb;
       border-radius:${v.borderRadius || '6px'};
       overflow:hidden;
-      box-shadow:${v.boxShadow !== 'none' ? v.boxShadow : 'none'};
+      box-shadow:0 1px 3px rgba(0,0,0,0.1);
+      background-color:#ffffff;
     }
 
     .article th,.article td{
-      border:1px solid ${v.border || '#d1d5db'};
+      border:1px solid #e5e7eb;
+      border-collapse:collapse;
       padding:8px 12px;
       text-align:left;
-      color:${v.text};
+      color:#374151;
+      vertical-align:top;
+      word-wrap:break-word;
     }
 
     .article th{
-      background:${v.muted}20;
+      background-color:#f3f4f6 !important;
+      background:#f3f4f6 !important;
       font-weight:700;
-      color:${v.accent};
+      color:#374151 !important;
+      border:1px solid #e5e7eb !important;
+      border-bottom:1px solid #e5e7eb !important;
+    }
+
+    .article tbody tr:nth-child(even) td{
+      background-color:#f9fafb !important;
+      background:#f9fafb !important;
+    }
+
+    .article tbody tr:hover td{
+      background-color:#f3f4f6 !important;
     }
 
     .article hr{
@@ -276,7 +293,14 @@ function mergeCss(html) {
     applyLinkTags: false,
     applyWidthAttributes: true,
     applyHeightAttributes: true,
-    applyAttributesTableElements: true
+    applyAttributesTableElements: true,
+    // 确保表格样式被正确内联
+    webResources: {
+      images: false,
+      svgs: false,
+      scripts: false,
+      relativeTo: false
+    }
   })
 }
 
@@ -358,6 +382,46 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
   }
 
   tempDiv.innerHTML = processedHtml
+
+  // 特殊处理表格样式，确保在微信中正确显示
+  const tables = tempDiv.querySelectorAll('table')
+  tables.forEach(table => {
+    // 确保表格有边框
+    if (!table.style.border) {
+      table.style.border = '1px solid #e5e7eb'
+    }
+    table.style.backgroundColor = '#ffffff'
+    table.style.borderCollapse = 'collapse'
+    table.style.width = '100%'
+
+    // 处理表头
+    const ths = table.querySelectorAll('th')
+    ths.forEach(th => {
+      th.style.backgroundColor = '#f3f4f6'
+      th.style.background = '#f3f4f6'
+      th.style.fontWeight = '700'
+      th.style.color = '#374151'
+      th.style.border = '1px solid #e5e7eb'
+      th.style.padding = '8px 12px'
+    })
+
+    // 处理表格单元格
+    const tds = table.querySelectorAll('td')
+    tds.forEach((td) => {
+      td.style.border = '1px solid #e5e7eb'
+      td.style.padding = '8px 12px'
+      td.style.color = '#374151'
+
+      // 为偶数行添加背景色
+      const row = td.parentElement
+      const rowIndex = Array.from(row.parentElement.children).indexOf(row)
+      if (rowIndex % 2 === 1) { // 偶数行 (0-based)
+        td.style.backgroundColor = '#f9fafb'
+      } else {
+        td.style.backgroundColor = '#ffffff'
+      }
+    })
+  })
 
   // 处理图片尺寸
   solveWeChatImage(tempDiv)
