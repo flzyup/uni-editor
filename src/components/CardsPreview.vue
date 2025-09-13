@@ -1,7 +1,7 @@
 <template>
   <div class="card-container">
     <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
-      <div v-for="(c, idx) in cards" :key="idx" class="card card-theme" :class="[cardTheme, { active: idx === currentCardIndex }]" @click="scrollToCard(idx)">
+      <div v-for="(c, idx) in cards" :key="idx" class="card card-theme" :class="[pageTheme, cardTheme, { active: idx === currentCardIndex }]" @click="scrollToCard(idx)">
         <div v-if="c.type==='cover'" class="inner cover">
           <div class="cover-background" v-if="cover.coverImage">
             <img :src="cover.coverImage" alt="封面图片" />
@@ -66,7 +66,10 @@ import * as htmlToImage from 'html-to-image'
 const props = defineProps({
   html: { type: String, default: '' },
   cardTheme: { type: String, default: 'card-theme-slate' },
+  pageTheme: { type: String, default: 'dark' }, // 'light' | 'dark'
 })
+
+// pageTheme 通过 CSS 继承从父组件获取，无需再次应用类名
 
 const stripRef = ref(null)
 const cards = ref([])

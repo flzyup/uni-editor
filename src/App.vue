@@ -70,6 +70,7 @@
           v-if="previewMode === 'article'"
           :html="html"
           :theme="previewTheme"
+          :page-theme="appThemeClass"
         />
 
         <!-- 卡片模式 -->
@@ -78,6 +79,7 @@
           ref="cardsPreviewRef"
           :html="html"
           :card-theme="previewTheme"
+          :page-theme="appThemeClass"
         />
       </section>
     </main>
@@ -106,7 +108,7 @@ const isMarkdown = ref(false)
 
 // 预览模式和主题
 const previewMode = ref('article') // 'article' | 'cards'
-const previewThemes = ['classic','minimal','night','coffee','paper','pop','ocean','forest','sunset','grape','slate','sand']
+const previewThemes = ['classic','minimal','paper','ocean','forest','sunset','grape','slate','sand']
 const previewTheme = ref('classic')
 
 // App light/dark theme (default light)

@@ -1,93 +1,42 @@
-// 卡片主题样式
-.card-theme {
-  --card-bg: #111318;
-  --card-text: #eef1f5;
-  --card-muted: #aab0bb;
-  --card-accent: #7c5cff;
-  --card-border: rgba(255,255,255,0.08);
-  --card-overlay: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.35));
-  
-  // 生成所有卡片主题
-  &.minimal {
-    --card-bg: #0f1116;
-    --card-accent: #3cc8a6;
-  }
-  
-  &.ocean {
-    --card-bg: #0a1220;
-    --card-accent: #60a5fa;
-  }
-  
-  &.forest {
-    --card-bg: #0e1612;
-    --card-accent: #22c55e;
-  }
-  
-  &.sunset {
-    --card-bg: #1a1010;
-    --card-accent: #fb7185;
-  }
-  
-  &.grape {
-    --card-bg: #130d1b;
-    --card-accent: #a78bfa;
-  }
-  
-  &.slate {
-    --card-bg: #0f1316;
-    --card-accent: #7dd3fc;
-  }
-  
-  &.sand {
-    --card-bg: #151310;
-    --card-accent: #fbbf24;
-  }
-  
-  &.paper {
-    --card-bg: #f7f7f2;
-    --card-accent: #0f766e;
-    --card-text: #1f2937;
-    --card-muted: #374151;
-    --card-border: #e5e7eb;
-  }
-
-  &.ocean-light {
-    --card-bg: #f0f9ff;
-    --card-text: #0c4a6e;
-    --card-accent: #2563eb;
-    --card-border: #e0f2fe;
-  }
-  &.forest-light {
-    --card-bg: #f0fdf4;
-    --card-text: #166534;
-    --card-accent: #16a34a;
-    --card-border: #dcfce7;
-  }
-  &.grape-light {
-    --card-bg: #f5f3ff;
-    --card-text: #5b21b6;
-    --card-accent: #7c3aed;
-    --card-border: #ede9fe;
-  }
-}
-
 // 卡片工具栏
 .cards-toolbar {
   .flex-start();
   gap: 10px;
   padding: 12px;
   border-bottom: 1px solid var(--border);
-  background: #0d1117;
+  background: var(--panel);
 }
 
-// 卡片网格布局
-.cards-grid-old {
-  padding: @panel-padding;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: @panel-gap;
-  overflow: auto;
-  height: calc(100dvh - @header-height - @footer-height - 52px);
+// Card theme CSS variable maps (translated from themes.css)
+// Light mode variables
+.theme-light {
+  .card-theme {
+    &.classic { --card-bg:#ffffff; --card-text:#1f2937; --card-muted:#6b7280; --card-accent:#7c5cff; --card-border:#e5e7eb; --card-overlay:linear-gradient(180deg, rgba(255,255,255,.0), rgba(0,0,0,.1)); }
+    &.minimal { --card-bg:#f9fafb; --card-text:#111827; --card-muted:#374151; --card-accent:#059669; --card-border:#e5e7eb; }
+    &.ocean   { --card-bg:#f0f9ff; --card-text:#0f172a; --card-muted:#334155; --card-accent:#0284c7; --card-border:#e5e7eb; }
+    &.forest  { --card-bg:#f0fdf4; --card-text:#052e16; --card-muted:#166534; --card-accent:#16a34a; --card-border:#e5e7eb; }
+    &.sunset  { --card-bg:#fef2f2; --card-text:#111827; --card-muted:#6b7280; --card-accent:#dc2626; --card-border:#e5e7eb; }
+    &.grape   { --card-bg:#faf5ff; --card-text:#111827; --card-muted:#6b7280; --card-accent:#7c3aed; --card-border:#e5e7eb; }
+    &.slate   { --card-bg:#f8fafc; --card-text:#0f172a; --card-muted:#334155; --card-accent:#0f172a; --card-border:#e5e7eb; }
+    &.sand    { --card-bg:#fffbeb; --card-text:#111827; --card-muted:#6b7280; --card-accent:#d97706; --card-border:#e5e7eb; }
+    &.paper   { --card-bg:#f7f7f2; --card-text:#1f2937; --card-muted:#374151; --card-accent:#0f766e; --card-border:#e5e7eb; }
+  }
+}
+
+// Dark mode variables
+.theme-dark {
+  .card-theme {
+    // Common dark text/muted/border, theme-specific accents and bg
+    &.classic { --card-bg:#111318; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#7c5cff; --card-border:rgba(255,255,255,0.08); --card-overlay:linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.35)); }
+    &.minimal { --card-bg:#0f1116; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#3cc8a6; --card-border:rgba(255,255,255,0.08); }
+    &.ocean   { --card-bg:#0a1220; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#60a5fa; --card-border:rgba(255,255,255,0.08); }
+    &.forest  { --card-bg:#0e1612; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#22c55e; --card-border:rgba(255,255,255,0.08); }
+    &.sunset  { --card-bg:#1a1010; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#fb7185; --card-border:rgba(255,255,255,0.08); }
+    &.grape   { --card-bg:#130d1b; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#a78bfa; --card-border:rgba(255,255,255,0.08); }
+    &.slate   { --card-bg:#0f1316; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#7dd3fc; --card-border:rgba(255,255,255,0.08); }
+    &.sand    { --card-bg:#151310; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#fbbf24; --card-border:rgba(255,255,255,0.08); }
+    &.paper   { --card-bg:#0f1216; --card-text:#e8edf5; --card-muted:#aab0bb; --card-accent:#0f766e; --card-border:rgba(255,255,255,0.08); }
+  }
 }
 
 // 卡片基础样式

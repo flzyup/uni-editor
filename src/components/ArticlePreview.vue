@@ -1,5 +1,5 @@
 <template>
-  <div class="article-preview-container" :class="['card-theme', theme]">
+  <div class="article-preview-container" :class="[pageTheme, 'card-theme', theme]">
     <div class="article-content" v-html="html"></div>
   </div>
 </template>
@@ -8,6 +8,7 @@
 const props = defineProps({
   html: { type: String, default: '' },
   theme: { type: String, default: 'classic' },
+  pageTheme: { type: String, default: 'dark' }, // 'light' | 'dark' - 保留用于未来可能的需求
 })
 </script>
 
@@ -16,16 +17,20 @@ const props = defineProps({
   flex: 1;
   overflow: auto;
   padding: 24px;
-  background: var(--card-bg);
-  color: var(--card-text);
+  background: var(--bg);
 }
 
 .article-content {
-  width: 375px;
+  width: 496px;
   margin: 0 auto;
+  padding: 1rem;
   font-family: var(--font-family-base);
+  background: var(--card-bg);
+  color: var(--card-text);
   line-height: 1.8;
   font-size: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent);
 }
 
 /* 应用编辑器主题样式到长文模式 */
@@ -71,16 +76,17 @@ const props = defineProps({
 }
 
 .article-content :deep(pre) {
-  background: color-mix(in srgb, var(--card-bg) 80%, #000);
+  background: color-mix(in srgb, var(--card-muted) 15%, var(--card-bg));
   color: var(--card-text);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
   margin: 16px 0;
+  border: 1px solid color-mix(in srgb, var(--card-border) 50%, transparent);
 }
 
 .article-content :deep(code) {
-  background: color-mix(in srgb, var(--card-bg) 90%, #000);
+  background: color-mix(in srgb, var(--card-muted) 12%, var(--card-bg));
   color: var(--card-text);
   padding: 2px 6px;
   border-radius: 4px;
