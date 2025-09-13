@@ -5,23 +5,26 @@
 import juice from 'juice'
 
 function getThemeVars(theme = 'classic') {
+  // Detect current page theme from DOM
+  const hasDark = !!document.querySelector('.theme-dark')
+  const hasLight = !!document.querySelector('.theme-light')
+  const pageThemeClass = hasDark ? 'theme-dark' : (hasLight ? 'theme-light' : 'theme-light')
+
+  // Create a themed wrapper so descendant selectors like
+  // `.theme-light .card-theme.ocean` resolve correctly
+  const wrapper = document.createElement('div')
+  wrapper.className = pageThemeClass
+  wrapper.style.position = 'absolute'
+  wrapper.style.left = '-9999px'
+  wrapper.style.pointerEvents = 'none'
+  wrapper.style.visibility = 'hidden'
+
   const probe = document.createElement('div')
   probe.className = `card-theme ${theme}`
-  probe.style.position = 'absolute'
-  probe.style.left = '-9999px'
-  probe.style.pointerEvents = 'none'
-  probe.style.visibility = 'hidden'
-  document.body.appendChild(probe)
+  wrapper.appendChild(probe)
+  document.body.appendChild(wrapper)
 
   const cs = getComputedStyle(probe)
-
-  console.log("------", theme)
-  console.log('Theme vars check:', {
-    text: cs.getPropertyValue('--card-text'),
-    accent: cs.getPropertyValue('--card-accent'),
-    bg: cs.getPropertyValue('--card-bg')
-  })
-  console.log("------")
 
   // 动态读取所有主题相关的CSS变量 - 使用card主题变量
   const vars = {
@@ -81,7 +84,7 @@ function getThemeVars(theme = 'classic') {
   }
 
   // 清理probe元素
-  document.body.removeChild(probe)
+  document.body.removeChild(wrapper)
 
   return vars
 }
@@ -397,21 +400,69 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
 
   tempDiv.innerHTML = processedHtml
 
-  // 特殊处理表格样式，确保在微信中正确显示
-  const tables = tempDiv.querySelectorAll('table')
+  // 强化关键元素的内联样式，最大化保留在微信中的显示一致性
   const borderColor = themeVars.border || '#d1d5db'
   const tableBg = themeVars.bg || '#ffffff'
   const borderRadius = themeVars.borderRadius || '6px'
+  const textColor = themeVars.text || '#1f2937'
+  const accent = themeVars.accent || '#7c5cff'
 
+  // 1) 头部标题：确保颜色和间距内联
+  tempDiv.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach((h) => {
+    const tag = h.tagName.toLowerCase()
+    const base = `color:${textColor};font-weight:700;margin:1.2em 0 .6em 0;`
+    const size = tag === 'h1' ? 'font-size:175%;' : tag === 'h2' ? 'font-size:150%;' : tag === 'h3' ? 'font-size:125%;' : tag === 'h4' ? 'font-size:112.5%;' : tag === 'h5' ? 'font-size:100%;' : 'font-size:87.5%;'
+    const accentCss = (tag === 'h1' || tag === 'h2') ? `color:${accent};` : ''
+    h.setAttribute('style', `${base}${size}${accentCss}${h.getAttribute('style') || ''}`)
+  })
+
+  // 2) 链接：用下边框模拟下划线，避免被清理
+  tempDiv.querySelectorAll('a').forEach((a) => {
+    const style = `color:${accent};text-decoration:none;border-bottom:1px solid ${accent}33;`
+    a.setAttribute('style', `${style}${a.getAttribute('style') || ''}`)
+    // 强制安全属性
+    a.setAttribute('target','_blank')
+    const href = a.getAttribute('href') || ''
+    if (!href || href.startsWith('javascript:')) a.removeAttribute('href')
+  })
+
+  // 3) 图片：半径与自适应
+  tempDiv.querySelectorAll('img').forEach((img) => {
+    const style = `max-width:100%;height:auto;display:block;border-radius:${borderRadius};margin:16px 0;`
+    img.setAttribute('style', `${style}${img.getAttribute('style') || ''}`)
+  })
+
+  // 4) 代码块：背景与半径
+  tempDiv.querySelectorAll('pre').forEach((pre) => {
+    const style = `background:${themeVars.codeBg || tableBg};color:${textColor};padding:12px;border-radius:${borderRadius};overflow:auto;margin:16px 0;`
+    pre.setAttribute('style', `${style}${pre.getAttribute('style') || ''}`)
+  })
+  tempDiv.querySelectorAll('code').forEach((code) => {
+    const style = `background:${themeVars.codeBg || tableBg};color:${textColor};padding:2px 6px;border-radius:4px;`
+    code.setAttribute('style', `${style}${code.getAttribute('style') || ''}`)
+  })
+
+  // 5) 表格：使用外层 wrapper 提供圆角裁切，避免 table 的圆角被微信打平
+  const tables = tempDiv.querySelectorAll('table')
   tables.forEach(table => {
-    // 强制设置表格样式，使用主题变量
-    table.setAttribute('style', `border-collapse: collapse; width: 100%; border: 1px solid ${borderColor}; background-color: ${tableBg}; margin: 16px 0; border-radius: ${borderRadius}; overflow: hidden;`)
-    table.setAttribute('border', '1')
+    // 创建包装器
+    const wrapper = document.createElement('div')
+    wrapper.setAttribute('style', `border:1px solid ${borderColor};border-radius:${borderRadius};overflow:hidden;background-color:${tableBg};margin:16px 0;`)
+    // 插入包装器并移动表格
+    const parent = table.parentElement
+    if (parent) {
+      parent.insertBefore(wrapper, table)
+      wrapper.appendChild(table)
+    }
+    // 设置表格样式
     table.setAttribute('cellpadding', '0')
     table.setAttribute('cellspacing', '0')
     table.setAttribute('bgcolor', tableBg)
-    table.style.borderRadius = borderRadius
-    table.style.overflow = 'hidden'
+    table.style.borderCollapse = 'collapse'
+    table.style.width = '100%'
+    table.style.backgroundColor = tableBg
+    table.style.border = 'none'
+    table.style.margin = '0'
 
     // 处理表头 - 使用主题变量
     const ths = table.querySelectorAll('th')
