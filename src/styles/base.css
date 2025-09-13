@@ -1,0 +1,110 @@
+:root {
+  --bg: #0b0c10;
+  --panel: #14161a;
+  --muted: #9aa3b2;
+  --text: #e8edf5;
+  --accent: #6ee7b7;
+  --border: #252a33;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Heiti SC", "WenQuanYi Micro Hei", sans-serif;
+  color: var(--text);
+  background: radial-gradient(1200px 1000px at 0% 0%, #0f1320, #0b0c10);
+}
+
+.container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100dvh;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.logo-mark {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: conic-gradient(from 0deg, #6ee7b7, #60a5fa, #a78bfa, #f472b6, #6ee7b7);
+  filter: saturate(1.1);
+}
+.logo-text {
+  font-size: 18px;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.panel {
+  background: rgba(14,16,21,0.7);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title { font-weight: 600; }
+.spacer { flex: 1; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.muted { color: var(--muted); }
+.btn {
+  background: #1b1f2a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn:hover { border-color: #2f3642; }
+.select { 
+  background: #1b1f2a; color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px;
+}
+
+.footer {
+  color: var(--muted);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+@media (max-width: 1080px) {
+  .main { grid-template-columns: 1fr; }
+}

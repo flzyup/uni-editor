@@ -1,0 +1,76 @@
+/* Editor themes (6+) and Card themes (8+) via CSS variables */
+
+/* Base content styles applied inside toastui .toastui-editor-contents */
+.editor-theme {
+  --ed-bg:#0f1218;
+  --ed-text:#e8eaed;
+  --ed-muted:#b0b5bd;
+  --ed-accent:#7c5cff;
+  --ed-code-bg:#0b0e14;
+  --ed-quote:#8fb3ff;
+  --ed-h-font: Inter, "Noto Serif SC", serif;
+  --ed-body-font: Inter, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Hiragino Sans GB", sans-serif;
+}
+
+/* 1. Classic */
+.editor-theme.classic { --ed-bg:#10131a; --ed-text:#e8eaed; --ed-muted:#aab0bb; --ed-accent:#7c5cff; --ed-quote:#8fb3ff; --ed-code-bg:#0b0e14; --ed-h-font: Inter, "Noto Serif SC", serif; }
+/* 2. Minimal */
+.editor-theme.minimal { --ed-bg:#0e0f12; --ed-text:#eef1f5; --ed-muted:#a0a6af; --ed-accent:#3cc8a6; --ed-quote:#66e0c8; --ed-code-bg:#0a0b0d; --ed-h-font: Inter, sans-serif; }
+/* 3. Night */
+.editor-theme.night { --ed-bg:#0b0c0f; --ed-text:#f1f5f9; --ed-muted:#94a3b8; --ed-accent:#60a5fa; --ed-quote:#93c5fd; --ed-code-bg:#0a0f18; --ed-h-font: Inter, sans-serif; }
+/* 4. Coffee */
+.editor-theme.coffee { --ed-bg:#12100e; --ed-text:#f3efe7; --ed-muted:#c8c0b6; --ed-accent:#d4a373; --ed-quote:#e9c46a; --ed-code-bg:#1a1714; --ed-h-font: "Noto Serif SC", serif; }
+/* 5. Paper */
+.editor-theme.paper { --ed-bg:#f7f7f2; --ed-text:#2b2b2b; --ed-muted:#5c5c5c; --ed-accent:#0f766e; --ed-quote:#0ea5a4; --ed-code-bg:#efefe8; --ed-h-font: "Noto Serif SC", serif; --invert:1; }
+/* 6. Pop */
+.editor-theme.pop { --ed-bg:#0f0b19; --ed-text:#f6f5ff; --ed-muted:#c7c4ff; --ed-accent:#ff6ad5; --ed-quote:#ffd166; --ed-code-bg:#140e24; --ed-h-font: Inter, sans-serif; }
+
+.editor-shell { height: calc(100dvh - 56px - 44px); display:flex; flex-direction:column; }
+.editor-toolbar { display:flex; gap:10px; padding:12px; border-bottom:1px solid var(--border); background: #0d1117; }
+.editor-host { flex:1; min-height:0; background: var(--ed-bg); }
+
+/* Toast UI content overrides under theme */
+/* Vditor content overrides under theme */
+.editor-host .vditor { background: var(--ed-bg); }
+.editor-host .vditor-toolbar { background: #0d1117; border-bottom-color: var(--border); }
+.editor-host .vditor-reset { color: var(--ed-text); font-family: var(--ed-body-font); }
+.editor-host .vditor-reset p { line-height: 1.8; }
+.editor-host .vditor-reset h1,
+.editor-host .vditor-reset h2,
+.editor-host .vditor-reset h3,
+.editor-host .vditor-reset h4,
+.editor-host .vditor-reset h5,
+.editor-host .vditor-reset h6 { font-family: var(--ed-h-font); font-weight: 700; color: var(--ed-text); margin-top: 1.4em; }
+.editor-host .vditor-reset a { color: var(--ed-accent); text-decoration: none; }
+.editor-host .vditor-reset blockquote { border-left: 4px solid var(--ed-quote); background: color-mix(in srgb, var(--ed-quote) 12%, transparent); color: var(--ed-text); padding: 10px 14px; }
+.editor-host .vditor-reset pre { background: var(--ed-code-bg); color: var(--ed-text); border-radius: 8px; padding: 12px; }
+.editor-host .vditor-reset code { background: color-mix(in srgb, var(--ed-code-bg) 65%, transparent); padding: 2px 6px; border-radius: 6px; }
+.editor-host .vditor-reset table { border-collapse: collapse; width: 100%; }
+.editor-host .vditor-reset table th,
+.editor-host .vditor-reset table td { border: 1px solid color-mix(in srgb, var(--ed-muted) 30%, transparent); padding: 8px 10px; }
+
+/* Card themes (8+) */
+.card-theme { --card-bg:#111318; --card-text:#eef1f5; --card-muted:#aab0bb; --card-accent:#7c5cff; --card-border:rgba(255,255,255,0.08); --card-overlay:linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.35)); }
+.card-theme.minimal { --card-bg:#0f1116; --card-accent:#3cc8a6; }
+.card-theme.ocean { --card-bg:#0a1220; --card-accent:#60a5fa; }
+.card-theme.forest { --card-bg:#0e1612; --card-accent:#22c55e; }
+.card-theme.sunset { --card-bg:#1a1010; --card-accent:#fb7185; }
+.card-theme.grape { --card-bg:#130d1b; --card-accent:#a78bfa; }
+.card-theme.slate { --card-bg:#0f1316; --card-accent:#7dd3fc; }
+.card-theme.sand { --card-bg:#151310; --card-accent:#fbbf24; }
+.card-theme.paper { --card-bg:#f7f7f2; --card-text:#1f2937; --card-muted:#374151; --card-accent:#0f766e; --card-border:#e5e7eb; }
+
+.cards-toolbar { display:flex; gap:10px; align-items:center; padding:12px; border-bottom:1px solid var(--border); background:#0d1117; }
+.cards-grid { padding:16px; display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:16px; overflow:auto; height: calc(100dvh - 56px - 44px - 52px); }
+.card { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; position: relative; display:flex; }
+.card-inner { aspect-ratio: 4 / 3; width:100%; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.card .cover-title { font-size: 22px; font-weight: 800; line-height: 1.35; }
+.card .cover-sub { color: var(--card-muted); font-size: 12px; }
+.card .cover-meta { margin-top: auto; font-size: 12px; color: var(--card-muted); display:flex; gap:12px; }
+.card .chip { background: color-mix(in srgb, var(--card-accent) 18%, transparent); color: var(--card-text); padding: 4px 8px; border-radius: 999px; font-size: 11px; border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent) }
+.card-content { font-size: 14px; line-height: 1.6; display:flex; flex-direction:column; gap:8px; overflow:hidden; }
+.card-content img { max-width: 100%; height: auto; object-fit: contain; border-radius: 8px; background: #0b0c0f; }
+.card-content h2, .card-content h3, .card-content h4 { margin: 6px 0; font-weight: 700; }
+.card-content p { margin: 0; }
+.card-content blockquote { margin: 0; padding: 6px 8px; border-left: 3px solid var(--card-accent); background: color-mix(in srgb, var(--card-accent) 12%, transparent); border-radius: 6px; }
+.card-content pre { margin: 0; padding: 8px; background: #0b0e14; border-radius: 8px; overflow:auto; }
