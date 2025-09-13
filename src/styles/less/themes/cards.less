@@ -1,0 +1,163 @@
+// 卡片主题样式
+.card-theme {
+  --card-bg: #111318;
+  --card-text: #eef1f5;
+  --card-muted: #aab0bb;
+  --card-accent: #7c5cff;
+  --card-border: rgba(255,255,255,0.08);
+  --card-overlay: linear-gradient(180deg, rgba(0,0,0,.0), rgba(0,0,0,.35));
+  
+  // 生成所有卡片主题
+  &.minimal {
+    --card-bg: #0f1116;
+    --card-accent: #3cc8a6;
+  }
+  
+  &.ocean {
+    --card-bg: #0a1220;
+    --card-accent: #60a5fa;
+  }
+  
+  &.forest {
+    --card-bg: #0e1612;
+    --card-accent: #22c55e;
+  }
+  
+  &.sunset {
+    --card-bg: #1a1010;
+    --card-accent: #fb7185;
+  }
+  
+  &.grape {
+    --card-bg: #130d1b;
+    --card-accent: #a78bfa;
+  }
+  
+  &.slate {
+    --card-bg: #0f1316;
+    --card-accent: #7dd3fc;
+  }
+  
+  &.sand {
+    --card-bg: #151310;
+    --card-accent: #fbbf24;
+  }
+  
+  &.paper {
+    --card-bg: #f7f7f2;
+    --card-accent: #0f766e;
+    --card-text: #1f2937;
+    --card-muted: #374151;
+    --card-border: #e5e7eb;
+  }
+}
+
+// 卡片工具栏
+.cards-toolbar {
+  .flex-start();
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: #0d1117;
+}
+
+// 卡片网格布局
+.cards-grid {
+  padding: @panel-padding;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: @panel-gap;
+  overflow: auto;
+  height: calc(100dvh - @header-height - @footer-height - 52px);
+}
+
+// 卡片基础样式
+.card {
+  background: var(--card-bg);
+  color: var(--card-text);
+  border: 1px solid var(--card-border);
+  border-radius: @panel-border-radius;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  
+  &-inner {
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    padding: @panel-padding;
+    .flex-column();
+    gap: 10px;
+  }
+  
+  .cover {
+    &-title {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    
+    &-sub {
+      color: var(--card-muted);
+      font-size: 12px;
+    }
+    
+    &-meta {
+      margin-top: auto;
+      font-size: 12px;
+      color: var(--card-muted);
+      .flex-start();
+      gap: 12px;
+    }
+  }
+  
+  .chip {
+    background: color-mix(in srgb, var(--card-accent) 18%, transparent);
+    color: var(--card-text);
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent);
+  }
+}
+
+// 卡片内容样式
+.card-content {
+  font-size: 14px;
+  line-height: 1.6;
+  .flex-column();
+  gap: 8px;
+  overflow: hidden;
+  
+  img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #0b0c0f;
+  }
+  
+  h2, h3, h4 {
+    margin: 6px 0;
+    font-weight: 700;
+  }
+  
+  p {
+    margin: 0;
+  }
+  
+  blockquote {
+    margin: 0;
+    padding: 6px 8px;
+    border-left: 3px solid var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+    border-radius: 6px;
+  }
+  
+  pre {
+    margin: 0;
+    padding: 8px;
+    background: #0b0e14;
+    border-radius: 8px;
+    overflow: auto;
+  }
+}

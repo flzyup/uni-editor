@@ -1,0 +1,501 @@
+// 卡片网格组件样式
+.card-container {
+  .flex-column();
+  .full-height();
+}
+
+.cards-strip {
+  display: flex;
+  gap: @panel-gap;
+  padding: @panel-padding;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-height: 0;
+  scroll-behavior: smooth;
+  padding-right: 32px; // 确保最后一张卡片完全可见
+  
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--panel);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+    
+    &:hover {
+      background: var(--muted);
+    }
+  }
+}
+
+.card {
+  position: relative;
+  border: 1px solid var(--card-border);
+  border-radius: @card-border-radius;
+  overflow: hidden;
+  width: @card-width;
+  height: @card-height;
+  .flex-column();
+  background: var(--card-bg);
+  color: var(--card-text);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  flex-shrink: 0;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--card-border) 40%, transparent);
+  }
+  
+  &.active {
+    border: 2px solid var(--card-accent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--card-accent) 30%, transparent);
+    transform: scale(1.02);
+  }
+}
+
+.inner {
+  padding: @card-content-padding;
+  .full-height();
+  .flex-column();
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.content-html {
+  font-size: 14px;
+  line-height: 1.6;
+  overflow: hidden;
+  flex: 1;
+  .flex-column();
+  justify-content: flex-start;
+  min-height: 0;
+  
+  img {
+    max-width: 100% !important;
+    max-height: 120px !important;
+    height: auto !important;
+    width: auto !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+    margin: 8px auto !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    object-position: center !important;
+    
+    // 特殊处理
+    &[width] {
+      width: auto !important;
+      max-width: 100% !important;
+    }
+    
+    &[height] {
+      height: auto !important;
+      max-height: 120px !important;
+    }
+  }
+  
+  // 表格基础样式
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 12px;
+    border: 2px solid var(--card-accent);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent);
+  }
+  
+  th, td {
+    padding: 8px 10px;
+    text-align: left;
+    border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+    vertical-align: top;
+  }
+  
+  th {
+    background: color-mix(in srgb, var(--card-accent) 25%, transparent);
+    font-weight: 700;
+    color: var(--card-text);
+    border-bottom: 2px solid color-mix(in srgb, var(--card-accent) 60%, transparent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--card-accent) 8%, transparent);
+  }
+  
+  tr:hover td {
+    background: color-mix(in srgb, var(--card-accent) 15%, transparent);
+  }
+  
+  // 标题样式
+  h1, h2, h3, h4 {
+    margin: 12px 0 6px 0;
+    color: var(--card-text);
+    font-weight: 700;
+  }
+  
+  h1 { font-size: 16px; color: var(--card-accent); }
+  h2 { font-size: 15px; color: var(--card-accent); }
+  h3 { font-size: 14px; }
+  h4 { font-size: 13px; }
+  
+  // 链接样式
+  a {
+    color: var(--card-accent);
+    text-decoration: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent);
+    
+    &:hover {
+      border-bottom-color: var(--card-accent);
+    }
+  }
+  
+  // 段落样式
+  p {
+    margin: 6px 0;
+    line-height: 1.5;
+  }
+  
+  // 列表样式
+  ul, ol {
+    margin: 8px 0;
+    padding-left: 16px;
+    
+    li {
+      margin: 2px 0;
+      line-height: 1.4;
+    }
+  }
+  
+  // 引用样式
+  blockquote {
+    border-left: 3px solid var(--card-accent);
+    background: color-mix(in srgb, var(--card-accent) 10%, transparent);
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 4px;
+    font-style: italic;
+  }
+  
+  // 代码样式
+  pre {
+    background: color-mix(in srgb, var(--card-bg) 80%, var(--card-border));
+    color: var(--card-text);
+    padding: 8px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 11px;
+    margin: 8px 0;
+    border: 1px solid color-mix(in srgb, var(--card-border) 60%, transparent);
+  }
+  
+  code {
+    background: color-mix(in srgb, var(--card-accent) 20%, transparent);
+    color: var(--card-text);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: @font-family-mono;
+  }
+}
+
+// 主题特定的表格样式
+.card-theme {
+  .content-html table {
+    border: 2px solid var(--card-accent) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent) !important;
+  }
+  
+  .content-html th,
+  .content-html td {
+    border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent) !important;
+  }
+  
+  .content-html th {
+    background: color-mix(in srgb, var(--card-accent) 25%, transparent) !important;
+    border-bottom: 2px solid color-mix(in srgb, var(--card-accent) 60%, transparent) !important;
+  }
+  
+  // 确保所有主题都应用通用图片样式
+  .content-html img,
+  &.minimal .content-html img,
+  &.ocean .content-html img,
+  &.forest .content-html img,
+  &.sunset .content-html img,
+  &.grape .content-html img,
+  &.slate .content-html img,
+  &.sand .content-html img,
+  &.paper .content-html img {
+    max-width: 100% !important;
+    max-height: 120px !important;
+    height: auto !important;
+    width: auto !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+    margin: 8px auto !important;
+    display: block !important;
+    flex-shrink: 0 !important;
+    object-position: center !important;
+  }
+  
+  // 不同主题的差异化样式
+  &.minimal .content-html {
+    table {
+      border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent) !important;
+      border-radius: 4px !important;
+      box-shadow: 0 1px 4px color-mix(in srgb, var(--card-accent) 15%, transparent) !important;
+    }
+    
+    th {
+      background: color-mix(in srgb, var(--card-accent) 15%, transparent) !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent) !important;
+    }
+  }
+  
+  &.ocean .content-html table {
+    border: 2px solid var(--card-accent) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--card-accent) 25%, transparent) !important;
+  }
+  
+  &.forest .content-html {
+    table {
+      border: 2px solid var(--card-accent) !important;
+      border-radius: 6px !important;
+    }
+    
+    th {
+      background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent) 30%, transparent), color-mix(in srgb, var(--card-accent) 20%, transparent)) !important;
+    }
+  }
+  
+  &.sunset .content-html table {
+    border: 2px solid var(--card-accent) !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--card-bg) 98%, transparent), color-mix(in srgb, var(--card-accent) 5%, transparent)) !important;
+  }
+  
+  &.grape .content-html {
+    table {
+      border: 2px solid var(--card-accent) !important;
+      border-radius: 6px !important;
+    }
+    
+    th {
+      background: color-mix(in srgb, var(--card-accent) 30%, transparent) !important;
+      color: white !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+    }
+  }
+  
+  &.slate .content-html table {
+    border: 2px solid var(--card-accent) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent) !important;
+  }
+  
+  &.sand .content-html table {
+    border: 2px solid var(--card-accent) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent) !important;
+  }
+  
+  &.paper .content-html {
+    table {
+      border: 2px solid var(--card-accent) !important;
+      background: white !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+      border-radius: 6px !important;
+    }
+    
+    th {
+      background: color-mix(in srgb, var(--card-accent) 20%, white) !important;
+      color: var(--card-text) !important;
+    }
+  }
+}
+
+// 封面样式
+.cover {
+  .flex-column();
+  .full-height();
+  position: relative;
+  padding: 0 !important; // 覆盖inner的padding
+}
+
+.cover-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: @card-border-radius;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.cover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+.cover-content {
+  position: relative;
+  z-index: 2;
+  .flex-column();
+  .full-height();
+  padding: @card-content-padding;
+}
+
+.title-overlay {
+  flex: 1;
+  .flex-column();
+  justify-content: center;
+  text-align: center;
+  padding: @card-content-padding;
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  margin: @card-content-padding 0;
+}
+
+.cover .title {
+  font: 800 22px/1.2 @font-family-base;
+  margin-bottom: 8px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.cover .summary {
+  font-size: 14px;
+  color: rgba(255,255,255,0.9);
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+.cover .meta {
+  margin-top: auto;
+  .flex-start();
+  gap: 8px;
+  color: white;
+  font-size: 12px;
+  padding: 12px @card-content-padding;
+  background: rgba(0,0,0,0.5);
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card-accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 36%, transparent);
+}
+
+.exporting .card {
+  box-shadow: none;
+}
+
+// 卡片导航样式
+.card-navigation {
+  .flex-between();
+  padding: 12px @card-content-padding;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+
+.nav-dots {
+  .flex-start();
+  gap: 8px;
+  overflow-x: auto;
+  max-width: 200px;
+}
+
+.nav-dot {
+  min-width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  .flex-center();
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  
+  &.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+}
+
+.nav-controls {
+  .flex-start();
+  gap: 12px;
+}
+
+.nav-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+  .flex-center();
+  transition: all 0.2s ease;
+  font-size: 14px;
+  
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.nav-info {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+  min-width: 48px;
+  text-align: center;
+}

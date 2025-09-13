@@ -13,10 +13,12 @@
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/vue-editor": "^3.2.3",
     "html-to-image": "^1.11.11",
+    "vditor": "^3.11.2",
     "vue": "^3.4.38"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.2",
+    "less": "^4.4.1",
     "vite": "^5.4.0"
   }
 }

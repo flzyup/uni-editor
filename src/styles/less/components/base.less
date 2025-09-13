@@ -1,0 +1,76 @@
+// 基础样式
+:root {
+  // 默认深色主题变量
+  --bg: @dark-bg;
+  --panel: @dark-panel;
+  --muted: @dark-muted;
+  --text: @dark-text;
+  --accent: @dark-accent;
+  --border: @dark-border;
+}
+
+// 浅色主题覆盖
+.theme-light {
+  --bg: @light-bg;
+  --panel: @light-panel;
+  --muted: @light-muted;
+  --text: @light-text;
+  --accent: @light-accent;
+  --border: @light-border;
+}
+
+// 全局重置
+* {
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  .full-height();
+}
+
+body {
+  margin: 0;
+  font-family: @font-family-base;
+  color: var(--text);
+  background: var(--bg);
+}
+
+// 容器布局
+.container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+// 主内容区域
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: @panel-gap;
+  padding: @panel-padding;
+  min-height: 0;
+  height: calc(100vh - @header-height - @footer-height - 8px);
+  overflow: hidden;
+  
+  @media (max-width: @tablet-max) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 面板基础样式
+.panel {
+  .panel-base();
+  .flex-column();
+  .full-height();
+}
+
+// 编辑器特殊样式
+.editor-scope {
+  flex: 1;
+  min-height: 0;
+}
+
+.main > .panel {
+  .full-height();
+}

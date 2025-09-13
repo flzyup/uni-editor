@@ -1,10 +1,20 @@
 :root {
+  /* dark defaults; light overrides via .theme-light */
   --bg: #0b0c10;
   --panel: #14161a;
   --muted: #9aa3b2;
   --text: #e8edf5;
   --accent: #6ee7b7;
   --border: #252a33;
+}
+/* App light theme variables */
+.theme-light {
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --muted: #6b7280;
+  --text: #111827;
+  --accent: #0ea5a4;
+  --border: #e5e7eb;
 }
 
 * { box-sizing: border-box; }
@@ -13,13 +23,14 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Heiti SC", "WenQuanYi Micro Hei", sans-serif;
   color: var(--text);
-  background: radial-gradient(1200px 1000px at 0% 0%, #0f1320, #0b0c10);
+  background: var(--bg);
 }
 
 .container {
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-height: 100dvh;
+  background: var(--bg);
 }
 
 .banner {
@@ -29,7 +40,7 @@ body {
   gap: 12px;
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+  background: var(--panel);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -57,14 +68,20 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   padding: 16px;
+  min-height: 0;
+  height: calc(100vh - 120px);
+  overflow: hidden;
 }
 
 .panel {
-  background: rgba(14,16,21,0.7);
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .panel-header {
@@ -75,7 +92,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .panel-title { font-weight: 600; }
+.panel-title { color: var(--text); }
+.logo-text { color: var(--text); }
 .spacer { flex: 1; }
+/* Ensure editor panel fills */
+.editor-scope { flex: 1; min-height: 0; }
+.main > .panel { height: 100%; min-height: 0; }
 
 .toolbar {
   display: flex;
@@ -84,7 +106,7 @@ body {
 }
 .muted { color: var(--muted); }
 .btn {
-  background: #1b1f2a;
+  background: var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
   padding: 6px 10px;
@@ -92,9 +114,9 @@ body {
   cursor: pointer;
   font-size: 12px;
 }
-.btn:hover { border-color: #2f3642; }
+.btn:hover { border-color: color-mix(in srgb, var(--border) 50%, transparent); }
 .select { 
-  background: #1b1f2a; color: var(--text);
+  background: var(--panel); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px;
 }
 

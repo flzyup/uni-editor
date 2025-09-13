@@ -1,0 +1,35 @@
+// 头部组件样式
+.banner {
+  .flex-between();
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  position: sticky;
+  top: 0;
+  z-index: @z-header;
+}
+
+.logo {
+  .flex-start();
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  
+  &-mark {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: conic-gradient(from 0deg, #6ee7b7, #60a5fa, #a78bfa, #f472b6, #6ee7b7);
+    filter: saturate(1.1);
+  }
+  
+  &-text {
+    font-size: 18px;
+    color: var(--text);
+  }
+}
+
+.spacer {
+  flex: 1;
+}
