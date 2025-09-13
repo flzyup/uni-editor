@@ -6,7 +6,7 @@ import juice from 'juice'
 
 function getThemeVars(theme = 'classic') {
   const probe = document.createElement('div')
-  probe.className = `editor-theme ${theme}`
+  probe.className = `card-theme ${theme}`
   probe.style.position = 'absolute'
   probe.style.left = '-9999px'
   probe.style.pointerEvents = 'none'
@@ -15,24 +15,33 @@ function getThemeVars(theme = 'classic') {
 
   const cs = getComputedStyle(probe)
 
-  // 动态读取所有主题相关的CSS变量
+  console.log("------", theme)
+  console.log('Theme vars check:', {
+    text: cs.getPropertyValue('--card-text'),
+    accent: cs.getPropertyValue('--card-accent'),
+    bg: cs.getPropertyValue('--card-bg')
+  })
+  console.log("------")
+
+  // 动态读取所有主题相关的CSS变量 - 使用card主题变量
   const vars = {
     // 基础颜色变量
-    text: cs.getPropertyValue('--ed-text').trim() || '#2b2b2b',
-    muted: cs.getPropertyValue('--ed-muted').trim() || '#6b7280',
-    accent: cs.getPropertyValue('--ed-accent').trim() || '#7c5cff',
-    quote: cs.getPropertyValue('--ed-quote').trim() || '#8fb3ff',
-    codeBg: cs.getPropertyValue('--ed-code-bg').trim() || '#f4f4f6',
-    bg: cs.getPropertyValue('--ed-bg').trim() || '#ffffff',
+    text: cs.getPropertyValue('--card-text').trim() || '#2b2b2b',
+    muted: cs.getPropertyValue('--card-muted').trim() || '#6b7280',
+    accent: cs.getPropertyValue('--card-accent').trim() || '#7c5cff',
+    quote: cs.getPropertyValue('--card-accent').trim() || '#8fb3ff', // 使用accent颜色作为引用色
+    codeBg: cs.getPropertyValue('--card-bg').trim() || '#f4f4f6', // 使用稍微深一点的背景色
+    bg: cs.getPropertyValue('--card-bg').trim() || '#ffffff',
+    border: cs.getPropertyValue('--card-border').trim() || 'rgba(255,255,255,0.08)',
 
     // 字体变量 - 针对微信平台优化字体
-    hFont: cs.getPropertyValue('--ed-h-font').trim() || '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
-    bodyFont: cs.getPropertyValue('--ed-body-font').trim() || '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
+    hFont: '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
+    bodyFont: '"Microsoft YaHei", "PingFang SC", "Source Han Sans SC", "Noto Sans CJK SC", "Hiragino Sans GB", sans-serif',
 
     // 其他可能的主题变量
-    border: cs.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.08)',
     shadow: cs.getPropertyValue('--shadow').trim() || 'rgba(0,0,0,0.1)',
     overlay: cs.getPropertyValue('--overlay').trim() || 'rgba(0,0,0,0.5)',
+    borderRadius: cs.getPropertyValue('--border-radius').trim() || '6px', // 默认圆角
 
     // 计算样式属性
     fontSize: cs.fontSize || '16px',
@@ -71,7 +80,9 @@ function getThemeVars(theme = 'classic') {
     filter: cs.filter || 'none'
   }
 
+  // 清理probe元素
   document.body.removeChild(probe)
+
   return vars
 }
 
@@ -209,39 +220,39 @@ function buildThemeCssFromVars(theme = 'classic') {
       border-collapse:collapse;
       width:100%;
       margin:16px 0;
-      border:1px solid #e5e7eb;
+      border:1px solid ${v.border || '#d1d5db'};
       border-radius:${v.borderRadius || '6px'};
       overflow:hidden;
-      box-shadow:0 1px 3px rgba(0,0,0,0.1);
-      background-color:#ffffff;
+      box-shadow:${v.boxShadow !== 'none' ? v.boxShadow : '0 2px 4px rgba(0,0,0,0.1)'};
+      background-color:${v.bg};
     }
 
     .article th,.article td{
-      border:1px solid #e5e7eb;
+      border:1px solid ${v.border || '#d1d5db'};
       border-collapse:collapse;
       padding:8px 12px;
       text-align:left;
-      color:#374151;
+      color:${v.text};
       vertical-align:top;
       word-wrap:break-word;
     }
 
     .article th{
-      background-color:#f3f4f6 !important;
-      background:#f3f4f6 !important;
+      background-color:${v.muted ? `${v.muted}33` : '#f8f9fa'} !important;
+      background:${v.muted ? `${v.muted}33` : '#f8f9fa'} !important;
       font-weight:700;
-      color:#374151 !important;
-      border:1px solid #e5e7eb !important;
-      border-bottom:1px solid #e5e7eb !important;
+      color:${v.accent || v.text} !important;
+      border:1px solid ${v.border || '#d1d5db'} !important;
+      border-bottom:2px solid ${v.border || '#d1d5db'} !important;
     }
 
     .article tbody tr:nth-child(even) td{
-      background-color:#f9fafb !important;
-      background:#f9fafb !important;
+      background-color:${v.bg ? `${v.bg}99` : '#f9f9f9'} !important;
+      background:${v.bg ? `${v.bg}99` : '#f9f9f9'} !important;
     }
 
     .article tbody tr:hover td{
-      background-color:#f3f4f6 !important;
+      background-color:${v.muted ? `${v.muted}1a` : '#f0f0f0'} !important;
     }
 
     .article hr{
@@ -356,6 +367,9 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
   // 先修改 HTML 结构
   let html = modifyHtmlStructure(innerHtml)
 
+  // 获取主题变量用于后续样式处理
+  const themeVars = getThemeVars(theme)
+
   // 构建完整的 HTML 并使用 juice 合并样式
   const fullHtml = buildWechatHtml(html, theme)
 
@@ -385,40 +399,126 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
 
   // 特殊处理表格样式，确保在微信中正确显示
   const tables = tempDiv.querySelectorAll('table')
-  tables.forEach(table => {
-    // 确保表格有边框
-    if (!table.style.border) {
-      table.style.border = '1px solid #e5e7eb'
-    }
-    table.style.backgroundColor = '#ffffff'
-    table.style.borderCollapse = 'collapse'
-    table.style.width = '100%'
+  const borderColor = themeVars.border || '#d1d5db'
+  const tableBg = themeVars.bg || '#ffffff'
+  const borderRadius = themeVars.borderRadius || '6px'
 
-    // 处理表头
+  tables.forEach(table => {
+    // 强制设置表格样式，使用主题变量
+    table.setAttribute('style', `border-collapse: collapse; width: 100%; border: 1px solid ${borderColor}; background-color: ${tableBg}; margin: 16px 0; border-radius: ${borderRadius}; overflow: hidden;`)
+    table.setAttribute('border', '1')
+    table.setAttribute('cellpadding', '0')
+    table.setAttribute('cellspacing', '0')
+    table.setAttribute('bgcolor', tableBg)
+    table.style.borderRadius = borderRadius
+    table.style.overflow = 'hidden'
+
+    // 处理表头 - 使用主题变量
     const ths = table.querySelectorAll('th')
-    ths.forEach(th => {
-      th.style.backgroundColor = '#f3f4f6'
-      th.style.background = '#f3f4f6'
+    const thBg = themeVars.muted ? `${themeVars.muted}33` : '#f8f9fa'
+    const thColor = themeVars.accent || themeVars.text || '#374151'
+
+    ths.forEach((th, index) => {
+      const isFirstTh = index === 0
+      const isLastTh = index === ths.length - 1
+      let borderRadius = ''
+
+      // 为表头的第一个和最后一个单元格添加圆角
+      if (isFirstTh && isLastTh) {
+        borderRadius = `border-top-left-radius: ${themeVars.borderRadius || '6px'}; border-top-right-radius: ${themeVars.borderRadius || '6px'};`
+      } else if (isFirstTh) {
+        borderRadius = `border-top-left-radius: ${themeVars.borderRadius || '6px'};`
+      } else if (isLastTh) {
+        borderRadius = `border-top-right-radius: ${themeVars.borderRadius || '6px'};`
+      }
+
+      // 使用多种方式确保样式不被过滤
+      th.setAttribute('style', `background-color: ${thBg} !important; background: ${thBg} !important; font-weight: 700; color: ${thColor} !important; border: 1px solid ${borderColor} !important; padding: 8px 12px; text-align: left; ${borderRadius}`)
+      th.setAttribute('bgcolor', thBg)
+      th.style.setProperty('background-color', thBg, 'important')
+      th.style.setProperty('background', thBg, 'important')
+      th.style.setProperty('color', thColor, 'important')
+      th.style.setProperty('border', `1px solid ${borderColor}`, 'important')
       th.style.fontWeight = '700'
-      th.style.color = '#374151'
-      th.style.border = '1px solid #e5e7eb'
       th.style.padding = '8px 12px'
+      th.style.textAlign = 'left'
+
+      // 设置圆角
+      const radiusValue = themeVars.borderRadius || '6px'
+      if (isFirstTh && isLastTh) {
+        th.style.borderTopLeftRadius = radiusValue
+        th.style.borderTopRightRadius = radiusValue
+      } else if (isFirstTh) {
+        th.style.borderTopLeftRadius = radiusValue
+      } else if (isLastTh) {
+        th.style.borderTopRightRadius = radiusValue
+      }
     })
 
-    // 处理表格单元格
+    // 处理表格单元格 - 使用主题变量
     const tds = table.querySelectorAll('td')
-    tds.forEach((td) => {
-      td.style.border = '1px solid #e5e7eb'
-      td.style.padding = '8px 12px'
-      td.style.color = '#374151'
+    const allRows = table.querySelectorAll('tr')
+    const lastRowIndex = allRows.length - 1
+    const cellColor = themeVars.text || '#374151'
+    const evenRowBg = themeVars.bg ? `${themeVars.bg}99` : '#f9f9f9'
+    const oddRowBg = tableBg
 
-      // 为偶数行添加背景色
+    tds.forEach((td) => {
       const row = td.parentElement
       const rowIndex = Array.from(row.parentElement.children).indexOf(row)
-      if (rowIndex % 2 === 1) { // 偶数行 (0-based)
-        td.style.backgroundColor = '#f9fafb'
-      } else {
-        td.style.backgroundColor = '#ffffff'
+      const isEvenRow = rowIndex % 2 === 1 // 偶数行 (0-based)
+      const bgColor = isEvenRow ? evenRowBg : oddRowBg
+
+      // 检查是否为最后一行的单元格
+      const isLastRow = rowIndex === lastRowIndex
+      const cellIndex = Array.from(row.children).indexOf(td)
+      const isFirstCell = cellIndex === 0
+      const isLastCell = cellIndex === row.children.length - 1
+
+      let cellBorderRadius = ''
+      const radiusValue = themeVars.borderRadius || '6px'
+      if (isLastRow) {
+        if (isFirstCell && isLastCell) {
+          cellBorderRadius = `border-bottom-left-radius: ${radiusValue}; border-bottom-right-radius: ${radiusValue};`
+        } else if (isFirstCell) {
+          cellBorderRadius = `border-bottom-left-radius: ${radiusValue};`
+        } else if (isLastCell) {
+          cellBorderRadius = `border-bottom-right-radius: ${radiusValue};`
+        }
+      }
+
+      // 使用多种方式设置样式
+      td.setAttribute('style', `background-color: ${bgColor} !important; background: ${bgColor} !important; border: 1px solid ${borderColor} !important; padding: 8px 12px; color: ${cellColor}; text-align: left; vertical-align: top; ${cellBorderRadius}`)
+      td.setAttribute('bgcolor', bgColor)
+      td.style.setProperty('background-color', bgColor, 'important')
+      td.style.setProperty('background', bgColor, 'important')
+      td.style.setProperty('border', `1px solid ${borderColor}`, 'important')
+      td.style.padding = '8px 12px'
+      td.style.color = cellColor
+      td.style.textAlign = 'left'
+      td.style.verticalAlign = 'top'
+
+      // 设置底部圆角
+      if (isLastRow) {
+        if (isFirstCell && isLastCell) {
+          td.style.borderBottomLeftRadius = radiusValue
+          td.style.borderBottomRightRadius = radiusValue
+        } else if (isFirstCell) {
+          td.style.borderBottomLeftRadius = radiusValue
+        } else if (isLastCell) {
+          td.style.borderBottomRightRadius = radiusValue
+        }
+      }
+    })
+
+    // 为整行也设置背景色
+    const trs = table.querySelectorAll('tr')
+    trs.forEach((tr, index) => {
+      const isEvenRow = index % 2 === 1
+      const bgColor = isEvenRow ? evenRowBg : oddRowBg
+      if (index > 0) { // 跳过表头行
+        tr.setAttribute('bgcolor', bgColor)
+        tr.style.backgroundColor = bgColor
       }
     })
   })
