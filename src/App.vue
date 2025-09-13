@@ -60,7 +60,7 @@
             </select>
 
             <!-- 操作按钮 -->
-            <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">复制为公众号格式</button>
+            <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">全部复制</button>
             <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">保存卡片</button>
           </div>
         </div>
@@ -173,6 +173,7 @@ onMounted(() => {
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  outline: none;
 }
 
 .mode-tab:hover {
@@ -186,5 +187,9 @@ onMounted(() => {
 
 .mode-tab + .mode-tab {
   border-left: 1px solid var(--border);
+}
+
+.mode-tab:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 </style>

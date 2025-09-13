@@ -51,12 +51,12 @@
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--card-border) 40%, transparent);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--card-accent) 18%, transparent);
   }
   
   &.active {
     border: 2px solid var(--card-accent);
-    box-shadow: 0 0 20px color-mix(in srgb, var(--card-accent) 30%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-accent) 25%, transparent);
     transform: scale(1.02);
   }
 }
@@ -80,7 +80,6 @@
   
   img {
     max-width: 100% !important;
-    max-height: 120px !important;
     height: auto !important;
     width: auto !important;
     object-fit: contain !important;
@@ -98,7 +97,6 @@
     
     &[height] {
       height: auto !important;
-      max-height: 120px !important;
     }
   }
   
@@ -195,7 +193,7 @@
     color: var(--card-text);
     padding: 8px;
     border-radius: 6px;
-    overflow-x: auto;
+    // overflow-x: auto;
     font-size: 11px;
     margin: 8px 0;
     border: 1px solid color-mix(in srgb, var(--card-border) 60%, transparent);
@@ -240,7 +238,6 @@
   &.sand .content-html img,
   &.paper .content-html img {
     max-width: 100% !important;
-    max-height: 120px !important;
     height: auto !important;
     width: auto !important;
     object-fit: contain !important;
@@ -451,6 +448,7 @@
   font-weight: 500;
   .flex-center();
   transition: all 0.2s ease;
+  .focus-ring();
   
   &:hover {
     border-color: var(--accent);
@@ -480,6 +478,7 @@
   .flex-center();
   transition: all 0.2s ease;
   font-size: 14px;
+  .focus-ring();
   
   &:hover:not(:disabled) {
     border-color: var(--accent);

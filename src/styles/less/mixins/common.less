@@ -47,6 +47,34 @@
   
   &:hover {
     border-color: color-mix(in srgb, var(--border) 50%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+    border-color: var(--accent);
+  }
+}
+
+// Utility: focus ring for interactive elements
+.focus-ring() {
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+    border-color: var(--accent);
+  }
+}
+
+// Reduced motion helper
+.reduced-motion() {
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
