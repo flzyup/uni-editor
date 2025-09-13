@@ -3,12 +3,16 @@
     <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
       <div v-for="(c, idx) in cards" :key="idx" class="card card-theme" :class="[pageTheme, cardTheme, { active: idx === currentCardIndex }]" @click="scrollToCard(idx)">
         <div v-if="c.type==='cover'" class="inner cover">
-          <div class="cover-background" v-if="cover.coverImage">
-            <img :src="cover.coverImage" alt="封面图片" />
+          <div class="cover-background">
+            <template v-if="cover.coverImage">
+              <img :src="cover.coverImage" alt="封面图片" />
+            </template>
+            <template v-else-if="coverBgHtml">
+              <div class="bg-html" v-html="coverBgHtml"></div>
+            </template>
             <div class="cover-overlay"></div>
           </div>
           <div class="cover-content">
-            <div class="badge">封面</div>
             <div class="title-overlay">
               <div class="title">{{ cover.title }}</div>
               <div class="summary">{{ cover.summary }}</div>
@@ -20,7 +24,7 @@
           </div>
         </div>
         <div v-else class="inner">
-          <div class="content-html" v-html="c.html"></div>
+          <div class="content-html content-rich" v-html="c.html"></div>
         </div>
       </div>
     </div>
@@ -79,6 +83,7 @@ let scrollTimeout = null
 let isUserClick = false
 
 const cover = ref({ title: '标题', summary: '摘要', wordCount: 0, minutes: 1 })
+const coverBgHtml = ref('')
 
 watch(() => [props.html, props.cardTheme], async () => {
   await nextTick()
@@ -88,18 +93,30 @@ watch(() => [props.html, props.cardTheme], async () => {
 onMounted(async () => { await generate() })
 
 function extractCoverData(root) {
+  // 标题：优先使用第一个 H1/H2/H3
   const h = root.querySelector('h1, h2, h3')
   const title = h ? h.textContent.trim() : '无标题'
-  const p = root.querySelector('p')
-  const summary = p ? p.textContent.trim().slice(0, 80) : ''
-  const text = root.textContent || ''
-  const wordCount = [...text].filter(ch => /\S/.test(ch)).length
+
+  // 摘要：从内容中排除第一个 H1，再取其余文本的前 80 个字符
+  const clone = root.cloneNode(true)
+  const firstH1 = clone.querySelector('h1')
+  if (firstH1) firstH1.remove()
+  const rawText = (clone.textContent || '').replace(/\s+/g, ' ').trim()
+  const summary = (() => {
+    const chars = Array.from(rawText)
+    if (chars.length <= 80) return rawText
+    return chars.slice(0, 80).join('') + '…'
+  })()
+
+  // 字数与预计阅读时长（按非空白字符）
+  const fullText = root.textContent || ''
+  const wordCount = [...fullText].filter(ch => /\S/.test(ch)).length
   const minutes = Math.max(1, Math.ceil(wordCount / 400))
-  
+
   // 提取第一张图片作为封面图
   const firstImg = root.querySelector('img')
   const coverImage = firstImg ? firstImg.src : null
-  
+
   cover.value = { title, summary, wordCount, minutes, coverImage }
 }
 
@@ -139,7 +156,7 @@ async function generate() {
   temp.style.height = contentH + 'px'
   temp.style.padding = pad + 'px'
   temp.style.overflow = 'hidden'
-  temp.className = `card-theme ${props.cardTheme}`
+  temp.className = `card-theme ${props.cardTheme} ${props.pageTheme}`
   document.body.appendChild(temp)
 
   const generated = [{ type: 'cover' }]
@@ -148,17 +165,13 @@ async function generate() {
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
     const probe = document.createElement('div')
-    probe.className = 'content-html'
-    probe.style.fontSize = '14px'
-    probe.style.lineHeight = '1.6'
+    probe.className = 'content-html content-rich'
     
     // 特殊处理图片，确保图片能完整显示
     if (block.type === 'img') {
       // 创建临时测试元素，应用图片样式
       const imgTestProbe = document.createElement('div')
-      imgTestProbe.className = 'content-html'
-      imgTestProbe.style.fontSize = '14px'
-      imgTestProbe.style.lineHeight = '1.6'
+      imgTestProbe.className = 'content-html content-rich'
       imgTestProbe.innerHTML = block.html
       temp.innerHTML = ''
       temp.appendChild(imgTestProbe)
@@ -168,9 +181,7 @@ async function generate() {
       
       // 测试加入当前累积内容
       const testProbe = document.createElement('div')
-      testProbe.className = 'content-html'
-      testProbe.style.fontSize = '14px'
-      testProbe.style.lineHeight = '1.6'
+      testProbe.className = 'content-html content-rich'
       testProbe.innerHTML = acc.map(b => b.html).join('') + block.html
       temp.innerHTML = ''
       temp.appendChild(testProbe)
@@ -202,9 +213,7 @@ async function generate() {
         if (['h1', 'h2', 'h3', 'h4'].includes(block.type) && i + 1 < blocks.length) {
           const nextBlock = blocks[i + 1]
           const combinedProbe = document.createElement('div')
-          combinedProbe.className = 'content-html'
-          combinedProbe.style.fontSize = '14px'
-          combinedProbe.style.lineHeight = '1.6'
+          combinedProbe.className = 'content-html content-rich'
           combinedProbe.innerHTML = block.html + nextBlock.html
           temp.innerHTML = ''
           temp.appendChild(combinedProbe)
@@ -217,15 +226,24 @@ async function generate() {
             acc = [block]
           }
         } else {
-          acc = [block]
-          
-          // 检查单个元素是否过大
-          probe.innerHTML = block.html
-          if (probe.scrollHeight > contentH) {
-            // 如果单个元素太大，尝试截断（但不截断图片和标题）
-            if (block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
-              const truncated = truncateContent(block.html, contentH, temp)
-              acc = [{ type: block.type, html: truncated, element: null }]
+          // 新卡片仅包含当前块，必要时对块进行拆分/截断
+          if (block.type === 'ul' || block.type === 'ol') {
+            const { fitHtml, remainHtml } = splitListToFit(block.html, contentH, temp)
+            acc = [{ type: block.type, html: fitHtml, element: null }]
+            if (remainHtml) {
+              blocks.splice(i + 1, 0, { type: block.type, html: remainHtml, element: null })
+            }
+          } else {
+            acc = [block]
+            
+            // 检查单个元素是否过大
+            probe.innerHTML = block.html
+            if (probe.scrollHeight > contentH) {
+              // 如果单个元素太大，尝试截断（但不截断图片和标题）
+              if (block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
+                const truncated = truncateContent(block.html, contentH, temp)
+                acc = [{ type: block.type, html: truncated, element: null }]
+              }
             }
           }
         }
@@ -237,15 +255,25 @@ async function generate() {
   
   if (acc.length) generated.push({ type: 'content', html: acc.map(b => b.html).join('') })
 
+  // Determine cover background when no image: use second card content HTML if available
+  if (!cover.value.coverImage) {
+    const second = generated[1]
+    if (second && second.type === 'content' && second.html) {
+      coverBgHtml.value = `<div class=\"content-html content-rich\">${second.html}</div>`
+    } else {
+      coverBgHtml.value = ''
+    }
+  } else {
+    coverBgHtml.value = ''
+  }
+
   cards.value = generated
   document.body.removeChild(temp)
 }
 
 function truncateContent(html, maxHeight, container) {
   const probe = document.createElement('div')
-  probe.className = 'content-html'
-  probe.style.fontSize = '14px'
-  probe.style.lineHeight = '1.6'
+  probe.className = 'content-html content-rich'
   
   // 对于图片，直接返回
   if (html.includes('<img')) return html
@@ -284,6 +312,62 @@ function truncateContent(html, maxHeight, container) {
   }
   
   return html
+}
+
+// 针对列表（ul/ol）按 li 进行拆分，保证结构正确不被压平
+function splitListToFit(html, maxHeight, container) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  const list = doc.body.firstElementChild
+  if (!list || !['UL','OL'].includes(list.tagName)) {
+    return { fitHtml: html, remainHtml: '' }
+  }
+
+  const isOrdered = list.tagName === 'OL'
+  const originalStart = isOrdered ? parseInt(list.getAttribute('start') || '1') : null
+  const items = Array.from(list.children).filter(el => el.tagName === 'LI')
+
+  const fitList = document.createElement(list.tagName.toLowerCase())
+  if (isOrdered && originalStart && originalStart !== 1) fitList.setAttribute('start', String(originalStart))
+
+  let fitCount = 0
+  for (let idx = 0; idx < items.length; idx++) {
+    const liClone = items[idx].cloneNode(true)
+    fitList.appendChild(liClone)
+
+    // 测量当前 fitList 高度
+    const probe = document.createElement('div')
+    probe.className = 'content-html content-rich'
+    probe.appendChild(fitList.cloneNode(true))
+    container.innerHTML = ''
+    container.appendChild(probe)
+
+    if (probe.scrollHeight <= maxHeight) {
+      fitCount = idx + 1
+      continue
+    } else {
+      // 超出，撤回最后一个
+      fitList.removeChild(fitList.lastElementChild)
+      break
+    }
+  }
+
+  // 所有项都能放下
+  if (fitCount >= items.length) {
+    return { fitHtml: list.outerHTML, remainHtml: '' }
+  }
+
+  // 构建剩余列表
+  const remainList = document.createElement(list.tagName.toLowerCase())
+  if (isOrdered) {
+    const start = (originalStart || 1) + fitCount
+    if (start !== 1) remainList.setAttribute('start', String(start))
+  }
+  for (let i = fitCount; i < items.length; i++) {
+    remainList.appendChild(items[i].cloneNode(true))
+  }
+
+  return { fitHtml: fitList.outerHTML, remainHtml: remainList.outerHTML }
 }
 
 function scrollToCard(index) {
@@ -386,4 +470,3 @@ onMounted(() => {
 
 defineExpose({ exportAll })
 </script>
-

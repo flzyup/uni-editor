@@ -412,7 +412,9 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
     const tag = h.tagName.toLowerCase()
     const base = `color:${textColor};font-weight:700;margin:1.2em 0 .6em 0;`
     const size = tag === 'h1' ? 'font-size:175%;' : tag === 'h2' ? 'font-size:150%;' : tag === 'h3' ? 'font-size:125%;' : tag === 'h4' ? 'font-size:112.5%;' : tag === 'h5' ? 'font-size:100%;' : 'font-size:87.5%;'
-    const accentCss = (tag === 'h1' || tag === 'h2') ? `color:${accent};` : ''
+    const accentCss = tag === 'h1'
+      ? `color:${accent};border-bottom:2px solid ${accent};padding-bottom:8px;`
+      : (tag === 'h2' ? `color:${accent};` : '')
     h.setAttribute('style', `${base}${size}${accentCss}${h.getAttribute('style') || ''}`)
   })
 
@@ -583,7 +585,19 @@ export function processClipboardContent(innerHtml, theme = 'classic', primaryCol
   tempDiv.insertBefore(beforeNode, tempDiv.firstChild)
   tempDiv.appendChild(afterNode)
 
-  return tempDiv.innerHTML
+  // 用一个带有内联样式的容器包裹，避免丢失容器级样式（背景、内边距、字体）
+  const wrapper = document.createElement('div')
+  wrapper.setAttribute('style', [
+    `font-family:${themeVars.bodyFont || 'Microsoft YaHei, PingFang SC, sans-serif'}`,
+    `font-size:${themeVars.fontSize || '16px'}`,
+    `line-height:${themeVars.lineHeight || '1.6'}`,
+    `color:${textColor}`,
+    `background:${themeVars.bg || '#ffffff'}`,
+    `padding:${themeVars.paddingTop || '20px'} ${themeVars.paddingRight || '20px'} ${themeVars.paddingBottom || '20px'} ${themeVars.paddingLeft || '20px'}`,
+    `border-radius:${borderRadius}`
+  ].join(';'))
+  wrapper.innerHTML = tempDiv.innerHTML
+  return wrapper.outerHTML
 }
 
 // Basic sanitization and normalization inspired by doocs/md utils.processClipboardContent
