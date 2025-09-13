@@ -86,10 +86,172 @@ const themeCssMap = {
   `,
 }
 
+function camelToKebab(s){return s.replace(/[A-Z]/g, m=>'-'+m.toLowerCase())}
+
 export function buildWechatHtml(innerHtml, theme='classic'){
-  const style = themeCssMap[theme] || themeCssMap.classic
-  // wrap into a single container to keep styles coherent on paste
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${style}</style></head><body><div class="article">${innerHtml}</div></body></html>`
-  return html
+  const css = themeCssMap[theme] || themeCssMap.classic
+
+  // Create a temporary DOM environment to compute styles
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none'
+  document.body.appendChild(iframe)
+  
+  const doc = iframe.contentDocument
+  if (!doc) {
+    document.body.removeChild(iframe)
+    return ''
+  }
+
+  doc.open()
+  doc.write(`<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body><div class="article">${innerHtml}</div></body></html>`)
+  doc.close()
+
+  const articleRoot = doc.querySelector('.article')
+  if (!articleRoot) {
+    document.body.removeChild(iframe)
+    return ''
+  }
+  
+  const walker = doc.createTreeWalker(articleRoot, NodeFilter.SHOW_ELEMENT)
+  const importantProps = [
+    'color','background-color','font-family','font-size','font-weight','font-style','line-height','letter-spacing',
+    'text-align','border','border-color','border-width','border-style','border-radius','padding','margin',
+    'list-style-type','text-decoration-color','text-decoration-line','text-decoration-style', 'text-indent',
+    'box-shadow', 'background', 'border-bottom', 'border-left', 'border-top', 'border-right',
+    'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+    'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+    'text-shadow', 'border-collapse', 'max-width', 'width', 'height',
+    'display', 'flex-direction', 'justify-content', 'align-items', 'gap'
+  ]
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    const computedStyle = iframe.contentWindow.getComputedStyle(node)
+    
+    let style = ''
+    for (const p of importantProps) {
+      const val = computedStyle.getPropertyValue(p)
+      if (val && val !== 'initial' && val !== 'auto' && val !== '0px' && val !== 'none') {
+        style += `${p}:${val};`
+      }
+    }
+    
+    if (style) {
+      const existingStyle = node.getAttribute('style') || ''
+      node.setAttribute('style', existingStyle + ';' + style)
+    }
+  }
+
+  const finalHtml = articleRoot.innerHTML
+  document.body.removeChild(iframe)
+  
+  return `<!doctype html><html><head><meta charset="utf-8"></head><body><div class="article-container">${finalHtml}</div></body></html>`
 }
 
+// Basic sanitization and normalization inspired by doocs/md utils.processClipboardContent
+const ALLOWED_TAGS = new Set(['p','h1','h2','h3','h4','h5','h6','strong','b','em','i','u','s','blockquote','pre','code','ul','ol','li','a','img','table','thead','tbody','tr','th','td','hr','br','span'])
+const ALLOWED_ATTRS = {
+  a: new Set(['href','target','rel','title']),
+  img: new Set(['src','alt','title','width','height']),
+  td: new Set(['colspan','rowspan','align']),
+  th: new Set(['colspan','rowspan','align']),
+}
+
+function sanitizeForWeChat(html) {
+  const doc = new DOMParser().parseFromString(`<div class="_root">${html || ''}</div>`, 'text/html')
+  const root = doc.querySelector('._root')
+  if (!root) return html || ''
+  
+  // Remove disallowed nodes
+  root.querySelectorAll('script,style,link,meta,iframe,object,embed,form,video,audio,svg').forEach(n => n.remove())
+  
+  // Walk and clean attributes/tags
+  const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT)
+  const toRemove = []
+  while (walker.nextNode()) {
+    const el = walker.currentNode
+    const tag = el.tagName.toLowerCase()
+    if (!ALLOWED_TAGS.has(tag)) {
+      // unwrap unknown elements but keep children
+      const parent = el.parentElement
+      if (parent) {
+        while (el.firstChild) parent.insertBefore(el.firstChild, el)
+        toRemove.push(el)
+      }
+      continue
+    }
+    // Remove classes and inline event handlers
+    el.removeAttribute('class')
+    Array.from(el.attributes).forEach(attr => {
+      const name = attr.name
+      if (name.startsWith('on')) el.removeAttribute(name)
+    })
+    // Whitelist attributes
+    const allow = ALLOWED_ATTRS[tag] || new Set()
+    Array.from(el.attributes).forEach(attr => {
+      if (!allow.has(attr.name)) {
+        // always allow data-src -> src fallback for imgs
+        if (tag === 'img' && (attr.name === 'data-src' || attr.name === 'referrerpolicy')) return
+        if (tag === 'a' && attr.name === 'name') return
+        if (attr.name === 'style') return // keep styles; they are inlined by builder
+        // otherwise drop
+        if (!['style'].includes(attr.name)) el.removeAttribute(attr.name)
+      }
+    })
+    // Ensure links safe
+    if (tag === 'a') {
+      el.setAttribute('target','_blank')
+      const href = el.getAttribute('href') || ''
+      if (!href || href.startsWith('javascript:')) el.removeAttribute('href')
+    }
+  }
+  toRemove.forEach(n => n.remove())
+  
+  // Unwrap spans without attributes
+  root.querySelectorAll('span').forEach(sp => {
+    if (!sp.attributes.length) {
+      const parent = sp.parentElement
+      if (parent) {
+        while (sp.firstChild) parent.insertBefore(sp.firstChild, sp)
+        sp.remove()
+      }
+    }
+  })
+  return root.innerHTML
+}
+
+export function processClipboardContent(innerHtml, theme='classic') {
+  // 1) sanitize HTML  2) convert to themed, inline-styled fragment
+  const sanitized = sanitizeForWeChat(innerHtml)
+  return convertToWechatFragment(sanitized, theme)
+}
+
+// Convert to fragment-only HTML (without doctype/head), suitable for pasting into WeChat editor directly
+export function convertToWechatFragment(innerHtml, theme='classic') {
+  const full = buildWechatHtml(innerHtml, theme)
+  const doc = new DOMParser().parseFromString(full, 'text/html')
+  const container = doc.querySelector('.article-container')
+  return container ? container.innerHTML : innerHtml
+}
+
+// Copy to clipboard following doocs/md approach: provide both text/html and text/plain
+export async function copyToWechat(innerHtml, theme='classic') {
+  const fragment = processClipboardContent(innerHtml, theme)
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${fragment}</body></html>`
+  const text = new DOMParser().parseFromString(innerHtml || '', 'text/html').body.textContent || ''
+  try {
+    const item = new window.ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([text], { type: 'text/plain' })
+    })
+    await navigator.clipboard.write([item])
+    return true
+  } catch (e) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch (e2) {
+      return false
+    }
+  }
+}

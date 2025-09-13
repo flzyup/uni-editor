@@ -20,7 +20,7 @@ Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布�
 
 ## 技术栈
 - 构建：Vite + Vue 3
-- 编辑器：[toast-ui/editor](https://github.com/nhn/tui.editor)
+- 编辑器：[Vditor](https://github.com/Vanessa219/vditor)
 - 导出图片：html-to-image
 - 样式：原子化的自定义 CSS + 主题变量
 

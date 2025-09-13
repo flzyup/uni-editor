@@ -50,6 +50,25 @@
     --card-muted: #374151;
     --card-border: #e5e7eb;
   }
+
+  &.ocean-light {
+    --card-bg: #f0f9ff;
+    --card-text: #0c4a6e;
+    --card-accent: #2563eb;
+    --card-border: #e0f2fe;
+  }
+  &.forest-light {
+    --card-bg: #f0fdf4;
+    --card-text: #166534;
+    --card-accent: #16a34a;
+    --card-border: #dcfce7;
+  }
+  &.grape-light {
+    --card-bg: #f5f3ff;
+    --card-text: #5b21b6;
+    --card-accent: #7c3aed;
+    --card-border: #ede9fe;
+  }
 }
 
 // 卡片工具栏
@@ -62,7 +81,7 @@
 }
 
 // 卡片网格布局
-.cards-grid {
+.cards-grid-old {
   padding: @panel-padding;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));

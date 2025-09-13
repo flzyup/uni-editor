@@ -1,5 +1,5 @@
 <template>
-  <div class="editor-wrap" :class="themeClass">
+  <div class="editor-wrap">
     <div ref="elRef" class="vditor-host"></div>
   </div>
 </template>
@@ -10,7 +10,6 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 
 const props = defineProps({
-  themeClass: { type: String, default: '' },
   markdownMode: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:html'])
@@ -73,15 +72,6 @@ onMounted(async () => {
     after: () => emitHtml(),
   })
   window.addEventListener('keydown', onKey)
-})
-
-watch(() => props.themeClass, async () => {
-  if (!vd) return
-  await nextTick()
-  // Force re-render with new theme
-  const currentContent = vd.getValue()
-  vd.setValue(currentContent)
-  emitHtml()
 })
 
 watch(() => props.markdownMode, async (v) => {

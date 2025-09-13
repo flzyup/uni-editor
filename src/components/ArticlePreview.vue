@@ -1,5 +1,5 @@
 <template>
-  <div class="article-preview-container" :class="['article-theme', theme]">
+  <div class="article-preview-container" :class="['card-theme', theme]">
     <div class="article-content" v-html="html"></div>
   </div>
 </template>
@@ -16,14 +16,14 @@ const props = defineProps({
   flex: 1;
   overflow: auto;
   padding: 24px;
-  background: var(--ed-bg);
-  color: var(--ed-text);
+  background: var(--card-bg);
+  color: var(--card-text);
 }
 
 .article-content {
-  max-width: 800px;
+  width: 375px;
   margin: 0 auto;
-  font-family: var(--ed-body-font);
+  font-family: var(--font-family-base);
   line-height: 1.8;
   font-size: 16px;
 }
@@ -35,9 +35,9 @@ const props = defineProps({
 .article-content :deep(h4),
 .article-content :deep(h5),
 .article-content :deep(h6) {
-  font-family: var(--ed-h-font);
+  font-family: var(--font-family-base);
   font-weight: 700;
-  color: var(--ed-accent);
+  color: var(--card-accent);
   margin: 1.4em 0 0.6em 0;
 }
 
@@ -51,9 +51,9 @@ const props = defineProps({
 }
 
 .article-content :deep(a) {
-  color: var(--ed-accent);
+  color: var(--card-accent);
   text-decoration: none;
-  border-bottom: 1px solid var(--ed-accent);
+  border-bottom: 1px solid var(--card-accent);
 }
 
 .article-content :deep(a:hover) {
@@ -61,9 +61,9 @@ const props = defineProps({
 }
 
 .article-content :deep(blockquote) {
-  border-left: 4px solid var(--ed-quote);
-  background: color-mix(in srgb, var(--ed-quote) 12%, transparent);
-  color: var(--ed-text);
+  border-left: 4px solid var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+  color: var(--card-text);
   padding: 12px 16px;
   margin: 16px 0;
   border-radius: 4px;
@@ -71,8 +71,8 @@ const props = defineProps({
 }
 
 .article-content :deep(pre) {
-  background: var(--ed-code-bg);
-  color: var(--ed-text);
+  background: color-mix(in srgb, var(--card-bg) 80%, #000);
+  color: var(--card-text);
   padding: 12px;
   border-radius: 8px;
   overflow-x: auto;
@@ -80,8 +80,8 @@ const props = defineProps({
 }
 
 .article-content :deep(code) {
-  background: color-mix(in srgb, var(--ed-code-bg) 65%, transparent);
-  color: var(--ed-text);
+  background: color-mix(in srgb, var(--card-bg) 90%, #000);
+  color: var(--card-text);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Fira Code', Monaco, monospace;
@@ -111,25 +111,25 @@ const props = defineProps({
   border-collapse: collapse;
   width: 100%;
   margin: 16px 0;
-  border: 2px solid var(--ed-accent);
+  border: 2px solid var(--card-accent);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .article-content :deep(th),
 .article-content :deep(td) {
-  border: 1px solid color-mix(in srgb, var(--ed-accent) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
   padding: 8px 12px;
   text-align: left;
 }
 
 .article-content :deep(th) {
-  background: color-mix(in srgb, var(--ed-accent) 25%, transparent);
+  background: color-mix(in srgb, var(--card-accent) 25%, transparent);
   font-weight: 600;
-  color: var(--ed-text);
+  color: var(--card-text);
 }
 
 .article-content :deep(tr:nth-child(even) td) {
-  background: color-mix(in srgb, var(--ed-accent) 8%, transparent);
+  background: color-mix(in srgb, var(--card-accent) 8%, transparent);
 }
 </style>
