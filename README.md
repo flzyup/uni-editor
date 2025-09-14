@@ -76,6 +76,12 @@ Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布�
 - [ ] 新增更多不同样式的主题
 - [ ] 添加导出PDF功能
 
+## 体验反馈
+
+若您有更好的意见、建议或者Bug反馈，可以扫码添加如下的微信群进行沟通
+
+![Uni Editor体验反馈微信群](raw/wechat_group.png)
+
 ## 许可证
 本项目采用 Apache License 2.0，详见 `LICENSE`。
 
