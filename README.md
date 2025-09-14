@@ -1,8 +1,15 @@
 # Uni Editor
 
+[![GitHub](https://img.shields.io/badge/GitHub-flzyup/uni--editor-blue?logo=github)](https://github.com/flzyup/uni-editor)
+[![官网](https://img.shields.io/badge/官网-uni--editor.com-green?logo=web)](https://uni-editor.com)
+
 Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布工具。它面向「公众号排版」与「图片类平台发布」两大场景：在左侧编辑区进行 WYSIWYG/Markdown 编写与主题预览，右侧自动将长文拆分为 4:3 样式卡片，支持多主题实时预览与高清导出，可直接用于小红书等平台发布。
 
-编辑器在线预览：[Uni Editor](https://uni-editor.com/)，所有内容均缓存浏览器本地
+## 链接
+
+- 🌐 **在线体验**：[https://uni-editor.com](https://uni-editor.com)
+- 💻 **GitHub 仓库**：[https://github.com/flzyup/uni-editor](https://github.com/flzyup/uni-editor)
+- 📚 **所有内容均缓存浏览器本地**
 
 ## 特性
 - 所见即所得编辑
@@ -48,9 +55,24 @@ Uni Editor 是一个现代化的、所见即所得的 Markdown 创作与发布�
 - 复制为公众号格式：现代浏览器支持以 `text/html` 粘贴来保留样式；如遇限制将回退为纯文本复制。
 - 分页策略：按段落/图片等块元素进行近似分页，尽量避免单块被切割；如内容密度差异较大，可适当调整文案以获得更佳版式。
 
-## 当前状态
+## 已完成功能
 
-**项目处于开发中，功能尚不可完全使用!**
+- [x] 所见即所得编辑器集成
+- [x] Markdown源码模式切换
+- [x] 多主题编辑器支持
+- [x] 公众号格式复制功能
+- [x] 卡片预览与导出
+- [x] 多种卡片主题切换
+- [x] 暗色/浅色页面主题
+- [x] 内容本地缓存
+- [x] 长文自动分页
+- [x] 高清PNG图片导出
+
+## TODO
+
+- [ ] 完善图片上传功能
+- [ ] 添加导出PDF功能
+- [ ] 更多丰富和不同样式的主题
 
 ## 许可证
 本项目采用 Apache License 2.0，详见 `LICENSE`。

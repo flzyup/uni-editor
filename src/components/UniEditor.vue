@@ -16,6 +16,7 @@ const emit = defineEmits(['update:html'])
 
 const elRef = ref(null)
 let vd = null
+let isVditorReady = false
 
 const CACHE_KEY = 'uni-editor-content'
 
@@ -60,7 +61,6 @@ onMounted(async () => {
     value: initial,
     cache: { enable: false },
     height: '100%',
-    theme: getEditorTheme(props.pageTheme),
     mode: 'ir',
     toolbarConfig: { pin: true },
     toolbar: [
@@ -68,21 +68,33 @@ onMounted(async () => {
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
       'quote', 'line', 'code', 'inline-code', '|',
       'table', 'insert-before', 'insert-after','|',
-      'line', 'link', 'upload', 'emoji', '|',
-      'undo', 'redo', 'fullscreen', '|',
-      'edit-mode', 'both','preview', '|',
-      'code-theme','content-theme','export','devtools', '|'
+      'line', 'link', 'emoji', '|', //'upload', 
+      'undo', 'redo', '|',
+      'edit-mode', 'both',
+      'code-theme','content-theme',  '|',
+      'export'
+      // 'devtools', '|'
     ],
     counter: { enable: true },
     upload: { accept: 'image/*' },
     input: () => emitHtml(),
-    after: () => emitHtml(),
+    after: () => {
+      isVditorReady = true
+      vd.setTheme(getEditorTheme(props.pageTheme))
+      emitHtml()
+    },
   })
   window.addEventListener('keydown', onKey)
 })
 
 watch(() => props.pageTheme, async (v) => {
-  vd?.setTheme(getEditorTheme(v))
+  if (vd && isVditorReady) {
+    try {
+      vd.setTheme(getEditorTheme(v))
+    } catch (error) {
+      console.warn('Failed to set Vditor theme:', error)
+    }
+  }
 })
 
 function emitHtml() {
@@ -108,6 +120,11 @@ function getHTML() {
 }
 
 onBeforeUnmount(() => {
+  isVditorReady = false
+  if (vd) {
+    vd.destroy?.()
+    vd = null
+  }
   window.removeEventListener('keydown', onKey)
 })
 
