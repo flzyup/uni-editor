@@ -6,6 +6,8 @@
         <div class="logo-text">Uni Editor</div>
       </a>
       <div class="toolbar">
+        <div class="toolbar-hint">{{ $t('header.hint') }}</div>
+        <div class="spacer" />
         <a
           href="https://github.com/flzyup/uni-editor"
           target="_blank"
@@ -32,7 +34,7 @@
         <FeaturesHint />
         <TodoHint />
         <LanguageSwitch />
-        <label class="muted" style="font-size:12px">{{ $t('header.theme') }}</label>
+        <label class="muted small-text">{{ $t('header.theme') }}</label>
         <select class="select" v-model="appTheme" @change="persistTheme">
           <option value="light">{{ $t('header.themeLight') }}</option>
           <option value="dark">{{ $t('header.themeDark') }}</option>
@@ -80,7 +82,7 @@
             </div>
 
             <!-- 主题切换 -->
-            <label class="muted" style="font-size:12px">{{ $t('main.theme') }}</label>
+            <label class="muted small-text">{{ $t('main.theme') }}</label>
             <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
               <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
             </select>
@@ -248,6 +250,10 @@ onMounted(() => {
   opacity: 0.8;
 }
 
+.toolbar-hint {
+  color: var(--accent);
+}
+
 /* GitHub链接样式 */
 .github-link {
   display: flex;
@@ -319,5 +325,10 @@ onMounted(() => {
 .footer-link:hover {
   opacity: 0.8;
   text-decoration: underline;
+}
+
+/* 通用字体大小样式 */
+.small-text {
+  font-size: 12px;
 }
 </style>

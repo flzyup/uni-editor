@@ -1,30 +1,62 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    <!-- 浅色模式渐变 -->
+    <linearGradient id="bgGradientLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="uGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+
+    <!-- 深色模式渐变 - 更亮的背景 -->
+    <linearGradient id="bgGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
+
+    <!-- 浅色模式U字母渐变（深色） -->
+    <linearGradient id="uGradientLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 深色模式U字母渐变（更亮的颜色） -->
+    <linearGradient id="uGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#cbd5e1;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 发光效果滤镜 -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
   <!-- 背景 -->
-  <rect width="180" height="180" rx="40" ry="40" fill="url(#bgGradient)" />
+  <rect width="180" height="180" rx="40" ry="40" fill="url(#bgGradientDark)" stroke="#475569" stroke-width="3"/>
 
-  <!-- 主要的U字母 - 更现代的设计 -->
+  <!-- 主要的U字母 -->
   <path d="M39 56v45c0 28 22 50 50 50s50-22 50-45v-50"
-        stroke="url(#uGradient)"
-        stroke-width="17"
+        stroke="url(#uGradientDark)"
+        stroke-width="19"
+        filter="url(#glow)"
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"/>
 
-  <!-- 科技感装饰 - 简洁的几何元素 -->
-  <rect x="28" y="45" width="11" height="11" fill="#6366f1" opacity="0.6" rx="2.5"/>
-  <rect x="141" y="45" width="11" height="11" fill="#8b5cf6" opacity="0.6" rx="2.5"/>
-
   <!-- 底部装饰线 -->
-  <rect x="67" y="157" width="46" height="5" fill="url(#uGradient)" opacity="0.4" rx="2.5"/>
+  <rect x="67" y="157" width="46" height="7" fill="url(#uGradientDark)" opacity="0.8" rx="3.5"/>
+
+  <!-- 主题适应 -->
+  <style>
+    <![CDATA[
+    @media (prefers-color-scheme: light) {
+      rect:first-of-type { fill: url(#bgGradientLight) !important; stroke: #cbd5e1 !important; }
+      path { stroke: url(#uGradientLight) !important; }
+      rect:last-of-type { fill: url(#uGradientLight) !important; }
+    }
+    ]]>
+  </style>
 </svg>

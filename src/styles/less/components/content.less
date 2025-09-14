@@ -3,21 +3,28 @@
   font-family: @font-family-base;
   background: var(--card-bg);
   color: var(--card-text);
-  line-height: 1.8;
-  font-size: 16px;
+  line-height: @line-height-lg;
+  font-size: @font-size-base;
   word-break: break-word;
   overflow-wrap: anywhere;
 
   h1, h2, h3, h4, h5, h6 {
     font-family: @font-family-base;
-    font-weight: 700;
+    font-weight: @font-weight-bold;
     color: var(--card-accent);
     margin: 0.3em 0 0.3em 0;
   }
 
-  h1 { font-size: 1.5em; }
-  h2 { font-size: 1.25em; }
-  h3 { font-size: 1.1em; }
+  h1 { font-size: @font-size-h1; }
+  h2 { font-size: @font-size-h2; }
+  h3 { font-size: @font-size-h3; }
+  h4 { font-size: @font-size-h4; }
+  h5 { font-size: @font-size-h5; }
+  h6 { font-size: @font-size-h6; }
+
+  strong {
+    color: color-mix(in srgb, var(--card-accent) 85%, transparent);
+  }
 
   p {
     margin: 0.1em 0;

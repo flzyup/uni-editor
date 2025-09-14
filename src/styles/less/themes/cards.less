@@ -59,19 +59,19 @@
   
   .cover {
     &-title {
-      font-size: 22px;
+      font-size: @font-size-2xl;
       font-weight: 800;
       line-height: 1.35;
     }
     
     &-sub {
       color: var(--card-muted);
-      font-size: 12px;
+      font-size: @font-size-sm;
     }
     
     &-meta {
       margin-top: auto;
-      font-size: 12px;
+      font-size: @font-size-sm;
       color: var(--card-muted);
       .flex-start();
       gap: 12px;
@@ -83,14 +83,14 @@
     color: var(--card-text);
     padding: 4px 8px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: @font-size-xs;
     border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent);
   }
 }
 
 // 卡片内容样式
 .card-content {
-  font-size: 14px;
+  font-size: @font-size-md;
   line-height: 1.6;
   .flex-column();
   gap: 8px;
