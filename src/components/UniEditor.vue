@@ -52,19 +52,23 @@ function saveContent(content) {
 const initial = loadCachedContent()
 
 onMounted(async () => {
+  const self = this;
   vd = new Vditor(elRef.value, {
     value: initial,
     cache: { enable: false },
     height: '100%',
     theme: 'dark',
-    mode: 'wysiwyg',
+    mode: 'ir',
     toolbarConfig: { pin: true },
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
-      'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
-      'quote', 'line', 'code', 'inline-code', 'table', '|',
-      'link', 'upload', 'emoji', '|',
-      'undo', 'redo', 'fullscreen'
+      'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
+      'quote', 'line', 'code', 'inline-code', '|',
+      'table', 'insert-before', 'insert-after','|',
+      'line', 'link', 'upload', 'emoji', '|',
+      'undo', 'redo', 'fullscreen', '|',
+      'edit-mode', 'both','preview', '|',
+      'code-theme','content-theme','export','devtools', '|'
     ],
     counter: { enable: true },
     upload: { accept: 'image/*' },
@@ -77,7 +81,7 @@ onMounted(async () => {
 watch(() => props.markdownMode, async (v) => {
   if (!vd) return
   await nextTick()
-  vd.setEditMode(v ? 'sv' : 'wysiwyg')
+  vd.setEditMode(v ? 'sv' : 'ir')
   emitHtml()
 })
 
