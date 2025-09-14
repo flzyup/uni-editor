@@ -121,7 +121,7 @@ function onHtml(val) {
 async function copyForWeChat() {
   const htmlRaw = await uniEditorRef.value?.getHTML?.()
   if (!htmlRaw) { alert('编辑器内容为空'); return }
-  const ok = await copyToWechat(htmlRaw, previewTheme.value)
+  const ok = await copyToWechat(previewTheme.value, appTheme.value)
   alert(ok ? `已复制为公众号格式（${previewTheme.value} 主题）。` : '复制失败：已尝试回退纯文本。')
 }
 
