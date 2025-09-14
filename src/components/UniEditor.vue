@@ -6,13 +6,18 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, defineExpose } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
+import zhMessages from '../locales/zh.js'
+import enMessages from '../locales/en.js'
 
 const props = defineProps({
   pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
 })
 const emit = defineEmits(['update:html'])
+
+const { locale } = useI18n()
 
 const elRef = ref(null)
 let vd = null
@@ -22,24 +27,24 @@ const CACHE_KEY = 'uni-editor-content'
 
 function loadCachedContent() {
   try {
-    return localStorage.getItem(CACHE_KEY) || `# 欢迎使用 Uni Editor
-
-- 所见即所得 + Markdown 源码
-- 主题切换（编辑器与卡片）
-- 一键复制为公众号格式
-- 预览长文卡片并导出高清图片
-
-![示例图](https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=60)`
+    return localStorage.getItem(CACHE_KEY) || getDefaultContent()
   } catch (e) {
-    return `# 欢迎使用 Uni Editor
-
-- 所见即所得 + Markdown 源码
-- 主题切换（编辑器与卡片）
-- 一键复制为公众号格式
-- 预览长文卡片并导出高清图片
-
-![示例图](https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=1200&q=60)`
+    return getDefaultContent()
   }
+}
+
+function getDefaultContent() {
+  // 根据当前语言返回默认内容
+  const currentLocale = locale.value
+
+  // 获取对应语言的默认模板
+  const messages = {
+    'zh': zhMessages,
+    'en': enMessages
+  }
+
+  const message = messages[currentLocale] || messages['en']
+  return message.defaultTemplate
 }
 
 function saveContent(content) {
@@ -56,19 +61,28 @@ function getEditorTheme(v) {
   return v === 'theme-dark' ? 'dark' : 'classic'
 }
 
+function getVditorLang(locale) {
+  const langMap = {
+    'zh': 'zh_CN',
+    'en': 'en_US'
+  }
+  return langMap[locale] || 'en_US'
+}
+
 onMounted(async () => {
   vd = new Vditor(elRef.value, {
     value: initial,
     cache: { enable: false },
     height: '100%',
     mode: 'ir',
+    lang: getVditorLang(locale.value),
     toolbarConfig: { pin: true },
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
       'quote', 'line', 'code', 'inline-code', '|',
       'table', 'insert-before', 'insert-after','|',
-      'line', 'link', 'emoji', '|', //'upload', 
+      'line', 'link', 'emoji', '|', //'upload',
       'undo', 'redo', '|',
       'edit-mode', 'both',
       'code-theme','content-theme',  '|',
@@ -94,6 +108,52 @@ watch(() => props.pageTheme, async (v) => {
     } catch (error) {
       console.warn('Failed to set Vditor theme:', error)
     }
+  }
+})
+
+// 监听语言变化，重新初始化Vditor（因为Vditor没有动态切换语言的API）
+watch(locale, async (newLocale) => {
+  if (vd && isVditorReady) {
+    // 保存当前内容
+    const currentContent = vd.getValue()
+
+    // 销毁当前实例
+    try {
+      vd.destroy()
+    } catch (error) {
+      console.warn('Failed to destroy Vditor:', error)
+    }
+
+    // 重新初始化
+    await nextTick()
+    vd = new Vditor(elRef.value, {
+      value: currentContent,
+      cache: { enable: false },
+      height: '100%',
+      mode: 'ir',
+      lang: getVditorLang(newLocale),
+      toolbarConfig: { pin: true },
+      toolbar: [
+        'headings', 'bold', 'italic', 'strike', '|',
+        'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
+        'quote', 'line', 'code', 'inline-code', '|',
+        'table', 'insert-before', 'insert-after','|',
+        'line', 'link', 'emoji', '|', //'upload',
+        'undo', 'redo', '|',
+        'edit-mode', 'both',
+        'code-theme','content-theme',  '|',
+        'export'
+        // 'devtools', '|'
+      ],
+      counter: { enable: true },
+      upload: { accept: 'image/*' },
+      input: () => emitHtml(),
+      after: () => {
+        isVditorReady = true
+        vd.setTheme(getEditorTheme(props.pageTheme))
+        emitHtml()
+      },
+    })
   }
 })
 

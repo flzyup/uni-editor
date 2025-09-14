@@ -10,19 +10,32 @@
           href="https://github.com/flzyup/uni-editor"
           target="_blank"
           class="github-link"
-          title="查看源码"
+          :title="$t('header.github')"
         >
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
           </svg>
-          <span>GitHub</span>
+          <span>{{ $t('header.github') }}</span>
+        </a>
+        <a
+          href="https://github.com/flzyup/uni-editor/issues"
+          target="_blank"
+          class="feedback-link"
+          :title="$t('header.feedback')"
+        >
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM2.04 4.326c.325 1.329 2.532 2.54 3.717 3.19.48.263.793.434.743.484-.08.08-.162.158-.242.234-.416.396-.787.749-.758 1.266.035.634.618.824 1.214 1.017.577.188 1.168.38 1.286.983.082.418-.07.749-.361 1.04-.28.281-.66.464-1.074.722C6.7 14.528 4.295 14.986 4.28 15.99H2.725c-.088-2.48 2.154-2.48 2.154-2.48-.832-.832-2.725-2.479-2.725-4.543 0-1.708.84-3.327 2.04-4.326zm11.952 0c-1.2.999-2.04 2.618-2.04 4.326 0 2.064 1.893 3.711 2.725 4.543 0 0-2.242 0-2.154 2.48h1.555c.015-1.004-2.39-1.462-2.249-2.735.114-.603.709-.795 1.286-.983.596-.193 1.179-.383 1.214-1.017.029-.517-.342-.87-.758-1.266-.08-.076-.162-.154-.242-.234-.05-.05.263-.221.743-.484 1.185-.65 3.392-1.861 3.717-3.19z"/>
+          </svg>
+          <span>{{ $t('header.feedback') }}</span>
         </a>
         <FeaturesHint />
         <TodoHint />
-        <label class="muted" style="font-size:12px">页面主题</label>
+        <LanguageSwitch />
+        <label class="muted" style="font-size:12px">{{ $t('header.theme') }}</label>
         <select class="select" v-model="appTheme" @change="persistTheme">
-          <option value="light">浅色</option>
-          <option value="dark">深色</option>
+          <option value="light">{{ $t('header.themeLight') }}</option>
+          <option value="dark">{{ $t('header.themeDark') }}</option>
         </select>
       </div>
     </header>
@@ -30,10 +43,10 @@
     <main class="main">
       <section class="panel editor-scope">
         <div class="panel-header">
-          <div class="panel-title">编辑器</div>
+          <div class="panel-title">{{ $t('main.editor') }}</div>
           <div class="spacer" />
           <div class="toolbar">
-           
+
           </div>
         </div>
         <UniEditor
@@ -45,7 +58,7 @@
 
       <section class="panel">
         <div class="panel-header">
-          <div class="panel-title">内容预览</div>
+          <div class="panel-title">{{ $t('main.preview') }}</div>
           <div class="spacer" />
           <div class="toolbar">
             <!-- 模式切换 -->
@@ -55,26 +68,26 @@
                 :class="{ active: previewMode === 'article' }"
                 @click="previewMode = 'article'"
               >
-                长文模式
+                {{ $t('main.articleMode') }}
               </button>
               <button
                 class="mode-tab"
                 :class="{ active: previewMode === 'cards' }"
                 @click="previewMode = 'cards'"
               >
-                卡片模式
+                {{ $t('main.cardMode') }}
               </button>
             </div>
 
             <!-- 主题切换 -->
-            <label class="muted" style="font-size:12px">主题</label>
+            <label class="muted" style="font-size:12px">{{ $t('main.theme') }}</label>
             <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
-              <option v-for="t in previewThemes" :key="t" :value="t">{{ t }}</option>
+              <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
             </select>
 
             <!-- 操作按钮 -->
-            <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">全部复制</button>
-            <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">保存卡片</button>
+            <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
+            <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">{{ $t('main.saveCards') }}</button>
           </div>
         </div>
 
@@ -110,10 +123,14 @@ import CardsPreview from './components/CardsPreview.vue'
 import ArticlePreview from './components/ArticlePreview.vue'
 import TodoHint from './components/TodoHint.vue'
 import FeaturesHint from './components/FeaturesHint.vue'
+import LanguageSwitch from './components/LanguageSwitch.vue'
 import { copyToWechat } from './utils/copy.js'
+import { useI18n } from 'vue-i18n'
 
 // 引入Less样式
 import './styles/index.less'
+
+const { t: $t } = useI18n()
 
 const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
@@ -129,15 +146,17 @@ const previewTheme = ref('classic')
 const appTheme = ref('light')
 const appThemeClass = computed(() => appTheme.value === 'dark' ? 'theme-dark' : 'theme-light')
 
+
 function onHtml(val) {
   html.value = val
 }
 
 async function copyForWeChat() {
   const htmlRaw = await uniEditorRef.value?.getHTML?.()
-  if (!htmlRaw) { alert('编辑器内容为空'); return }
+  if (!htmlRaw) { alert($t('messages.emptyContent')); return }
   const ok = await copyToWechat(previewTheme.value, appTheme.value)
-  alert(ok ? `已复制为公众号格式（${previewTheme.value} 主题）。` : '复制失败：已尝试回退纯文本。')
+  const themeName = $t(`themes.${previewTheme.value}`)
+  alert(ok ? $t('messages.copySuccess', { theme: themeName }) : $t('messages.copyFailed'))
 }
 
 
@@ -145,6 +164,7 @@ async function copyForWeChat() {
 async function saveCards() {
   await cardsPreviewRef.value?.exportAll?.()
 }
+
 
 function persistTheme(){
   try { localStorage.setItem('uni.appTheme', appTheme.value) } catch {}
@@ -254,9 +274,37 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+/* 反馈链接样式 */
+.feedback-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-right: 12px;
+}
+
+.feedback-link:hover {
+  background: color-mix(in srgb, #f39c12 15%, transparent);
+  border-color: #f39c12;
+  color: #f39c12;
+  transform: translateY(-1px);
+}
+
+.feedback-link svg {
+  flex-shrink: 0;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
-  .github-link span {
+  .github-link span,
+  .feedback-link span {
     display: none;
   }
 }

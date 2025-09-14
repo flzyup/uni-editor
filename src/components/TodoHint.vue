@@ -2,7 +2,7 @@
   <div v-if="todos.length > 0" class="todo-toolbar">
     <button class="todo-btn" @click="showDropdown = !showDropdown">
       <span class="todo-icon">📋</span>
-      <span class="todo-title">待完善功能</span>
+      <span class="todo-title">{{ $t('header.todo') }}</span>
       <span class="todo-arrow" :class="{ rotated: showDropdown }">▼</span>
     </button>
 

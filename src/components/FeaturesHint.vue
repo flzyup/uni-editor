@@ -2,7 +2,7 @@
   <div v-if="features.length > 0" class="features-toolbar">
     <button class="features-btn" @click="showDropdown = !showDropdown">
       <span class="features-icon">✅</span>
-      <span class="features-title">已支持功能</span>
+      <span class="features-title">{{ $t('header.features') }}</span>
       <span class="features-arrow" :class="{ rotated: showDropdown }">▼</span>
     </button>
 
