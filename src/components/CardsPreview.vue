@@ -70,7 +70,7 @@ import * as htmlToImage from 'html-to-image'
 const props = defineProps({
   html: { type: String, default: '' },
   cardTheme: { type: String, default: 'card-theme-slate' },
-  pageTheme: { type: String, default: 'dark' }, // 'light' | 'dark'
+  pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
 })
 
 // pageTheme 通过 CSS 继承从父组件获取，无需再次应用类名

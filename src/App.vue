@@ -20,12 +20,12 @@
           <div class="panel-title">编辑器</div>
           <div class="spacer" />
           <div class="toolbar">
-            <button class="btn" @click="toggleMode">{{ isMarkdown ? '切换到所见即所得' : '切换到Markdown源码' }}</button>
+           
           </div>
         </div>
         <UniEditor
           ref="uniEditorRef"
-          :markdown-mode="isMarkdown"
+          :page-theme="appThemeClass"
           @update:html="onHtml"
         />
       </section>
@@ -104,7 +104,6 @@ const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
 
 const html = ref('')
-const isMarkdown = ref(false)
 
 // 预览模式和主题
 const previewMode = ref('article') // 'article' | 'cards'
@@ -117,10 +116,6 @@ const appThemeClass = computed(() => appTheme.value === 'dark' ? 'theme-dark' : 
 
 function onHtml(val) {
   html.value = val
-}
-
-function toggleMode() {
-  isMarkdown.value = !isMarkdown.value
 }
 
 async function copyForWeChat() {

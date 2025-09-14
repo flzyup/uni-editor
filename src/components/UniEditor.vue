@@ -10,7 +10,7 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 
 const props = defineProps({
-  markdownMode: { type: Boolean, default: false },
+  pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
 })
 const emit = defineEmits(['update:html'])
 
@@ -51,13 +51,16 @@ function saveContent(content) {
 
 const initial = loadCachedContent()
 
+function getEditorTheme(v) {
+  return v === 'theme-dark' ? 'dark' : 'classic'
+}
+
 onMounted(async () => {
-  const self = this;
   vd = new Vditor(elRef.value, {
     value: initial,
     cache: { enable: false },
     height: '100%',
-    theme: 'dark',
+    theme: getEditorTheme(props.pageTheme),
     mode: 'ir',
     toolbarConfig: { pin: true },
     toolbar: [
@@ -78,11 +81,8 @@ onMounted(async () => {
   window.addEventListener('keydown', onKey)
 })
 
-watch(() => props.markdownMode, async (v) => {
-  if (!vd) return
-  await nextTick()
-  vd.setEditMode(v ? 'sv' : 'ir')
-  emitHtml()
+watch(() => props.pageTheme, async (v) => {
+  vd?.setTheme(getEditorTheme(v))
 })
 
 function emitHtml() {
@@ -127,7 +127,7 @@ defineExpose({ getHTML })
 <style scoped>
 .editor-wrap { height: 100%; min-height: 0; display: flex; }
 .vditor-host { border-top: 1px solid var(--border); flex: 1; min-height: 0; }
-:deep(.vditor) { background: var(--ed-bg); color: var(--ed-text); border: none; }
+:deep(.vditor) { background: var(--panel); color: var(--text); border: none; }
 :deep(.vditor .vditor-toolbar) {
   background: var(--panel);
   border-bottom: 1px solid var(--border);

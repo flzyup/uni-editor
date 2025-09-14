@@ -8,7 +8,7 @@
 const props = defineProps({
   html: { type: String, default: '' },
   theme: { type: String, default: 'classic' },
-  pageTheme: { type: String, default: 'dark' }, // 'light' | 'dark' - 保留用于未来可能的需求
+  pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
 })
 </script>
 
