@@ -1,0 +1,36 @@
+{
+  "name": "Uni Editor - 专业自媒体编辑器",
+  "short_name": "Uni Editor",
+  "description": "专业自媒体编辑器，支持微信公众号、小红书、B站、抖音等平台。长文模式一键复制到公众号，卡片模式自动分页高清导出PNG。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "180x180"
+    }
+  ],
+  "categories": ["productivity", "utilities", "business"],
+  "lang": "zh-CN"
+}

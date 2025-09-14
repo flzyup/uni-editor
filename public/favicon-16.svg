@@ -1,0 +1,26 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="uGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="16" height="16" rx="4" ry="4" fill="url(#bgGradient)" />
+
+  <!-- 主要的U字母 - 简化版本 -->
+  <path d="M3.5 5v4c0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4v-4.5"
+        stroke="url(#uGradient)"
+        stroke-width="1.5"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- 简化装饰 -->
+  <rect x="6" y="14" width="4" height="0.5" fill="url(#uGradient)" opacity="0.4" rx="0.25"/>
+</svg>

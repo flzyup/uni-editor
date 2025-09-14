@@ -1,0 +1,30 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="uGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="180" height="180" rx="40" ry="40" fill="url(#bgGradient)" />
+
+  <!-- 主要的U字母 - 更现代的设计 -->
+  <path d="M39 56v45c0 28 22 50 50 50s50-22 50-45v-50"
+        stroke="url(#uGradient)"
+        stroke-width="17"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- 科技感装饰 - 简洁的几何元素 -->
+  <rect x="28" y="45" width="11" height="11" fill="#6366f1" opacity="0.6" rx="2.5"/>
+  <rect x="141" y="45" width="11" height="11" fill="#8b5cf6" opacity="0.6" rx="2.5"/>
+
+  <!-- 底部装饰线 -->
+  <rect x="67" y="157" width="46" height="5" fill="url(#uGradient)" opacity="0.4" rx="2.5"/>
+</svg>

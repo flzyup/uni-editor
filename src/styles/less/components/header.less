@@ -20,8 +20,23 @@
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: conic-gradient(from 0deg, #6ee7b7, #60a5fa, #a78bfa, #f472b6, #6ee7b7);
-    filter: saturate(1.1);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      background: url("data:image/svg+xml,<svg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'><defs><linearGradient id='uGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%236366f1'/><stop offset='100%25' style='stop-color:%238b5cf6'/></linearGradient></defs><path d='M3 4v5c0 2.5 2.2 4.5 5 4.5s5-2 5-4.5V4' stroke='url(%23uGrad)' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat center center;
+      background-size: 16px 16px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
   }
   
   &-text {
