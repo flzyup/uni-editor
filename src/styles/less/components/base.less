@@ -54,15 +54,16 @@ body {
 // 主内容区域
 .main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: @panel-gap;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
   padding: @panel-padding;
   min-height: 0;
   height: calc(100vh - @header-height - @footer-height - 8px);
   overflow: hidden;
-  
+
   @media (max-width: @tablet-max) {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto 1fr;
   }
 }
 

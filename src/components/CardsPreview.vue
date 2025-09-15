@@ -1,16 +1,218 @@
 <template>
   <div class="card-container">
-    <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
-      <div v-for="(c, idx) in cards" :key="idx" class="card card-theme" :class="[pageTheme, cardTheme, { active: idx === currentCardIndex }]" @click="scrollToCard(idx)">
-        <div v-if="c.type==='cover'" class="inner cover">
-          <div class="cover-background">
-            <template v-if="cover.coverImage">
-              <img :src="cover.coverImage" alt="封面图片" />
-            </template>
-            <template v-else-if="coverBgHtml">
+    <!-- 左侧子Tab导航 -->
+    <div class="sub-tabs">
+      <button class="sub-tab" :class="{ active: currentTab === 'cover' }" @click="setCurrentTab('cover')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21,15 16,10 5,21"/>
+        </svg>
+        {{ t('cardsPreview.cover') }}
+      </button>
+      <button class="sub-tab" :class="{ active: currentTab === 'cards' }" @click="setCurrentTab('cards')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="9" rx="1"/>
+          <rect x="14" y="3" width="7" height="5" rx="1"/>
+          <rect x="14" y="12" width="7" height="9" rx="1"/>
+          <rect x="3" y="16" width="7" height="5" rx="1"/>
+        </svg>
+        {{ t('cardsPreview.cards') }}
+      </button>
+    </div>
+
+    <!-- 封面设计页面 -->
+    <div v-if="currentTab === 'cover'" class="cover-design-page">
+      <!-- 封面预览和布局选择区域 -->
+      <div class="cover-left-section">
+        <div class="cover-preview-section">
+          <div class="preview-container">
+            <div class="card card-theme cover-preview" :class="[pageTheme, cardTheme, `cover-layout-${currentCoverLayout}`]">
+              <div class="inner cover">
+                <div class="cover-background">
+                  <template v-if="cover.coverImage">
+                    <img :src="cover.coverImage" alt="封面图片" :style="coverImageStyle" />
+                  </template>
+                  <template v-else-if="coverBgHtml">
+                    <div
+                      class="bg-html"
+                      v-html="coverBgHtml"
+                      :style="{
+                        transform: `scale(${props.scale})`,
+                        transformOrigin: 'top left',
+                        width: `${100 / props.scale}%`,
+                        height: `${100 / props.scale}%`,
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        boxSizing: 'border-box',
+                        padding: '0 16px'
+                      }"
+                    ></div>
+                  </template>
+                  <div class="cover-overlay"></div>
+                </div>
+                <div class="cover-content">
+                  <div class="title-overlay">
+                    <div class="title">{{ cover.title }}</div>
+                    <div
+                      v-if="currentCoverLayout !== 'minimal'"
+                      class="summary"
+                    >{{ truncatedSummary }}</div>
+                  </div>
+                </div>
+                <div class="meta">
+                  <span>全文 {{ cover.wordCount }} 字</span>
+                  <span>阅读需 {{ cover.minutes }} 分钟</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="layout-selection-section">
+          <h3>{{ t('cardsPreview.layoutSelection') }}</h3>
+          <div class="layout-grid">
+            <div
+              v-for="layout in coverLayouts"
+              :key="layout.id"
+              class="layout-card"
+              :class="{ active: currentCoverLayout === layout.id }"
+              @click="changeCoverLayout(layout.id)"
+            >
+              <div class="layout-preview" v-html="layout.icon"></div>
+              <div class="layout-info">
+                <div class="layout-name">{{ layout.name }}</div>
+                <div class="layout-desc">{{ layout.description }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 内容编辑面板 -->
+  <div class="cover-edit-panel">
+    <div class="edit-section">
+      <h3>{{ t('cardsPreview.contentEdit') }}</h3>
+      <div class="content-edit-form">
+        <div class="form-group">
+          <label>{{ t('cardsPreview.title') }}</label>
+          <input v-model="cover.title" type="text" class="form-input" :placeholder="t('cardsPreview.titlePlaceholder')">
+        </div>
+        <div class="form-group">
+          <label>{{ t('cardsPreview.summary') }}</label>
+          <textarea v-model="cover.summary" class="form-textarea" rows="6" :placeholder="t('cardsPreview.summaryPlaceholder')"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="edit-section">
+      <h3>{{ t('cardsPreview.backgroundImage') }}</h3>
+      <div class="image-upload-area">
+        <input type="file" ref="imageInput" @change="handleImageUpload" accept="image/*" style="display: none;">
+        <div class="upload-zone" @click="$refs.imageInput?.click()">
+          <div v-if="cover.coverImage" class="current-image">
+            <img :src="cover.coverImage" alt="当前图片">
+            <div class="image-overlay">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21,15 16,10 5,21"/>
+              </svg>
+              <span>{{ t('cardsPreview.clickToReplace') }}</span>
+            </div>
+          </div>
+          <div v-else class="upload-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21,15 16,10 5,21"/>
+            </svg>
+            <span>{{ t('cardsPreview.clickToUpload') }}</span>
+            <small>{{ t('cardsPreview.imageFormats') }}</small>
+          </div>
+        </div>
+        <!-- 常用图片填充选项 -->
+        <div class="content-edit-form" style="margin-top: 12px;">
+          <div class="form-group">
+            <label>{{ t('cardsPreview.fillMode') }}</label>
+            <select class="select" v-model="cover.imageFit" @change="persistCoverData">
+              <option value="cover">{{ t('cardsPreview.fillCover') }}</option>
+              <option value="contain">{{ t('cardsPreview.fillContain') }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>{{ t('cardsPreview.alignPosition') }}</label>
+            <select class="select" v-model="cover.imagePosition" @change="persistCoverData">
+              <option value="center center">{{ t('cardsPreview.alignCenter') }}</option>
+              <option value="top center">{{ t('cardsPreview.alignTop') }}</option>
+              <option value="bottom center">{{ t('cardsPreview.alignBottom') }}</option>
+              <option value="left center">{{ t('cardsPreview.alignLeft') }}</option>
+              <option value="right center">{{ t('cardsPreview.alignRight') }}</option>
+              <option value="top left">{{ t('cardsPreview.alignTopLeft') }}</option>
+              <option value="top right">{{ t('cardsPreview.alignTopRight') }}</option>
+              <option value="bottom left">{{ t('cardsPreview.alignBottomLeft') }}</option>
+              <option value="bottom right">{{ t('cardsPreview.alignBottomRight') }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+
+    <!-- 卡片列表页面 -->
+    <div v-else class="cards-page">
+      <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
+        <div
+          v-for="(c, idx) in cards"
+          :key="idx"
+          class="card card-theme"
+          :class="[pageTheme, cardTheme, { active: idx === currentCardIndex }]"
+          @click="scrollToCard(idx)"
+        >
+          <template v-if="c.type === 'cover'">
+            <div class="inner cover" :class="`cover-layout-${currentCoverLayout}`">
+              <div class="cover-background">
+                <template v-if="cover.coverImage">
+                  <img :src="cover.coverImage" alt="封面图片" :style="coverImageStyle" />
+                </template>
+                <template v-else-if="coverBgHtml">
+                  <div
+                    class="bg-html"
+                    v-html="coverBgHtml"
+                    :style="{
+                      transform: `scale(${props.scale})`,
+                      transformOrigin: 'top left',
+                      width: `${100 / props.scale}%`,
+                      height: `${100 / props.scale}%`,
+                      position: 'absolute',
+                      top: '0',
+                      left: '0',
+                      boxSizing: 'border-box',
+                      padding: '0 16px'
+                    }"
+                  ></div>
+                </template>
+                <div class="cover-overlay"></div>
+              </div>
+              <div class="cover-content">
+                <div class="title-overlay">
+                  <div class="title">{{ cover.title }}</div>
+                  <div v-if="currentCoverLayout !== 'minimal'" class="summary">{{ truncatedSummary }}</div>
+                </div>
+              </div>
+              <div class="meta">
+                <span>全文 {{ cover.wordCount }} 字</span>
+                <span>阅读需 {{ cover.minutes }} 分钟</span>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="inner" style="position: relative;">
               <div
-                class="bg-html"
-                v-html="coverBgHtml"
+                class="content-html content-rich scaled-content"
+                v-html="c.html"
                 :style="{
                   transform: `scale(${props.scale})`,
                   transformOrigin: 'top left',
@@ -23,77 +225,52 @@
                   padding: '0 16px'
                 }"
               ></div>
-            </template>
-            <div class="cover-overlay"></div>
-          </div>
-          <div class="cover-content">
-            <div class="title-overlay">
-              <div class="title">{{ cover.title }}</div>
-              <div class="summary">{{ cover.summary }}</div>
             </div>
-          </div>
-          <div class="meta">
-            <span>全文 {{ cover.wordCount }} 字</span>
-            <span>阅读需 {{ cover.minutes }} 分钟</span>
-          </div>
-        </div>
-        <div v-else class="inner" style="position: relative;">
-          <div
-            class="content-html content-rich scaled-content"
-            v-html="c.html"
-            :style="{
-              transform: `scale(${props.scale})`,
-              transformOrigin: 'top left',
-              width: `${100 / props.scale}%`,
-              height: `${100 / props.scale}%`,
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              boxSizing: 'border-box',
-              padding: '0 16px'
-            }"
-          ></div>
+          </template>
         </div>
       </div>
-    </div>
-    
-    <!-- 卡片导航 -->
-    <div v-if="cards.length > 1" class="card-navigation">
-      <div class="nav-dots">
-        <button 
-          v-for="(card, idx) in cards" 
-          :key="idx"
-          class="nav-dot" 
-          :class="{ active: idx === currentCardIndex }"
-          @click="scrollToCard(idx)"
-        >
-          {{ idx + 1 }}
-        </button>
-      </div>
-      <div class="nav-controls">
-        <button 
-          class="nav-btn" 
-          :disabled="currentCardIndex === 0"
-          @click="scrollToCard(currentCardIndex - 1)"
-        >
-          ◀
-        </button>
-        <span class="nav-info">{{ currentCardIndex + 1 }} / {{ cards.length }}</span>
-        <button 
-          class="nav-btn" 
-          :disabled="currentCardIndex === cards.length - 1"
-          @click="scrollToCard(currentCardIndex + 1)"
-        >
-          ▶
-        </button>
+
+      <!-- 卡片导航（仅在卡片页面显示） -->
+      <div v-if="cards.length > 0" class="card-navigation">
+        <div class="nav-dots">
+          <button
+            v-for="(card, idx) in cards"
+            :key="idx"
+            class="nav-dot"
+            :class="{ active: idx === currentCardIndex }"
+            @click="scrollToCard(idx)"
+          >
+            {{ idx + 1 }}
+          </button>
+        </div>
+        <div class="nav-controls">
+          <button
+            class="nav-btn"
+            :disabled="currentCardIndex === 0"
+            @click="scrollToCard(currentCardIndex - 1)"
+          >
+            ◀
+          </button>
+          <span class="nav-info">{{ currentCardIndex + 1 }} / {{ cards.length }}</span>
+          <button
+            class="nav-btn"
+            :disabled="currentCardIndex === cards.length - 1"
+            @click="scrollToCard(currentCardIndex + 1)"
+          >
+            ▶
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import * as htmlToImage from 'html-to-image'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   html: { type: String, default: '' },
@@ -112,8 +289,79 @@ const CARD_INDEX_KEY = 'uni.currentCardIndex'
 let scrollTimeout = null
 let isUserClick = false
 
-const cover = ref({ title: '标题', summary: '摘要', wordCount: 0, minutes: 1 })
+const cover = ref({
+  title: '',
+  summary: '',
+  wordCount: 0,
+  minutes: 1,
+  originalSummary: '',
+  imageFit: 'cover', // 'cover' | 'contain'
+  imagePosition: 'center center',
+})
 const coverBgHtml = ref('')
+const imageInput = ref(null)
+
+// 计算摘要截断
+const truncatedSummary = computed(() => {
+  const maxLength = 80
+  if (cover.value.summary && cover.value.summary.length > maxLength) {
+    return cover.value.summary.substring(0, maxLength) + '...'
+  }
+  return cover.value.summary
+})
+
+// 背景图片样式（填充/对齐）
+const coverImageStyle = computed(() => ({
+  objectFit: cover.value.imageFit || 'cover',
+  objectPosition: cover.value.imagePosition || 'center center',
+}))
+
+
+// 封面布局相关
+const COVER_LAYOUT_KEY = 'uni.coverLayout'
+const CURRENT_TAB_KEY = 'uni.currentTab'
+const currentCoverLayout = ref('center')
+const currentTab = ref('cover') // 'cover' | 'cards'
+
+// 6种封面布局配置
+const coverLayouts = computed(() => [
+  {
+    id: 'minimal',
+    name: t('coverLayouts.minimal'),
+    description: t('coverLayouts.minimalDesc'),
+    icon: '<div style="background: #4f46e5; border-radius: 2px; width: 20px; height: 8px; margin: 8px auto;"></div>'
+  },
+  {
+    id: 'center',
+    name: t('coverLayouts.center'),
+    description: t('coverLayouts.centerDesc'),
+    icon: '<div style="background: #4f46e5; border-radius: 2px; width: 20px; height: 8px; margin: 2px auto;"></div><div style="background: #9ca3af; border-radius: 1px; width: 16px; height: 6px; margin: 2px auto;"></div>'
+  },
+  {
+    id: 'image-top',
+    name: t('coverLayouts.imageTop'),
+    description: t('coverLayouts.imageTopDesc'),
+    icon: '<div style="background: #94a3b8; border-radius: 2px; width: 20px; height: 8px; margin: 0 auto 1px;"></div><div style="background: #4f46e5; border-radius: 1px; width: 16px; height: 4px; margin: 0 auto 1px;"></div><div style="background: #9ca3af; border-radius: 1px; width: 12px; height: 3px; margin: 0 auto;"></div>'
+  },
+  {
+    id: 'image-bottom',
+    name: t('coverLayouts.imageBottom'),
+    description: t('coverLayouts.imageBottomDesc'),
+    icon: '<div style="background: #4f46e5; border-radius: 1px; width: 16px; height: 4px; margin: 0 auto 1px;"></div><div style="background: #9ca3af; border-radius: 1px; width: 12px; height: 3px; margin: 0 auto 1px;"></div><div style="background: #94a3b8; border-radius: 2px; width: 20px; height: 8px; margin: 0 auto;"></div>'
+  },
+  {
+    id: 'magazine',
+    name: t('coverLayouts.magazine'),
+    description: t('coverLayouts.magazineDesc'),
+    icon: '<div style="background: #4f46e5; border-radius: 2px; width: 16px; height: 6px; margin: 2px auto 1px;"></div><div style="background: #9ca3af; border-radius: 1px; width: 10px; height: 4px; margin: 1px 0;"></div>'
+  },
+  {
+    id: 'three-section',
+    name: t('coverLayouts.threeSection'),
+    description: t('coverLayouts.threeSectionDesc'),
+    icon: '<div style="background: #4f46e5; border-radius: 1px; width: 16px; height: 3px; margin: 1px auto;"></div><div style="background: #94a3b8; border-radius: 2px; width: 20px; height: 8px; margin: 1px auto;"></div><div style="background: #9ca3af; border-radius: 1px; width: 12px; height: 3px; margin: 1px auto;"></div>'
+  }
+])
 
 watch(() => [props.html, props.cardTheme, props.scale], async () => {
   await nextTick()
@@ -121,6 +369,11 @@ watch(() => [props.html, props.cardTheme, props.scale], async () => {
 }, { immediate: false })
 
 onMounted(async () => {
+  // 恢复保存的封面布局和数据
+  restoreCoverLayout()
+  restoreCoverData()
+  restoreCurrentTab()
+
   // 如果挂载时已经有 HTML 内容，立即生成卡片
   if (props.html && props.html.trim()) {
     await generate()
@@ -130,7 +383,7 @@ onMounted(async () => {
 function extractCoverData(root) {
   // 标题：优先使用第一个 H1/H2/H3
   const h = root.querySelector('h1, h2, h3')
-  const title = h ? h.textContent.trim() : '无标题'
+  const title = h ? h.textContent.trim() : t('cardsPreview.title')
 
   // 摘要：从内容中排除第一个 H1，再取其余文本的前 80 个字符
   const clone = root.cloneNode(true)
@@ -152,7 +405,26 @@ function extractCoverData(root) {
   const firstImg = root.querySelector('img')
   const coverImage = firstImg ? firstImg.src : null
 
-  cover.value = { title, summary, wordCount, minutes, coverImage }
+  // 只有当当前封面数据为空时才更新，保持用户编辑的内容
+  if (!cover.value.title && !cover.value.summary) {
+    cover.value = {
+      title,
+      summary,
+      wordCount,
+      minutes,
+      coverImage,
+      originalSummary: summary, // 保存完整摘要
+      imageFit: cover.value.imageFit || 'cover',
+      imagePosition: cover.value.imagePosition || 'center center',
+    }
+  } else {
+    // 只更新字数、阅读时间和封面图
+    cover.value.wordCount = wordCount
+    cover.value.minutes = minutes
+    if (!cover.value.coverImage) {
+      cover.value.coverImage = coverImage
+    }
+  }
 }
 
 async function generate() {
@@ -237,7 +509,7 @@ async function generate() {
     console.log(`Block ${i}: ${block.type}`)
   })
 
-  const generated = [{ type: 'cover' }]
+  const generated = []
   let acc = []
   
   for (let i = 0; i < blocks.length; i++) {
@@ -604,10 +876,15 @@ function scrollToCard(index) {
     const totalWidth = cards.value.length * cardWidth + 16 + 32 // 总宽度包括左右padding
     const maxScrollLeft = Math.max(0, totalWidth - stripWidth)
     
-    stripRef.value.scrollTo({
-      left: Math.max(0, Math.min(scrollLeft, maxScrollLeft)),
-      behavior: 'smooth'
-    })
+    const finalLeft = Math.max(0, Math.min(scrollLeft, maxScrollLeft))
+    stripRef.value.scrollTo({ left: finalLeft, behavior: 'smooth' })
+    // 兜底：直接设置 scrollLeft，避免影响其他容器
+    setTimeout(() => {
+      const actual = stripRef.value?.scrollLeft ?? 0
+      if (Math.abs(actual - finalLeft) > 10 && stripRef.value) {
+        stripRef.value.scrollLeft = finalLeft
+      }
+    }, 180)
     
     // 等待滚动完成后重置标记
     setTimeout(() => {
@@ -775,18 +1052,11 @@ function restoreCardPosition(generatedCards) {
 
         stripRef.value.scrollLeft = finalScrollLeft
 
-        // 检查是否滚动成功，如果失败则使用scrollIntoView作为备选
+        // 检查是否滚动成功，如未成功则直接设置 scrollLeft 兜底
         setTimeout(() => {
           const actualScrollLeft = stripRef.value?.scrollLeft || 0
           if (stripRef.value && Math.abs(actualScrollLeft - finalScrollLeft) > 10) {
-            const targetCard = cardElements[savedIndex]
-            if (targetCard) {
-              targetCard.scrollIntoView({
-                behavior: 'auto',
-                block: 'nearest',
-                inline: 'center'
-              })
-            }
+            stripRef.value.scrollLeft = finalScrollLeft
           }
         }, 100)
       }, 300)
@@ -808,6 +1078,147 @@ onBeforeUnmount(() => {
     stripRef.value.removeEventListener('scroll', handleScroll)
   }
 })
+
+// 子页签切换时，动态注册/注销滚动监听，并进入卡片页时对齐位置
+watch(currentTab, async (tab) => {
+  await nextTick()
+  if (tab === 'cards') {
+    if (stripRef.value) {
+      stripRef.value.removeEventListener('scroll', handleScroll)
+      stripRef.value.addEventListener('scroll', handleScroll)
+    }
+    // 进入卡片页后滚动到当前索引
+    const idx = Math.min(currentCardIndex.value, Math.max(0, cards.value.length - 1))
+    scrollToCard(idx)
+  } else {
+    if (stripRef.value) {
+      stripRef.value.removeEventListener('scroll', handleScroll)
+    }
+  }
+})
+
+// 封面布局相关函数
+function changeCoverLayout(layoutId) {
+  currentCoverLayout.value = layoutId
+  persistCoverLayout()
+  persistCoverData()
+}
+
+function loadCoverLayout() {
+  try {
+    const saved = localStorage.getItem(COVER_LAYOUT_KEY)
+    return saved || 'center'
+  } catch {
+    return 'center'
+  }
+}
+
+function persistCoverLayout() {
+  try {
+    localStorage.setItem(COVER_LAYOUT_KEY, currentCoverLayout.value)
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
+
+function restoreCoverLayout() {
+  currentCoverLayout.value = loadCoverLayout()
+}
+
+// Tab切换相关函数
+function setCurrentTab(tab) {
+  currentTab.value = tab
+  persistCurrentTab()
+}
+
+function loadCurrentTab() {
+  try {
+    const saved = localStorage.getItem(CURRENT_TAB_KEY)
+    return saved || 'cover'
+  } catch {
+    return 'cover'
+  }
+}
+
+function persistCurrentTab() {
+  try {
+    localStorage.setItem(CURRENT_TAB_KEY, currentTab.value)
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
+
+function restoreCurrentTab() {
+  currentTab.value = loadCurrentTab()
+}
+
+// 图片上传函数
+function handleImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  // 检查文件类型
+  if (!file.type.startsWith('image/')) {
+    alert(t('messages.invalidImageFormat'))
+    return
+  }
+
+  // 检查文件大小（限制5MB）
+  if (file.size > 5 * 1024 * 1024) {
+    alert(t('messages.imageSizeExceeded'))
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    cover.value.coverImage = e.target?.result
+    persistCoverData()
+  }
+  reader.readAsDataURL(file)
+
+  // 清空输入框，允许重复上传同一文件
+  event.target.value = ''
+}
+
+function persistCoverData() {
+  try {
+    const coverData = {
+      title: cover.value.title,
+      summary: cover.value.summary,
+      originalSummary: cover.value.originalSummary,
+      coverImage: cover.value.coverImage,
+      layout: currentCoverLayout.value,
+      imageFit: cover.value.imageFit,
+      imagePosition: cover.value.imagePosition,
+    }
+    localStorage.setItem('uni.coverData', JSON.stringify(coverData))
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
+
+// 监听封面数据变化
+watch([() => cover.value.title, () => cover.value.summary], () => {
+  persistCoverData()
+}, { deep: true })
+
+function restoreCoverData() {
+  try {
+    const saved = localStorage.getItem('uni.coverData')
+    if (saved) {
+      const coverData = JSON.parse(saved)
+      if (coverData.title) cover.value.title = coverData.title
+      if (coverData.summary) cover.value.summary = coverData.summary
+      if (coverData.originalSummary) cover.value.originalSummary = coverData.originalSummary
+      if (coverData.coverImage) cover.value.coverImage = coverData.coverImage
+      if (coverData.layout) currentCoverLayout.value = coverData.layout
+      if (coverData.imageFit) cover.value.imageFit = coverData.imageFit
+      if (coverData.imagePosition) cover.value.imagePosition = coverData.imagePosition
+    }
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
 
 defineExpose({ exportAll })
 </script>

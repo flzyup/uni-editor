@@ -24,6 +24,52 @@ export default {
     theme: 'Theme'
   },
 
+  // Cards preview related
+  cardsPreview: {
+    cover: 'Cover',
+    cards: 'Cards',
+    layoutSelection: 'Layout Selection',
+    contentEdit: 'Content Edit',
+    title: 'Title',
+    titlePlaceholder: 'Please enter title',
+    summary: 'Summary',
+    summaryPlaceholder: 'Please enter summary',
+    backgroundImage: 'Background Image',
+    clickToUpload: 'Click to upload image',
+    clickToReplace: 'Click to replace',
+    imageFormats: 'Support JPG, PNG formats, size no more than 5MB',
+    fillMode: 'Fill Mode',
+    fillCover: 'Cover (Scale to fit)',
+    fillContain: 'Contain (Scale with margin)',
+    alignPosition: 'Align Position',
+    alignCenter: 'Center',
+    alignTop: 'Top',
+    alignBottom: 'Bottom',
+    alignLeft: 'Left',
+    alignRight: 'Right',
+    alignTopLeft: 'Top Left',
+    alignTopRight: 'Top Right',
+    alignBottomLeft: 'Bottom Left',
+    alignBottomRight: 'Bottom Right',
+    scale: 'Scale'
+  },
+
+  // Cover layouts
+  coverLayouts: {
+    minimal: 'Minimal Layout',
+    minimalDesc: 'Show title only, centered display',
+    center: 'Center Layout',
+    centerDesc: 'Title and summary centered display',
+    imageTop: 'Image Top Layout',
+    imageTopDesc: 'Image on top, text below',
+    imageBottom: 'Image Bottom Layout',
+    imageBottomDesc: 'Text on top, image below',
+    magazine: 'Magazine Layout',
+    magazineDesc: 'Title centered on top, summary on left',
+    threeSection: 'Three Section Layout',
+    threeSectionDesc: 'Title-Image-Summary vertical arrangement'
+  },
+
   // Editor related
   editor: {
     welcome: 'Welcome to Uni Editor',
@@ -70,7 +116,11 @@ export default {
     copyFailed: 'Copy failed: fallback to plain text.',
     emptyContent: 'Editor content is empty',
     exportSuccess: 'Cards exported successfully',
-    exportFailed: 'Export failed, please try again'
+    exportFailed: 'Export failed, please try again',
+    imageUploadSuccess: 'Image uploaded successfully',
+    imageUploadFailed: 'Image upload failed',
+    imageSizeExceeded: 'Image size cannot exceed 5MB',
+    invalidImageFormat: 'Please select JPG or PNG format image'
   },
 
 

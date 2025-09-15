@@ -24,6 +24,52 @@ export default {
     theme: '主题'
   },
 
+  // 卡片预览相关
+  cardsPreview: {
+    cover: '封面',
+    cards: '卡片',
+    layoutSelection: '布局选择',
+    contentEdit: '内容编辑',
+    title: '标题',
+    titlePlaceholder: '请输入标题',
+    summary: '摘要',
+    summaryPlaceholder: '请输入摘要',
+    backgroundImage: '背景图片',
+    clickToUpload: '点击上传图片',
+    clickToReplace: '点击替换',
+    imageFormats: '支持 JPG、PNG 格式，大小不超过 5MB',
+    fillMode: '填充方式',
+    fillCover: '覆盖（等比裁剪）',
+    fillContain: '适应（等比留边）',
+    alignPosition: '对齐位置',
+    alignCenter: '居中',
+    alignTop: '上',
+    alignBottom: '下',
+    alignLeft: '左',
+    alignRight: '右',
+    alignTopLeft: '左上',
+    alignTopRight: '右上',
+    alignBottomLeft: '左下',
+    alignBottomRight: '右下',
+    scale: '缩放'
+  },
+
+  // 封面布局
+  coverLayouts: {
+    minimal: '极简布局',
+    minimalDesc: '仅显示标题，居中显示',
+    center: '居中布局',
+    centerDesc: '标题和摘要居中显示',
+    imageTop: '图上布局',
+    imageTopDesc: '图片上方，文字下方',
+    imageBottom: '图下布局',
+    imageBottomDesc: '文字上方，图片下方',
+    magazine: '杂志布局',
+    magazineDesc: '标题上方居中，摘要左侧',
+    threeSection: '三段布局',
+    threeSectionDesc: '标题-图片-摘要垂直排列'
+  },
+
   // 编辑器相关
   editor: {
     welcome: '欢迎使用 Uni Editor',
@@ -70,7 +116,11 @@ export default {
     copyFailed: '复制失败：已尝试回退纯文本。',
     emptyContent: '编辑器内容为空',
     exportSuccess: '卡片导出成功',
-    exportFailed: '导出失败，请重试'
+    exportFailed: '导出失败，请重试',
+    imageUploadSuccess: '图片上传成功',
+    imageUploadFailed: '图片上传失败',
+    imageSizeExceeded: '图片大小不能超过5MB',
+    invalidImageFormat: '请选择JPG或PNG格式的图片'
   },
 
 

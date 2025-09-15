@@ -42,7 +42,7 @@
       </div>
     </header>
 
-    <main class="main">
+    <main class="main" ref="mainRef" :style="{ gridTemplateColumns: leftPanelWidth + 'px auto ' + rightPanelWidth + 'px' }">
       <section class="panel editor-scope">
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.editor') }}</div>
@@ -58,12 +58,32 @@
         />
       </section>
 
+      <!-- Draggable Splitter -->
+      <div
+        class="panel-splitter"
+        @mousedown="startResize"
+        :class="{ resizing: isResizing }"
+      >
+        <div class="splitter-handle">
+          <div class="splitter-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
       <section class="panel">
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.preview') }}</div>
-          <div class="spacer" />
           <div class="toolbar">
-            <!-- 模式切换 -->
+            <!-- 主题切换（标题右侧） -->
+            <label class="muted small-text">{{ $t('main.theme') }}</label>
+            <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
+              <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
+            </select>
+
+            <!-- 模式切换（主题之后） -->
             <div class="mode-tabs">
               <button
                 class="mode-tab"
@@ -81,14 +101,24 @@
               </button>
             </div>
 
+            <!-- 缩放比例（移至工具栏，仅卡片模式显示） -->
+            <div v-if="previewMode === 'cards'" class="scale-control-inline">
+              <label class="muted small-text">缩放</label>
+              <input
+                type="range"
+                class="scale-slider"
+                v-model="cardScale"
+                @input="persistCardScale"
+                min="0.5"
+                max="1.0"
+                step="0.05"
+              />
+              <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
+            </div>
 
-            <!-- 主题切换 -->
-            <label class="muted small-text">{{ $t('main.theme') }}</label>
-            <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
-              <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
-            </select>
+            <div class="spacer"></div>
 
-            <!-- 操作按钮 -->
+            <!-- 操作按钮（最右侧） -->
             <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
             <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">{{ $t('main.saveCards') }}</button>
           </div>
@@ -104,20 +134,6 @@
 
         <!-- 卡片模式 -->
         <div v-if="previewMode === 'cards'" class="cards-container">
-          <!-- 缩放滑杆 -->
-          <div class="scale-control-floating">
-            <label class="muted small-text">缩放比例</label>
-            <input
-              type="range"
-              class="scale-slider"
-              v-model="cardScale"
-              @input="persistCardScale"
-              min="0.5"
-              max="1.0"
-              step="0.05"
-            />
-            <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
-          </div>
           <CardsPreview
             ref="cardsPreviewRef"
             :html="html"
@@ -136,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import UniEditor from './components/UniEditor.vue'
 import CardsPreview from './components/CardsPreview.vue'
 import ArticlePreview from './components/ArticlePreview.vue'
@@ -153,8 +169,16 @@ const { t: $t } = useI18n()
 
 const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
+const mainRef = ref(null)
 
 const html = ref('')
+
+// Splitter state
+const isResizing = ref(false)
+const leftPanelWidth = ref(0)
+const rightPanelWidth = ref(0)
+const initialMouseX = ref(0)
+const initialLeftWidth = ref(0)
 
 // 预览模式和主题
 const previewMode = ref('article') // 'article' | 'cards'
@@ -207,6 +231,80 @@ function persistCardScale(){
   try { localStorage.setItem('uni.cardScale', String(cardScale.value)) } catch {}
 }
 
+// Splitter functionality
+function startResize(event) {
+  isResizing.value = true
+  initialMouseX.value = event.clientX
+  initialLeftWidth.value = leftPanelWidth.value
+
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+
+  event.preventDefault()
+}
+
+function handleResize(event) {
+  if (!isResizing.value || !mainRef.value) return
+
+  const deltaX = event.clientX - initialMouseX.value
+  const mainWidth = mainRef.value.clientWidth
+  const splitterWidth = 6 // splitter width
+  const minPanelWidth = 300 // minimum panel width
+
+  const newLeftWidth = Math.max(
+    minPanelWidth,
+    Math.min(
+      mainWidth - splitterWidth - minPanelWidth,
+      initialLeftWidth.value + deltaX
+    )
+  )
+
+  leftPanelWidth.value = newLeftWidth
+  rightPanelWidth.value = mainWidth - splitterWidth - newLeftWidth
+
+  // Persist the split ratio
+  const splitRatio = newLeftWidth / mainWidth
+  try {
+    localStorage.setItem('uni.splitRatio', String(splitRatio))
+  } catch {}
+}
+
+function stopResize() {
+  isResizing.value = false
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+function initializePanelSizes() {
+  if (!mainRef.value) return
+
+  const mainWidth = mainRef.value.clientWidth
+  const splitterWidth = 6
+
+  // Try to restore saved split ratio
+  let splitRatio = 0.5 // default 50/50 split
+  try {
+    const saved = localStorage.getItem('uni.splitRatio')
+    if (saved) {
+      const ratio = parseFloat(saved)
+      if (!isNaN(ratio) && ratio >= 0.2 && ratio <= 0.8) {
+        splitRatio = ratio
+      }
+    }
+  } catch {}
+
+  leftPanelWidth.value = Math.floor(mainWidth * splitRatio)
+  rightPanelWidth.value = mainWidth - splitterWidth - leftPanelWidth.value
+}
+
+function handleWindowResize() {
+  initializePanelSizes()
+}
+
 onMounted(() => {
   try {
     // Restore app theme
@@ -236,14 +334,28 @@ onMounted(() => {
       }
     }
   } catch {}
+
+  // Initialize panel sizes after mount
+  setTimeout(() => {
+    initializePanelSizes()
+  }, 100)
+
+  // Listen for window resize
+  window.addEventListener('resize', handleWindowResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleWindowResize)
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
 })
 </script>
 
 <style scoped>
-.editor-scope { 
-  min-height: 0; 
-  display: grid; 
-  grid-template-rows: auto 1fr; 
+.editor-scope {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
   height: 100%;
   overflow: hidden;
 }
@@ -405,7 +517,7 @@ onMounted(() => {
 }
 
 .scale-slider {
-  width: 100px;
+  width: 90px; /* 工具栏内缩短宽度 */
   height: 4px;
   border-radius: 2px;
   background: var(--border);
@@ -442,10 +554,102 @@ onMounted(() => {
   font-weight: 500;
 }
 
+/* 工具栏内的缩放控制布局 */
+.scale-control-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   .scale-control-floating {
     display: none;
+  }
+}
+
+/* Panel Splitter Styles */
+.panel-splitter {
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.splitter-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 60px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--border) 80%, var(--panel) 20%);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--border) 30%, transparent);
+}
+
+.panel-splitter:hover .splitter-handle {
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.panel-splitter.resizing .splitter-handle {
+  background: var(--accent);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.splitter-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+}
+
+.splitter-dots .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.panel-splitter:hover .splitter-dots .dot {
+  background: var(--text);
+  transform: scale(1.2);
+}
+
+.panel-splitter.resizing .splitter-dots .dot {
+  background: white;
+  transform: scale(1.3);
+}
+
+/* Panel layout adjustments for splitter */
+.main > .panel {
+  overflow: hidden;
+}
+
+/* Mobile responsive - hide splitter on small screens */
+@media (max-width: 768px) {
+  .panel-splitter {
+    display: none;
+  }
+
+  .main {
+    flex-direction: column !important;
+  }
+
+  .main > .panel {
+    width: 100% !important;
   }
 }
 </style>
