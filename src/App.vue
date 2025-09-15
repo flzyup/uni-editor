@@ -68,18 +68,19 @@
               <button
                 class="mode-tab"
                 :class="{ active: previewMode === 'article' }"
-                @click="previewMode = 'article'"
+                @click="setPreviewMode('article')"
               >
                 {{ $t('main.articleMode') }}
               </button>
               <button
                 class="mode-tab"
                 :class="{ active: previewMode === 'cards' }"
-                @click="previewMode = 'cards'"
+                @click="setPreviewMode('cards')"
               >
                 {{ $t('main.cardMode') }}
               </button>
             </div>
+
 
             <!-- 主题切换 -->
             <label class="muted small-text">{{ $t('main.theme') }}</label>
@@ -102,13 +103,29 @@
         />
 
         <!-- 卡片模式 -->
-        <CardsPreview
-          v-if="previewMode === 'cards'"
-          ref="cardsPreviewRef"
-          :html="html"
-          :card-theme="previewTheme"
-          :page-theme="appThemeClass"
-        />
+        <div v-if="previewMode === 'cards'" class="cards-container">
+          <!-- 缩放滑杆 -->
+          <div class="scale-control-floating">
+            <label class="muted small-text">缩放比例</label>
+            <input
+              type="range"
+              class="scale-slider"
+              v-model="cardScale"
+              @input="persistCardScale"
+              min="0.5"
+              max="1.0"
+              step="0.05"
+            />
+            <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
+          </div>
+          <CardsPreview
+            ref="cardsPreviewRef"
+            :html="html"
+            :card-theme="previewTheme"
+            :page-theme="appThemeClass"
+            :scale="cardScale"
+          />
+        </div>
       </section>
     </main>
 
@@ -143,6 +160,7 @@ const html = ref('')
 const previewMode = ref('article') // 'article' | 'cards'
 const previewThemes = ['classic','minimal','paper','ocean','forest','sunset','grape','slate','sand']
 const previewTheme = ref('classic')
+const cardScale = ref(0.75) // 卡片模式缩放比例，范围 0.5-1.0
 
 // App light/dark theme (default light)
 const appTheme = ref('light')
@@ -176,6 +194,19 @@ function persistPreviewTheme(){
   try { localStorage.setItem('uni.previewTheme', previewTheme.value) } catch {}
 }
 
+function setPreviewMode(mode) {
+  previewMode.value = mode
+  persistPreviewMode()
+}
+
+function persistPreviewMode(){
+  try { localStorage.setItem('uni.previewMode', previewMode.value) } catch {}
+}
+
+function persistCardScale(){
+  try { localStorage.setItem('uni.cardScale', String(cardScale.value)) } catch {}
+}
+
 onMounted(() => {
   try {
     // Restore app theme
@@ -188,6 +219,21 @@ onMounted(() => {
     const savedPreviewTheme = localStorage.getItem('uni.previewTheme')
     if (savedPreviewTheme && previewThemes.includes(savedPreviewTheme)) {
       previewTheme.value = savedPreviewTheme
+    }
+
+    // Restore preview mode
+    const savedPreviewMode = localStorage.getItem('uni.previewMode')
+    if (savedPreviewMode === 'article' || savedPreviewMode === 'cards') {
+      previewMode.value = savedPreviewMode
+    }
+
+    // Restore card scale
+    const savedCardScale = localStorage.getItem('uni.cardScale')
+    if (savedCardScale) {
+      const scale = parseFloat(savedCardScale)
+      if (!isNaN(scale) && scale >= 0.5 && scale <= 1.0) {
+        cardScale.value = scale
+      }
     }
   } catch {}
 })
@@ -330,5 +376,76 @@ onMounted(() => {
 /* 通用字体大小样式 */
 .small-text {
   font-size: 12px;
+}
+
+/* 卡片容器样式 */
+.cards-container {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 浮动缩放控制样式 */
+.scale-control-floating {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  backdrop-filter: blur(8px);
+}
+
+.scale-slider {
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.scale-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.scale-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--panel);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.scale-value {
+  min-width: 35px;
+  text-align: center;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .scale-control-floating {
+    display: none;
+  }
 }
 </style>

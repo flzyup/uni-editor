@@ -62,7 +62,7 @@
 }
 
 .inner {
-  padding: 0 @card-content-padding;
+  padding: @card-content-padding;
   .full-height();
   .flex-column();
   box-sizing: border-box;
@@ -106,9 +106,9 @@
     inset: 0;
     padding: @card-content-padding;
     overflow: hidden;
-    // filter: blur(8px);
+    filter: blur(4px);
     transform: scale(1.05);
-    // opacity: .55;
+    opacity: .55;
     pointer-events: none;
   }
 }
