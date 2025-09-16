@@ -70,8 +70,92 @@
     word-break: break-word;
   }
 
-  ul, ol { padding-left: 24px; margin: 12px 0; }
-  li { margin: 4px 0; }
+  ul, ol { padding-left: 4px; margin: @content-border-radius 0; }
+
+  ul {
+    list-style: none;
+  }
+
+  ul li {
+    margin: 8px 0;
+    position: relative;
+    padding-left: 16px;
+
+    // 竖线（在圆点后面）
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 2px; // 竖线在圆点中心
+      width: 1px;
+      background: color-mix(in srgb, var(--card-accent) 25%, transparent);
+      z-index: 1;
+    }
+
+    // 圆点（在竖线上面）
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 4px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--card-accent);
+      transform: translateY(-50%);
+      z-index: 2;
+      // 增强光晕效果
+      box-shadow:
+        0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
+        0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
+    }
+
+    // 第一个列表项不显示顶部竖线
+    &:first-child::after {
+      top: 50%;
+    }
+
+    // 最后一个列表项不显示底部竖线
+    &:last-child::after {
+      bottom: 50%;
+    }
+  }
+
+  ol {
+    list-style: none;
+    counter-reset: list-counter;
+  }
+
+  ol li {
+    margin: 4px 0;
+    position: relative;
+    padding-left: 26px; // 给数字留出更多空间
+    counter-increment: list-counter;
+
+    // 数字（靠左对齐）
+    &::before {
+      content: counter(list-counter);
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--card-accent);
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-50%);
+      z-index: 2;
+      box-shadow:
+        0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
+        0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
+    }
+  }
 
   img {
     max-width: 100%;

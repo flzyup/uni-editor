@@ -159,16 +159,6 @@
   flex-shrink: 1; // 允许根据可用空间收缩
 }
 
-// 覆盖规则：保证极简布局的标题尺寸与内边距生效
-.cover-layout-minimal .title {
-  font-size: 32px !important;
-  letter-spacing: 0.25em;
-}
-.cover-layout-minimal .title-overlay {
-  padding-left: 24px;
-  padding-right: 24px;
-}
-
 // 提升选择器特异性，确保封面页布局选择区的按钮样式生效
 .cover-design-page .layout-selection-section .layout-card {
   padding: 6px;
@@ -893,7 +883,8 @@
                 order 0.4s ease,
                 padding 0.4s ease,
                 margin 0.4s ease,
-                border-radius 0.4s ease;
+                border-radius 0.4s ease,
+                backdrop-filter 0.4s ease;
   }
 
   .title, .summary {
@@ -973,6 +964,9 @@
   .cover-content {
     justify-content: center;
     align-items: center;
+    // 为极简模式的标题添加微妙的模糊背景
+    backdrop-filter: blur(2px);
+    transition: all 0.4s ease, backdrop-filter 0.4s ease;
   }
 
   .title-overlay {
@@ -1005,6 +999,7 @@
     background: rgba(0,0,0,0.3);
     padding: 8px (@card-content-padding) 8px (@card-content-padding + 8px);
   }
+
 }
 
 // 2. 居中布局
@@ -1017,6 +1012,9 @@
   .cover-content {
     justify-content: center;
     align-items: center;
+    // 为居中布局也添加backdrop-filter，与极简模式保持一致
+    backdrop-filter: blur(3px);
+    transition: all 0.4s ease, backdrop-filter 0.4s ease;
   }
 
   .title-overlay {
@@ -1028,12 +1026,16 @@
     opacity: 1;
     visibility: visible;
     height: auto;
+    margin-top: @card-title-summary-gap;
   }
 
   .meta {
     opacity: 1;
     visibility: visible;
     height: auto;
+    // 确保meta组件在最顶层，防止被背景图片遵挡
+    z-index: 10;
+    position: relative;
   }
 
   .cover-overlay {
@@ -1078,6 +1080,7 @@
     transition: all 0.3s ease, background 0.4s ease, backdrop-filter 0.4s ease;
   }
 
+  
   .title, .summary {
     color: var(--card-text);
     text-shadow: none;
@@ -1098,7 +1101,8 @@
     top: auto;
     left: auto;
     right: auto;
-    margin-top: 0; // 重置杂志布局的margin-top
+    margin-top: @card-title-summary-gap;
+    margin-bottom: @card-title-summary-gap; // 重置杂志布局的margin-top
     text-align: center; // 重置杂志布局的左对齐
   }
 
@@ -1156,12 +1160,14 @@
     position: relative;
     order: 2; // 图片在下方
     transition: all 0.4s ease, height 0.4s ease, order 0.4s ease;
-
+    
     img, .bg-html {
       height: 100%;
       object-fit: cover;
       filter: none;
       transition: filter 0.4s ease;
+      border-bottom-left-radius: @card-border-radius;
+      border-bottom-right-radius: @card-border-radius;
     }
   }
 
@@ -1194,7 +1200,7 @@
     top: auto;
     left: auto;
     right: auto;
-    margin-top: 0; // 重置杂志布局的margin-top
+    margin-top: @card-title-summary-gap; // 重置杂志布局的margin-top
     text-align: center; // 重置杂志布局的左对齐
   }
 
@@ -1287,6 +1293,9 @@
     opacity: 1;
     visibility: visible;
     height: auto;
+    // 确保meta组件在最顶层，防止被背景图片遵挡
+    z-index: 10;
+    position: relative;
   }
 
   .cover-overlay {
@@ -1314,10 +1323,15 @@
 }
 
 .cover .title {
-  font: 700 22px/1.3 @font-family-base;
+  font: 700 22px/1.5 @font-family-base; // 增加行间距从1.3到1.5
   margin-bottom: 8px;
   color: white;
   text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.9);
+  // 支持多行显示
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .cover .summary {
@@ -1333,18 +1347,18 @@
   gap: 8px;
   color: white;
   font-size: @font-size-sm;
-  // 扩展到卡片左右边缘，使底部圆角与卡片一致
-  margin-left: -@card-content-padding;
-  margin-right: -@card-content-padding;
   // 左侧增加额外内边距，避免文字贴边
   padding: 12px (@card-content-padding) 12px (@card-content-padding + 8px);
-  background: rgba(0,0,0,0.5);
+  // 使用更暗的背景色替代backdrop-filter，避免圆角问题
+  background: rgba(0,0,0,0.75);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   border-bottom-left-radius: @card-border-radius;
   border-bottom-right-radius: @card-border-radius;
-  backdrop-filter: blur(4px);
   text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  // 确保在卡片容器内
+  box-sizing: border-box;
+  // 移除所有backdrop-filter相关属性，使用纯背景色
 }
 
 
@@ -1352,6 +1366,22 @@
 
 .exporting .card {
   box-shadow: none;
+  border: none;
+  border-radius: 0;
+
+  // 移除卡片四个角的圆角，但保持内部元素的圆角
+  .cover .meta {
+    // 重置meta的底部圆角为0，因为卡片本身已无圆角
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  // 针对不同布局重置meta的圆角
+  .cover-layout-image-top .meta,
+  .cover-layout-image-bottom .meta {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
 }
 
 // 卡片导航样式

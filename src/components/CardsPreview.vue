@@ -105,7 +105,7 @@
               </svg>
             </button>
           </div>
-          <input v-model="cover.title" type="text" class="form-input" :placeholder="t('cardsPreview.titlePlaceholder')">
+          <textarea v-model="cover.title" class="form-textarea" rows="2" :placeholder="t('cardsPreview.titlePlaceholder')"></textarea>
         </div>
         <div class="form-group">
           <div class="form-label-with-sync">
@@ -1162,10 +1162,28 @@ function syncCoverImage() {
   const coverImage = extractCoverImageFromContent(content)
   if (coverImage) {
     cover.value.coverImage = coverImage
+    // 有图片时清除HTML背景
+    coverBgHtml.value = ''
     persistCoverData()
     success(t('cardsPreview.syncCoverImageSuccess'))
   } else {
-    warning(t('cardsPreview.syncNoContent'))
+    // 没有图片时，清除封面图并设置HTML背景，与无缓存时逻辑一致
+    cover.value.coverImage = null
+
+    // 使用与generate函数相同的逻辑设置HTML背景
+    if (cards.value && cards.value.length > 1) {
+      const second = cards.value[1]
+      if (second && second.type === 'content' && second.html) {
+        coverBgHtml.value = `<div class="content-html content-rich">${second.html}</div>`
+      } else {
+        coverBgHtml.value = ''
+      }
+    } else {
+      coverBgHtml.value = ''
+    }
+
+    persistCoverData()
+    success(t('cardsPreview.syncCoverImageSuccess'))
   }
 }
 

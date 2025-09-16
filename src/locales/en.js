@@ -67,9 +67,9 @@ export default {
     minimalDesc: 'Show title only, centered display',
     center: 'Center',
     centerDesc: 'Title and summary centered display',
-    imageTop: 'Image Top',
+    imageTop: 'IMG Top',
     imageTopDesc: 'Image on top, text below',
-    imageBottom: 'Image Bottom',
+    imageBottom: 'IMG Btm',
     imageBottomDesc: 'Text on top, image below',
     magazine: 'Magazine',
     magazineDesc: 'Title centered on top, summary on left'
