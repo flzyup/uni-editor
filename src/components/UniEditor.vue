@@ -74,7 +74,7 @@ onMounted(async () => {
     value: initial,
     cache: { enable: false },
     height: '100%',
-    mode: 'ir',
+    mode: 'wysiwyg',
     lang: getVditorLang(locale.value),
     toolbarConfig: { pin: true },
     toolbar: [
@@ -86,7 +86,7 @@ onMounted(async () => {
       'undo', 'redo', '|',
       'edit-mode', 'both',
       'code-theme','content-theme',  '|',
-      'export'
+      'edit-mode', 'export'
       // 'devtools', '|'
     ],
     counter: { enable: true },
