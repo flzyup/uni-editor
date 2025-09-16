@@ -164,11 +164,13 @@ import FeaturesHint from './components/FeaturesHint.vue'
 import LanguageSwitch from './components/LanguageSwitch.vue'
 import { copyToWechat } from './utils/copy.js'
 import { useI18n } from 'vue-i18n'
+import { useToast } from './composables/useToast'
 
 // 引入Less样式
 import './styles/index.less'
 
 const { t: $t } = useI18n()
+const { success, error, warning } = useToast()
 
 const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
@@ -200,10 +202,14 @@ function onHtml(val) {
 
 async function copyForWeChat() {
   const htmlRaw = await uniEditorRef.value?.getHTML?.()
-  if (!htmlRaw) { alert($t('messages.emptyContent')); return }
+  if (!htmlRaw) { warning($t('messages.emptyContent')); return }
   const ok = await copyToWechat(previewTheme.value, appTheme.value)
   const themeName = $t(`themes.${previewTheme.value}`)
-  alert(ok ? $t('messages.copySuccess', { theme: themeName }) : $t('messages.copyFailed'))
+  if (ok) {
+    success($t('messages.copySuccess', { theme: themeName }))
+  } else {
+    error($t('messages.copyFailed'))
+  }
 }
 
 
@@ -212,9 +218,9 @@ async function saveCards() {
   try {
     await cardsPreviewRef.value?.exportAll?.()
     // 导出成功提示可以在CardsPreview组件内部处理
-  } catch (error) {
-    console.error('导出卡片失败:', error)
-    alert($t('messages.exportFailed'))
+  } catch (err) {
+    console.error('导出卡片失败:', err)
+    error($t('messages.exportFailed'))
   }
 }
 

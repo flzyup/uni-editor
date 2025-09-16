@@ -98,9 +98,10 @@
             <label>{{ t('cardsPreview.title') }}</label>
             <button type="button" class="sync-btn" @click="syncTitle" :title="t('cardsPreview.syncTitle')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6"/>
-                <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
-                <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
               </svg>
             </button>
           </div>
@@ -111,9 +112,10 @@
             <label>{{ t('cardsPreview.summary') }}</label>
             <button type="button" class="sync-btn" @click="syncSummary" :title="t('cardsPreview.syncSummary')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6"/>
-                <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
-                <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M3 21v-5h5"/>
               </svg>
             </button>
           </div>
@@ -128,9 +130,10 @@
           <label>{{ t('cardsPreview.coverImage') }}</label>
           <button type="button" class="sync-btn" @click="syncCoverImage" :title="t('cardsPreview.syncCoverImage')">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M23 4v6h-6"/>
-              <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
-              <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M3 21v-5h5"/>
             </svg>
           </button>
         </div>
@@ -309,8 +312,10 @@
 import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import * as htmlToImage from 'html-to-image'
 import { useI18n } from 'vue-i18n'
+import { useToast } from '../composables/useToast'
 
 const { t } = useI18n()
+const { success, error, warning } = useToast()
 
 const props = defineProps({
   html: { type: String, default: '' },
@@ -420,29 +425,11 @@ onMounted(async () => {
 })
 
 function extractCoverData(root) {
-  // 标题：优先使用第一个 H1/H2/H3
-  const h = root.querySelector('h1, h2, h3')
-  const title = h ? h.textContent.trim() : t('cardsPreview.title')
-
-  // 摘要：从内容中排除第一个 H1，再取其余文本的前 80 个字符
-  const clone = root.cloneNode(true)
-  const firstH1 = clone.querySelector('h1')
-  if (firstH1) firstH1.remove()
-  const rawText = (clone.textContent || '').replace(/\s+/g, ' ').trim()
-  const summary = (() => {
-    const chars = Array.from(rawText)
-    if (chars.length <= 80) return rawText
-    return chars.slice(0, 80).join('') + '…'
-  })()
-
-  // 字数与预计阅读时长（按非空白字符）
-  const fullText = root.textContent || ''
-  const wordCount = [...fullText].filter(ch => /\S/.test(ch)).length
-  const minutes = Math.max(1, Math.ceil(wordCount / 400))
-
-  // 提取第一张图片作为封面图
-  const firstImg = root.querySelector('img')
-  const coverImage = firstImg ? firstImg.src : null
+  // 使用统一的提取函数
+  const title = extractTitleFromContent(root) || t('cardsPreview.title')
+  const summary = extractSummaryFromContent(root)
+  const coverImage = extractCoverImageFromContent(root)
+  const { wordCount, minutes } = extractWordCountAndMinutes(root)
 
   // 只有当当前封面数据为空时才更新，保持用户编辑的内容
   if (!cover.value.title && !cover.value.summary) {
@@ -952,7 +939,7 @@ async function doExportAllCards() {
     await exportSingleCard(node, suffix, isCover)
   }
 
-  alert(t('messages.exportSuccess'))
+  success(t('messages.exportSuccess'))
   exporting.value = false
 }
 
@@ -1089,87 +1076,96 @@ watch(currentTab, async (tab) => {
   }
 })
 
+// 统一的内容提取工具函数
+function extractTitleFromContent(root) {
+  // 标题：优先使用第一个 H1/H2/H3
+  const h = root.querySelector('h1, h2, h3')
+  return h ? h.textContent.trim() : ''
+}
+
+function extractSummaryFromContent(root) {
+  // 摘要：从内容中排除第一个 H1，再取其余文本的前 80 个字符
+  const clone = root.cloneNode(true)
+  const firstH1 = clone.querySelector('h1')
+  if (firstH1) firstH1.remove()
+  const rawText = (clone.textContent || '').replace(/\s+/g, ' ').trim()
+  const chars = Array.from(rawText)
+  if (chars.length <= 80) return rawText
+  return chars.slice(0, 80).join('') + '…'
+}
+
+function extractCoverImageFromContent(root) {
+  // 提取第一张图片作为封面图
+  const firstImg = root.querySelector('img')
+  return firstImg ? firstImg.src : null
+}
+
+function extractWordCountAndMinutes(root) {
+  // 字数与预计阅读时长（按非空白字符）
+  const fullText = root.textContent || ''
+  const wordCount = [...fullText].filter(ch => /\S/.test(ch)).length
+  const minutes = Math.max(1, Math.ceil(wordCount / 400))
+  return { wordCount, minutes }
+}
+
 // 同步功能
 function syncTitle() {
-  const htmlContent = props.html || ''
-  let synced = false
-
-  // 提取第一个h1标签的内容作为标题
-  const h1Match = htmlContent.match(/<h1[^>]*>(.*?)<\/h1>/i)
-  if (h1Match) {
-    const title = h1Match[1].replace(/<[^>]*>/g, '').trim()
-    if (title) {
-      cover.value.title = title
-      persistCoverData()
-      synced = true
-    }
+  if (!props.html) {
+    warning(t('cardsPreview.syncNoContent'))
+    return
   }
 
-  // 如果没有h1，尝试提取第一个h2标签
-  if (!synced) {
-    const h2Match = htmlContent.match(/<h2[^>]*>(.*?)<\/h2>/i)
-    if (h2Match) {
-      const title = h2Match[1].replace(/<[^>]*>/g, '').trim()
-      if (title) {
-        cover.value.title = title
-        persistCoverData()
-        synced = true
-      }
-    }
-  }
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(props.html, 'text/html')
+  const content = doc.body
 
-  if (synced) {
-    alert(t('cardsPreview.syncTitleSuccess'))
+  const title = extractTitleFromContent(content)
+  if (title) {
+    cover.value.title = title
+    persistCoverData()
+    success(t('cardsPreview.syncTitleSuccess'))
   } else {
-    alert(t('cardsPreview.syncNoContent'))
+    warning(t('cardsPreview.syncNoContent'))
   }
 }
 
 function syncSummary() {
-  const htmlContent = props.html || ''
-  let synced = false
-
-  // 提取第一个段落的内容作为摘要
-  const pMatch = htmlContent.match(/<p[^>]*>(.*?)<\/p>/i)
-  if (pMatch) {
-    const summary = pMatch[1].replace(/<[^>]*>/g, '').trim()
-    if (summary) {
-      // 限制摘要长度
-      const maxLength = 200
-      cover.value.summary = summary.length > maxLength
-        ? summary.substring(0, maxLength) + '...'
-        : summary
-      persistCoverData()
-      synced = true
-    }
+  if (!props.html) {
+    warning(t('cardsPreview.syncNoContent'))
+    return
   }
 
-  if (synced) {
-    alert(t('cardsPreview.syncSummarySuccess'))
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(props.html, 'text/html')
+  const content = doc.body
+
+  const summary = extractSummaryFromContent(content)
+  if (summary) {
+    cover.value.summary = summary
+    persistCoverData()
+    success(t('cardsPreview.syncSummarySuccess'))
   } else {
-    alert(t('cardsPreview.syncNoContent'))
+    warning(t('cardsPreview.syncNoContent'))
   }
 }
 
 function syncCoverImage() {
-  const htmlContent = props.html || ''
-  let synced = false
-
-  // 提取第一个img标签的src作为封面图
-  const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
-  if (imgMatch) {
-    const imgSrc = imgMatch[1].trim()
-    if (imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('data:') || imgSrc.startsWith('/'))) {
-      cover.value.coverImage = imgSrc
-      persistCoverData()
-      synced = true
-    }
+  if (!props.html) {
+    warning(t('cardsPreview.syncNoContent'))
+    return
   }
 
-  if (synced) {
-    alert(t('cardsPreview.syncCoverImageSuccess'))
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(props.html, 'text/html')
+  const content = doc.body
+
+  const coverImage = extractCoverImageFromContent(content)
+  if (coverImage) {
+    cover.value.coverImage = coverImage
+    persistCoverData()
+    success(t('cardsPreview.syncCoverImageSuccess'))
   } else {
-    alert(t('cardsPreview.syncNoContent'))
+    warning(t('cardsPreview.syncNoContent'))
   }
 }
 
@@ -1235,13 +1231,13 @@ function handleImageUpload(event) {
 
   // 检查文件类型
   if (!file.type.startsWith('image/')) {
-    alert(t('messages.invalidImageFormat'))
+    error(t('messages.invalidImageFormat'))
     return
   }
 
   // 检查文件大小（限制5MB）
   if (file.size > 5 * 1024 * 1024) {
-    alert(t('messages.imageSizeExceeded'))
+    error(t('messages.imageSizeExceeded'))
     return
   }
 
