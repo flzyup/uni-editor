@@ -61,7 +61,7 @@
                     >{{ truncatedSummary }}</div>
                   </div>
                 </div>
-                <div class="meta">
+                <div v-if="showMeta" class="meta">
                   <span>全文 {{ cover.wordCount }} 字</span>
                   <span>阅读需 {{ cover.minutes }} 分钟</span>
                 </div>
@@ -71,7 +71,6 @@
         </div>
 
         <div class="layout-selection-section">
-          <h3>{{ t('cardsPreview.layoutSelection') }}</h3>
           <div class="layout-grid">
             <div
               v-for="layout in coverLayouts"
@@ -91,47 +90,76 @@
       </div>
 
       <!-- 内容编辑面板 -->
-  <div class="cover-edit-panel">
+      <div class="cover-edit-panel">
     <div class="edit-section">
-      <h3>{{ t('cardsPreview.contentEdit') }}</h3>
       <div class="content-edit-form">
         <div class="form-group">
-          <label>{{ t('cardsPreview.title') }}</label>
+          <div class="form-label-with-sync">
+            <label>{{ t('cardsPreview.title') }}</label>
+            <button type="button" class="sync-btn" @click="syncTitle" :title="t('cardsPreview.syncTitle')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"/>
+                <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
+                <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+              </svg>
+            </button>
+          </div>
           <input v-model="cover.title" type="text" class="form-input" :placeholder="t('cardsPreview.titlePlaceholder')">
         </div>
         <div class="form-group">
-          <label>{{ t('cardsPreview.summary') }}</label>
+          <div class="form-label-with-sync">
+            <label>{{ t('cardsPreview.summary') }}</label>
+            <button type="button" class="sync-btn" @click="syncSummary" :title="t('cardsPreview.syncSummary')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 4v6h-6"/>
+                <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
+                <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+              </svg>
+            </button>
+          </div>
           <textarea v-model="cover.summary" class="form-textarea" rows="6" :placeholder="t('cardsPreview.summaryPlaceholder')"></textarea>
         </div>
       </div>
     </div>
 
     <div class="edit-section">
-      <h3>{{ t('cardsPreview.backgroundImage') }}</h3>
-      <div class="image-upload-area">
-        <input type="file" ref="imageInput" @change="handleImageUpload" accept="image/*" style="display: none;">
-        <div class="upload-zone" @click="$refs.imageInput?.click()">
-          <div v-if="cover.coverImage" class="current-image">
-            <img :src="cover.coverImage" alt="当前图片">
-            <div class="image-overlay">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="form-group">
+        <div class="form-label-with-sync">
+          <label>{{ t('cardsPreview.coverImage') }}</label>
+          <button type="button" class="sync-btn" @click="syncCoverImage" :title="t('cardsPreview.syncCoverImage')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"/>
+              <path d="m1 20 2.5-2.5c3.5-3.5 9-9 9-9"/>
+              <path d="m23 4-2.5 2.5c-3.5 3.5-9 9-9 9"/>
+            </svg>
+          </button>
+        </div>
+        <div class="image-upload-area">
+          <input type="file" ref="imageInput" @change="handleImageUpload" accept="image/*" style="display: none;">
+          <div class="upload-zone" @click="$refs.imageInput?.click()">
+            <div v-if="cover.coverImage" class="current-image">
+              <img :src="cover.coverImage" alt="当前图片">
+              <div class="image-overlay">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21,15 16,10 5,21"/>
+                </svg>
+                <span>{{ t('cardsPreview.clickToReplace') }}</span>
+              </div>
+            </div>
+            <div v-else class="upload-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5"/>
                 <polyline points="21,15 16,10 5,21"/>
               </svg>
-              <span>{{ t('cardsPreview.clickToReplace') }}</span>
+              <span>{{ t('cardsPreview.clickToUpload') }}</span>
+              <small>{{ t('cardsPreview.imageFormats') }}</small>
             </div>
           </div>
-          <div v-else class="upload-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21,15 16,10 5,21"/>
-            </svg>
-            <span>{{ t('cardsPreview.clickToUpload') }}</span>
-            <small>{{ t('cardsPreview.imageFormats') }}</small>
-          </div>
         </div>
+      </div>
         <!-- 常用图片填充选项 -->
         <div class="content-edit-form" style="margin-top: 12px;">
           <div class="form-group">
@@ -155,14 +183,26 @@
               <option value="bottom right">{{ t('cardsPreview.alignBottomRight') }}</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label>{{ t('cardsPreview.showMeta') }}</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" :value="true" v-model="showMeta" @change="persistShowMeta" />
+                <span>{{ t('cardsPreview.show') }}</span>
+              </label>
+              <label class="radio-option">
+                <input type="radio" :value="false" v-model="showMeta" @change="persistShowMeta" />
+                <span>{{ t('cardsPreview.hide') }}</span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
     </div>
 
-    <!-- 卡片列表页面 -->
-    <div v-else class="cards-page">
+    <div v-if="currentTab === 'cards'" class="cards-page">
       <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
         <div
           v-for="(c, idx) in cards"
@@ -202,7 +242,7 @@
                   <div v-if="currentCoverLayout !== 'minimal'" class="summary">{{ truncatedSummary }}</div>
                 </div>
               </div>
-              <div class="meta">
+              <div v-if="showMeta" class="meta">
                 <span>全文 {{ cover.wordCount }} 字</span>
                 <span>阅读需 {{ cover.minutes }} 分钟</span>
               </div>
@@ -301,6 +341,10 @@ const cover = ref({
 const coverBgHtml = ref('')
 const imageInput = ref(null)
 
+// Meta显示控制
+const showMeta = ref(true) // 默认显示
+const META_SHOW_KEY = 'uni.showMeta'
+
 // 计算摘要截断
 const truncatedSummary = computed(() => {
   const maxLength = 80
@@ -354,12 +398,6 @@ const coverLayouts = computed(() => [
     name: t('coverLayouts.magazine'),
     description: t('coverLayouts.magazineDesc'),
     icon: '<div style="background: #4f46e5; border-radius: 2px; width: 16px; height: 6px; margin: 2px auto 1px;"></div><div style="background: #9ca3af; border-radius: 1px; width: 10px; height: 4px; margin: 1px 0;"></div>'
-  },
-  {
-    id: 'three-section',
-    name: t('coverLayouts.threeSection'),
-    description: t('coverLayouts.threeSectionDesc'),
-    icon: '<div style="background: #4f46e5; border-radius: 1px; width: 16px; height: 3px; margin: 1px auto;"></div><div style="background: #94a3b8; border-radius: 2px; width: 20px; height: 8px; margin: 1px auto;"></div><div style="background: #9ca3af; border-radius: 1px; width: 12px; height: 3px; margin: 1px auto;"></div>'
   }
 ])
 
@@ -373,6 +411,7 @@ onMounted(async () => {
   restoreCoverLayout()
   restoreCoverData()
   restoreCurrentTab()
+  restoreShowMeta()
 
   // 如果挂载时已经有 HTML 内容，立即生成卡片
   if (props.html && props.html.trim()) {
@@ -1050,6 +1089,90 @@ watch(currentTab, async (tab) => {
   }
 })
 
+// 同步功能
+function syncTitle() {
+  const htmlContent = props.html || ''
+  let synced = false
+
+  // 提取第一个h1标签的内容作为标题
+  const h1Match = htmlContent.match(/<h1[^>]*>(.*?)<\/h1>/i)
+  if (h1Match) {
+    const title = h1Match[1].replace(/<[^>]*>/g, '').trim()
+    if (title) {
+      cover.value.title = title
+      persistCoverData()
+      synced = true
+    }
+  }
+
+  // 如果没有h1，尝试提取第一个h2标签
+  if (!synced) {
+    const h2Match = htmlContent.match(/<h2[^>]*>(.*?)<\/h2>/i)
+    if (h2Match) {
+      const title = h2Match[1].replace(/<[^>]*>/g, '').trim()
+      if (title) {
+        cover.value.title = title
+        persistCoverData()
+        synced = true
+      }
+    }
+  }
+
+  if (synced) {
+    alert(t('cardsPreview.syncTitleSuccess'))
+  } else {
+    alert(t('cardsPreview.syncNoContent'))
+  }
+}
+
+function syncSummary() {
+  const htmlContent = props.html || ''
+  let synced = false
+
+  // 提取第一个段落的内容作为摘要
+  const pMatch = htmlContent.match(/<p[^>]*>(.*?)<\/p>/i)
+  if (pMatch) {
+    const summary = pMatch[1].replace(/<[^>]*>/g, '').trim()
+    if (summary) {
+      // 限制摘要长度
+      const maxLength = 200
+      cover.value.summary = summary.length > maxLength
+        ? summary.substring(0, maxLength) + '...'
+        : summary
+      persistCoverData()
+      synced = true
+    }
+  }
+
+  if (synced) {
+    alert(t('cardsPreview.syncSummarySuccess'))
+  } else {
+    alert(t('cardsPreview.syncNoContent'))
+  }
+}
+
+function syncCoverImage() {
+  const htmlContent = props.html || ''
+  let synced = false
+
+  // 提取第一个img标签的src作为封面图
+  const imgMatch = htmlContent.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i)
+  if (imgMatch) {
+    const imgSrc = imgMatch[1].trim()
+    if (imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('data:') || imgSrc.startsWith('/'))) {
+      cover.value.coverImage = imgSrc
+      persistCoverData()
+      synced = true
+    }
+  }
+
+  if (synced) {
+    alert(t('cardsPreview.syncCoverImageSuccess'))
+  } else {
+    alert(t('cardsPreview.syncNoContent'))
+  }
+}
+
 // 封面布局相关函数
 function changeCoverLayout(layoutId) {
   currentCoverLayout.value = layoutId
@@ -1150,6 +1273,14 @@ function persistCoverData() {
   }
 }
 
+function persistShowMeta() {
+  try {
+    localStorage.setItem(META_SHOW_KEY, JSON.stringify(showMeta.value))
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
+
 // 监听封面数据变化
 watch([() => cover.value.title, () => cover.value.summary], () => {
   persistCoverData()
@@ -1167,6 +1298,17 @@ function restoreCoverData() {
       if (coverData.layout) currentCoverLayout.value = coverData.layout
       if (coverData.imageFit) cover.value.imageFit = coverData.imageFit
       if (coverData.imagePosition) cover.value.imagePosition = coverData.imagePosition
+    }
+  } catch {
+    // localStorage 不可用时忽略错误
+  }
+}
+
+function restoreShowMeta() {
+  try {
+    const saved = localStorage.getItem(META_SHOW_KEY)
+    if (saved !== null) {
+      showMeta.value = JSON.parse(saved)
     }
   } catch {
     // localStorage 不可用时忽略错误

@@ -20,20 +20,19 @@ export default {
     cardMode: '卡片模式',
     copyAll: '全部复制',
     saveCards: '保存卡片',
-    theme: '主题'
+    theme: '主题',
+    scale: '缩放'
   },
 
   // 卡片预览相关
   cardsPreview: {
     cover: '封面',
     cards: '卡片',
-    layoutSelection: '布局选择',
-    contentEdit: '内容编辑',
+    coverImage: '封面图',
     title: '标题',
     titlePlaceholder: '请输入标题',
     summary: '摘要',
     summaryPlaceholder: '请输入摘要',
-    backgroundImage: '背景图片',
     clickToUpload: '点击上传图片',
     clickToReplace: '点击替换',
     imageFormats: '支持 JPG、PNG 格式，大小不超过 5MB',
@@ -50,23 +49,30 @@ export default {
     alignTopRight: '右上',
     alignBottomLeft: '左下',
     alignBottomRight: '右下',
-    scale: '缩放'
+    showMeta: '显示信息条',
+    show: '显示',
+    hide: '隐藏',
+    syncTitle: '从编辑器同步标题',
+    syncSummary: '从编辑器同步摘要',
+    syncCoverImage: '从编辑器同步封面图',
+    syncTitleSuccess: '标题同步成功',
+    syncSummarySuccess: '摘要同步成功',
+    syncCoverImageSuccess: '封面图同步成功',
+    syncNoContent: '编辑器中未找到相应内容'
   },
 
   // 封面布局
   coverLayouts: {
-    minimal: '极简布局',
+    minimal: '极简',
     minimalDesc: '仅显示标题，居中显示',
-    center: '居中布局',
+    center: '居中',
     centerDesc: '标题和摘要居中显示',
-    imageTop: '图上布局',
+    imageTop: '图上',
     imageTopDesc: '图片上方，文字下方',
-    imageBottom: '图下布局',
+    imageBottom: '图下',
     imageBottomDesc: '文字上方，图片下方',
-    magazine: '杂志布局',
-    magazineDesc: '标题上方居中，摘要左侧',
-    threeSection: '三段布局',
-    threeSectionDesc: '标题-图片-摘要垂直排列'
+    magazine: '杂志',
+    magazineDesc: '标题上方居中，摘要左侧'
   },
 
   // 编辑器相关

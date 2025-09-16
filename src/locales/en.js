@@ -20,20 +20,19 @@ export default {
     cardMode: 'Card Mode',
     copyAll: 'Copy All',
     saveCards: 'Save Cards',
-    theme: 'Theme'
+    theme: 'Theme',
+    scale: 'Scale'
   },
 
   // Cards preview related
   cardsPreview: {
     cover: 'Cover',
     cards: 'Cards',
-    layoutSelection: 'Layout Selection',
-    contentEdit: 'Content Edit',
+    coverImage: 'Cover Image',
     title: 'Title',
     titlePlaceholder: 'Please enter title',
     summary: 'Summary',
     summaryPlaceholder: 'Please enter summary',
-    backgroundImage: 'Background Image',
     clickToUpload: 'Click to upload image',
     clickToReplace: 'Click to replace',
     imageFormats: 'Support JPG, PNG formats, size no more than 5MB',
@@ -50,23 +49,30 @@ export default {
     alignTopRight: 'Top Right',
     alignBottomLeft: 'Bottom Left',
     alignBottomRight: 'Bottom Right',
-    scale: 'Scale'
+    showMeta: 'Show Info Bar',
+    show: 'Show',
+    hide: 'Hide',
+    syncTitle: 'Sync title from editor',
+    syncSummary: 'Sync summary from editor',
+    syncCoverImage: 'Sync cover image from editor',
+    syncTitleSuccess: 'Title synced successfully',
+    syncSummarySuccess: 'Summary synced successfully',
+    syncCoverImageSuccess: 'Cover image synced successfully',
+    syncNoContent: 'No corresponding content found in editor'
   },
 
   // Cover layouts
   coverLayouts: {
-    minimal: 'Minimal Layout',
+    minimal: 'Minimal',
     minimalDesc: 'Show title only, centered display',
-    center: 'Center Layout',
+    center: 'Center',
     centerDesc: 'Title and summary centered display',
-    imageTop: 'Image Top Layout',
+    imageTop: 'Image Top',
     imageTopDesc: 'Image on top, text below',
-    imageBottom: 'Image Bottom Layout',
+    imageBottom: 'Image Bottom',
     imageBottomDesc: 'Text on top, image below',
-    magazine: 'Magazine Layout',
-    magazineDesc: 'Title centered on top, summary on left',
-    threeSection: 'Three Section Layout',
-    threeSectionDesc: 'Title-Image-Summary vertical arrangement'
+    magazine: 'Magazine',
+    magazineDesc: 'Title centered on top, summary on left'
   },
 
   // Editor related

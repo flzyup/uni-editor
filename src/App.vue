@@ -76,50 +76,54 @@
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.preview') }}</div>
           <div class="toolbar">
-            <!-- 主题切换（标题右侧） -->
+            <!-- 主题切换（左侧） -->
             <label class="muted small-text">{{ $t('main.theme') }}</label>
             <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
               <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
             </select>
 
-            <!-- 模式切换（主题之后） -->
-            <div class="mode-tabs">
-              <button
-                class="mode-tab"
-                :class="{ active: previewMode === 'article' }"
-                @click="setPreviewMode('article')"
-              >
-                {{ $t('main.articleMode') }}
-              </button>
-              <button
-                class="mode-tab"
-                :class="{ active: previewMode === 'cards' }"
-                @click="setPreviewMode('cards')"
-              >
-                {{ $t('main.cardMode') }}
-              </button>
-            </div>
+            <div class="spacer"></div>
 
-            <!-- 缩放比例（移至工具栏，仅卡片模式显示） -->
-            <div v-if="previewMode === 'cards'" class="scale-control-inline">
-              <label class="muted small-text">缩放</label>
-              <input
-                type="range"
-                class="scale-slider"
-                v-model="cardScale"
-                @input="persistCardScale"
-                min="0.5"
-                max="1.0"
-                step="0.05"
-              />
-              <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
+            <!-- 模式切换（居中） -->
+            <div class="mode-tabs-center">
+              <div class="mode-tabs">
+                <button
+                  class="mode-tab"
+                  :class="{ active: previewMode === 'article' }"
+                  @click="setPreviewMode('article')"
+                >
+                  {{ $t('main.articleMode') }}
+                </button>
+                <button
+                  class="mode-tab"
+                  :class="{ active: previewMode === 'cards' }"
+                  @click="setPreviewMode('cards')"
+                >
+                  {{ $t('main.cardMode') }}
+                </button>
+              </div>
             </div>
 
             <div class="spacer"></div>
 
-            <!-- 操作按钮（最右侧） -->
-            <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
-            <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">{{ $t('main.saveCards') }}</button>
+            <!-- 缩放比例和操作按钮（右侧） -->
+            <div class="toolbar-right">
+              <div v-if="previewMode === 'cards'" class="scale-control-inline">
+                <label class="muted small-text">{{ $t('main.scale') }}</label>
+                <input
+                  type="range"
+                  class="scale-slider"
+                  v-model="cardScale"
+                  @input="persistCardScale"
+                  min="0.5"
+                  max="1.0"
+                  step="0.05"
+                />
+                <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
+              </div>
+              <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
+              <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">{{ $t('main.saveCards') }}</button>
+            </div>
           </div>
         </div>
 
@@ -371,12 +375,23 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+.mode-tabs-center {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
 .mode-tabs {
   display: flex;
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
-  margin-right: 12px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .mode-tab {
@@ -509,22 +524,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
 }
 
-/* 浮动缩放控制样式 */
-.scale-control-floating {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+/* 工具栏内的缩放控制布局 */
+.scale-control-inline {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  backdrop-filter: blur(8px);
+  gap: 6px;
 }
 
 .scale-slider {
@@ -563,20 +567,6 @@ onBeforeUnmount(() => {
   text-align: center;
   color: var(--accent);
   font-weight: 500;
-}
-
-/* 工具栏内的缩放控制布局 */
-.scale-control-inline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* 移动端适配 */
-@media (max-width: 768px) {
-  .scale-control-floating {
-    display: none;
-  }
 }
 
 /* Panel Splitter Styles */

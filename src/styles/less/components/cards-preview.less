@@ -10,29 +10,40 @@
 .sub-tabs {
   display: flex;
   flex-direction: column;
-  width: 64px;
+  width: 66px; // 调整宽度适应50px按钮
   background: var(--panel);
   border-right: 1px solid var(--border);
   flex-shrink: 0;
   padding: 12px 0;
+  align-items: center; // 水平居中tab按钮
 }
 
 .sub-tab {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 12px 8px;
+  padding: 8px;
   margin: 4px 8px;
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text);
-  border-radius: 8px;
+  border-radius: @content-border-radius;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: @font-size-xs;
   font-weight: 500;
   .focus-ring();
+
+  // 设置为50px正方形
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
+  min-height: 50px;
+  max-width: 50px;
+  max-height: 50px;
+  flex-shrink: 0;
 
   &:hover {
     background: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -65,7 +76,7 @@
   display: flex;
   flex-direction: column;
   .full-height();
-  min-height: 0;
+  min-height: 350px; // 减少最小高度，让布局更灵活
   min-width: 0; // 关键：允许flex子项在水平方向收缩
 }
 
@@ -74,7 +85,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 16px; // 减少padding为布局按钮留出空间
   background: color-mix(in srgb, var(--panel) 50%, var(--background));
   min-height: 0;
   min-width: 0; // 防止撑宽父容器
@@ -99,16 +110,22 @@
 .card.cover-preview:hover { transform: none; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1); }
 
 .cover-preview {
-  // 设置最大尺寸以防止溢出，同时保持卡片比例
-  width: min(@card-width, calc(100vw - 100px)); // 确保不超出视口
+  // 适当缩小尺寸为布局按钮留出空间
+  width: min(280px, calc(100vw - 120px)); // 缩小固定宽度并增加边距
   height: auto;
-  max-height: calc(100vh - 200px); // 确保不超出视口高度
+  max-height: calc(100vh - 300px); // 增加底部空间给布局按钮
   aspect-ratio: @card-width / @card-height; // 保持宽高比
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
 
+  // 在较小屏幕上进一步缩小
+  @media (max-width: 1200px) {
+    width: min(240px, calc(100vw - 100px));
+    max-height: calc(100vh - 280px);
+  }
+
   // 如果高度受限，则按高度来计算宽度
   @media (max-height: 700px) {
-    height: calc(100vh - 250px);
+    height: calc(100vh - 320px); // 为布局按钮留出更多空间
     width: auto;
   }
 }
@@ -117,14 +134,17 @@
 .layout-selection-section {
   background: var(--panel);
   border-top: 1px solid var(--border);
-  padding: 24px;
+  padding: 16px; // 减少padding
   flex-shrink: 0;
+  min-height: 80px; // 进一步减少最小高度，为5个按钮提供足够空间
+  display: flex;
+  flex-direction: column;
 
   h3 {
     font-size: @font-size-lg;
     font-weight: 600;
     color: var(--text);
-    margin: 0 0 16px 0;
+    margin: 0 0 12px 0; // 减少底部边距
   }
 }
 
@@ -149,10 +169,18 @@
   padding-right: 24px;
 }
 
-// 提升选择器特异性，确保封面页布局选择区的按钮缩小生效
+// 提升选择器特异性，确保封面页布局选择区的按钮样式生效
 .cover-design-page .layout-selection-section .layout-card {
   padding: 6px;
   gap: 4px;
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px;
+  min-height: 50px;
+  max-width: 50px;
+  max-height: 50px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 .cover-design-page .layout-selection-section .layout-preview {
   width: 20px;
@@ -183,11 +211,18 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+  flex: 1; // 占用可用空间
 
-  // 在封面页的布局选择区域中使用6列紧凑布局
+  // 在封面页的布局选择区域中使用5列布局，居中显示
   .layout-selection-section & {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: clamp(6px, 1.5vw, 12px); // 减小动态间距，最小6px，最大12px
+    flex-wrap: nowrap; // 禁止换行，强制一行显示
+    max-width: 100%;
+    width: 100%;
+    overflow-x: auto; // 如果空间不足，允许水平滚动
   }
 
   // 在右侧编辑面板中使用单列
@@ -203,7 +238,7 @@
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: @content-border-radius;
   cursor: pointer;
   transition: all 0.2s ease;
   background: var(--background);
@@ -226,10 +261,17 @@
     text-align: left;
   }
 
-  // 在封面页的布局选择区域中缩小按钮尺寸
+  // 在封面页的布局选择区域中调整按钮尺寸为正方形
   .layout-selection-section & {
     gap: 4px;
     padding: 6px;
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    max-width: 50px;
+    max-height: 50px;
+    flex-shrink: 0; // 防止在flex布局中被压缩
   }
 }
 
@@ -249,7 +291,7 @@
     margin-bottom: 0;
   }
 
-  // 在封面页布局选择区域进一步缩小
+  // 在封面页布局选择区域调整图标尺寸
   .layout-selection-section & {
     width: 20px;
     height: 15px;
@@ -311,6 +353,11 @@
     font-weight: 600;
     color: var(--text);
   }
+
+  // 当使用form-label-with-sync时，重置gap
+  .form-label-with-sync + * {
+    margin-top: 0;
+  }
 }
 
 .form-input, .form-textarea {
@@ -339,12 +386,111 @@
   line-height: 1.5;
 }
 
+// Radio button 样式
+.radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: @font-size-sm;
+  color: var(--text);
+
+  input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--background);
+    cursor: pointer;
+    appearance: none;
+    position: relative;
+    transition: all 0.2s ease;
+
+    &:checked {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    &:checked::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+    }
+
+    &:hover {
+      border-color: var(--accent);
+    }
+  }
+
+  span {
+    font-weight: 500;
+  }
+
+  &:hover {
+    color: var(--accent);
+  }
+}
+
+// Form label with sync button
+.form-label-with-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  label {
+    margin: 0;
+    flex: 1;
+  }
+}
+
+.sync-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  margin-left: 8px;
+
+  &:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--background));
+    color: var(--accent);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
 // 图片上传区域
 .image-upload-area {
   .upload-zone {
     border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 24px;
+    border-radius: @content-border-radius;
+    padding: 3px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -511,7 +657,7 @@
   right: 12px;
   background: rgba(0, 0, 0, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: @content-border-radius;
   padding: 8px;
   z-index: 10;
   backdrop-filter: blur(12px);
@@ -737,13 +883,31 @@
 // 不同布局的样式
 // 所有布局都加上平滑过渡效果
 .cover {
-  .cover-content, .title-overlay, .cover-overlay {
-    transition: all 0.4s ease;
+  // 为整个封面容器添加过渡动画
+  transition: all 0.4s ease;
+
+  .cover-content, .title-overlay, .cover-overlay, .cover-background {
+    transition: all 0.4s ease,
+                height 0.4s ease,
+                flex 0.4s ease,
+                order 0.4s ease,
+                padding 0.4s ease,
+                margin 0.4s ease,
+                border-radius 0.4s ease;
   }
 
   .title, .summary {
     transition: all 0.3s ease;
     text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.9);
+  }
+
+  .meta {
+    transition: all 0.4s ease,
+                opacity 0.4s ease,
+                visibility 0.4s ease,
+                position 0.4s ease,
+                background 0.4s ease,
+                color 0.4s ease;
   }
 
   // 编辑状态样式
@@ -826,11 +990,20 @@
   }
 
   .summary {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    margin: 0;
+    padding: 0;
   }
 
   .meta {
-    display: none;
+    // 在极简布局中，meta条仍然可以通过showMeta控制显示/隐藏
+    // 但使用较小的样式以保持极简的设计感
+    font-size: 10px;
+    opacity: 0.8;
+    background: rgba(0,0,0,0.3);
+    padding: 8px (@card-content-padding) 8px (@card-content-padding + 8px);
   }
 }
 
@@ -850,6 +1023,23 @@
     justify-content: center;
     text-align: center;
   }
+
+  .summary {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+  }
+
+  .meta {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+  }
+
+  .cover-overlay {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 // 3. 图上布局
@@ -859,36 +1049,90 @@
   .cover-background {
     height: 50%;
     position: relative;
+    order: 1; // 图片在上方
+    transition: all 0.4s ease, height 0.4s ease, order 0.4s ease;
 
     img, .bg-html {
       height: 100%;
       object-fit: cover;
       filter: none;
+      transition: filter 0.4s ease;
     }
   }
 
   .cover-content {
-    height: 50%;
+    height: 50%; // 恢复为50%，不需要为meta留空间
     justify-content: center;
     align-items: center;
-    background: var(--card-bg);
+    background: color-mix(in srgb, var(--card-accent) 5%, var(--card-bg)); // 使用主题色混合背景
     position: relative;
-    z-index: 3;
+    z-index: 1; // 降低z-index，让meta显示在上层
+    order: 2; // 内容在下方
+    transition: all 0.4s ease, height 0.4s ease, order 0.4s ease, background 0.4s ease;
   }
 
   .title-overlay {
     background: none;
     backdrop-filter: none;
     color: var(--card-text);
+    transition: all 0.3s ease, background 0.4s ease, backdrop-filter 0.4s ease;
   }
 
   .title, .summary {
     color: var(--card-text);
     text-shadow: none;
+    transition: all 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
   }
 
   .cover-overlay {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  .summary {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    position: static; // 重置杂志布局的绝对定位
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-top: 0; // 重置杂志布局的margin-top
+    text-align: center; // 重置杂志布局的左对齐
+  }
+
+  .cover-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  // 图上布局的meta条定位在卡片底部
+  .meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: @font-size-sm;
+    padding: 12px (@card-content-padding) 12px (@card-content-padding + 8px);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: @card-border-radius;
+    border-bottom-right-radius: @card-border-radius;
+    backdrop-filter: blur(4px);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    .flex-start();
+    gap: 8px;
+    opacity: 1;
+    visibility: visible;
+    height: auto;
   }
 }
 
@@ -897,23 +1141,27 @@
   .flex-column();
 
   .cover-content {
-    height: 50%;
+    height: 50%; // 恢复为50%，不需要为meta留空间
     justify-content: center;
     align-items: center;
-    background: var(--card-bg);
+    background: color-mix(in srgb, var(--card-accent) 5%, var(--card-bg)); // 使用主题色混合背景
     position: relative;
-    z-index: 3;
-    order: -1;
+    z-index: 1; // 降低z-index，让meta显示在上层
+    order: 1; // 内容在上方
+    transition: all 0.4s ease, height 0.4s ease, order 0.4s ease, background 0.4s ease;
   }
 
   .cover-background {
     height: 50%;
     position: relative;
+    order: 2; // 图片在下方
+    transition: all 0.4s ease, height 0.4s ease, order 0.4s ease;
 
     img, .bg-html {
       height: 100%;
       object-fit: cover;
       filter: none;
+      transition: filter 0.4s ease;
     }
   }
 
@@ -921,15 +1169,66 @@
     background: none;
     backdrop-filter: none;
     color: var(--card-text);
+    height: auto; // 重置杂志布局的固定高度
+    margin-bottom: 0; // 重置杂志布局的底部边距
+    transition: all 0.3s ease, background 0.4s ease, backdrop-filter 0.4s ease, height 0.4s ease, margin-bottom 0.4s ease;
   }
 
   .title, .summary {
     color: var(--card-text);
     text-shadow: none;
+    transition: all 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
   }
 
   .cover-overlay {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  .summary {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    position: static; // 重置杂志布局的绝对定位
+    top: auto;
+    left: auto;
+    right: auto;
+    margin-top: 0; // 重置杂志布局的margin-top
+    text-align: center; // 重置杂志布局的左对齐
+  }
+
+  .cover-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+  }
+
+  // 图下布局的meta条定位在卡片底部
+  .meta {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: @font-size-sm;
+    padding: 12px (@card-content-padding) 12px (@card-content-padding + 8px);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-left-radius: @card-border-radius;
+    border-bottom-right-radius: @card-border-radius;
+    backdrop-filter: blur(4px);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    .flex-start();
+    gap: 8px;
+    opacity: 1;
+    visibility: visible;
+    height: auto;
   }
 }
 
@@ -940,33 +1239,54 @@
   }
 
   .cover-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     justify-content: flex-start;
-    padding-top: 16.67%; // 1/6 高度
-    height: 50%; // 上方 1/2
+    position: relative;
   }
 
   .title-overlay {
-    height: 33.33%; // 上方 1/2 的 1/3（即整体的 1/6）
+    height: 25%; // 占据上方1/4空间
+    display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
     text-align: center;
-    position: relative;
+    background: none;
+    backdrop-filter: none;
+    padding: 16px;
+    margin-bottom: 80%; // 与摘要间距1/4卡片高度
+    transition: height 0.4s ease, margin-bottom 0.4s ease, background 0.4s ease, backdrop-filter 0.4s ease;
   }
 
   .title {
     font-size: 24px;
     font-weight: 900;
     line-height: 1.2;
+    text-align: center;
+    margin: 0;
   }
 
   .summary {
     position: absolute;
+    top: 50%; // 距离顶部1/2位置开始
     left: 16px;
-    bottom: 16px;
+    right: 30%;
     font-size: @font-size-sm;
-    max-width: 40%;
-    text-align: left;
-    transform: scale(0.9);
-    transform-origin: left bottom;
+    text-align: left; // 左对齐
+    line-height: 1.4;
+    margin-top: 30%;
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+    transition: position 0.4s ease, top 0.4s ease, left 0.4s ease, right 0.4s ease, margin-top 0.4s ease, text-align 0.4s ease;
+  }
+
+  .meta {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
   }
 
   .cover-overlay {
@@ -975,68 +1295,11 @@
       color-mix(in srgb, var(--card-accent) 55%, transparent) 0%,
       color-mix(in srgb, var(--card-accent) 25%, transparent) 100%
     );
+    opacity: 1;
+    visibility: visible;
   }
 }
 
-// 6. 三段布局
-.cover-layout-three-section {
-  .flex-column();
-  padding: 12.5% 16px; // 上下 1/8 留白
-
-  .cover-content {
-    height: auto;
-    flex: none;
-    justify-content: flex-start;
-    margin-bottom: 16px;
-  }
-
-  .title-overlay {
-    background: none;
-    backdrop-filter: none;
-    padding: 0;
-    margin-bottom: 16px;
-  }
-
-  .title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 0;
-    text-align: center;
-  }
-
-  .summary {
-    display: block;
-    font-size: @font-size-sm;
-    text-align: center;
-    margin-top: 16px;
-    order: 2;
-  }
-
-  .cover-background {
-    height: auto;
-    flex: 1;
-    min-height: 120px;
-    order: 1;
-    margin: 16px 0;
-    border-radius: 8px;
-    overflow: hidden;
-
-    img, .bg-html {
-      height: 100%;
-      object-fit: cover;
-      filter: none;
-    }
-  }
-
-  .meta {
-    order: 3;
-    margin-top: auto;
-  }
-
-  .cover-overlay {
-    background: rgba(0,0,0,0.2);
-  }
-}
 
 .title-overlay {
   flex: 1;
@@ -1083,6 +1346,7 @@
   backdrop-filter: blur(4px);
   text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
+
 
 // .badge removed
 
