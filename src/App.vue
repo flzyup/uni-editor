@@ -121,7 +121,10 @@
                 />
                 <span class="scale-value small-text">{{ Math.round(cardScale * 100) }}%</span>
               </div>
-              <button v-if="previewMode === 'article'" class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
+              <template v-if="previewMode === 'article'">
+                <button class="btn" @click="copyForWeChat">{{ $t('main.copyAll') }}</button>
+                <button class="btn" @click="saveArticle">{{ $t('main.saveArticle') }}</button>
+              </template>
               <button v-if="previewMode === 'cards'" class="btn" @click="saveCards">{{ $t('main.saveCards') }}</button>
             </div>
           </div>
@@ -129,6 +132,7 @@
 
         <!-- 长文模式 -->
         <ArticlePreview
+          ref="articlePreviewRef"
           v-if="previewMode === 'article'"
           :html="html"
           :theme="previewTheme"
@@ -174,6 +178,7 @@ const { success, error, warning } = useToast()
 
 const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
+const articlePreviewRef = ref(null)
 const mainRef = ref(null)
 
 const html = ref('')
@@ -220,6 +225,19 @@ async function saveCards() {
     // 导出成功提示可以在CardsPreview组件内部处理
   } catch (err) {
     console.error('导出卡片失败:', err)
+    error($t('messages.exportFailed'))
+  }
+}
+
+async function saveArticle() {
+  if (!html.value) {
+    warning($t('messages.emptyContent'))
+    return
+  }
+  try {
+    await articlePreviewRef.value?.exportArticle?.()
+  } catch (err) {
+    console.error('导出长文失败:', err)
     error($t('messages.exportFailed'))
   }
 }

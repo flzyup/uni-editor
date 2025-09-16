@@ -20,6 +20,7 @@ export default {
     cardMode: 'Card Mode',
     copyAll: 'Copy All',
     saveCards: 'Save Cards',
+    saveArticle: 'Save Article',
     theme: 'Theme',
     scale: 'Scale'
   },

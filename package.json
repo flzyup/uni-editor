@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "highlight.js": "^11.11.1",
     "html-to-image": "^1.11.11",
     "juice": "^11.0.1",
     "vditor": "^3.11.2",

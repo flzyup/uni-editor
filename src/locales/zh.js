@@ -20,6 +20,7 @@ export default {
     cardMode: '卡片模式',
     copyAll: '全部复制',
     saveCards: '保存卡片',
+    saveArticle: '保存长文',
     theme: '主题',
     scale: '缩放'
   },

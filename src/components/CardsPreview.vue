@@ -36,7 +36,7 @@
                   <template v-else-if="coverBgHtml">
                     <div
                       class="bg-html"
-                      v-html="coverBgHtml"
+                      v-html="highlightedCoverBgHtml"
                       :style="{
                         transform: `scale(${props.scale})`,
                         transformOrigin: 'top left',
@@ -223,7 +223,7 @@
                 <template v-else-if="coverBgHtml">
                   <div
                     class="bg-html"
-                    v-html="coverBgHtml"
+                    v-html="highlightedCoverBgHtml"
                     :style="{
                       transform: `scale(${props.scale})`,
                       transformOrigin: 'top left',
@@ -313,6 +313,7 @@ import { ref, watch, nextTick, onMounted, onBeforeUnmount, computed } from 'vue'
 import * as htmlToImage from 'html-to-image'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '../composables/useToast'
+import { highlightCodeBlocks } from '../utils/highlight.js'
 
 const { t } = useI18n()
 const { success, error, warning } = useToast()
@@ -344,6 +345,11 @@ const cover = ref({
   imagePosition: 'center center',
 })
 const coverBgHtml = ref('')
+
+// Apply syntax highlighting to cover background HTML
+const highlightedCoverBgHtml = computed(() => {
+  return coverBgHtml.value ? highlightCodeBlocks(coverBgHtml.value) : ''
+})
 const imageInput = ref(null)
 
 // Meta显示控制
@@ -460,8 +466,10 @@ async function generate() {
     persistCardIndex()
     return
   }
+  // Apply syntax highlighting before processing
+  const highlightedHtml = highlightCodeBlocks(props.html)
   const parser = new DOMParser()
-  const doc = parser.parseFromString(props.html, 'text/html')
+  const doc = parser.parseFromString(highlightedHtml, 'text/html')
   const content = doc.body
   extractCoverData(content)
 
