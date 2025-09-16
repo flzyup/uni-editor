@@ -463,7 +463,6 @@ async function generate() {
   // 测量时使用的高度，确保与渲染时一致 - 使用物理高度而不是缩放后的高度
   const contentH = physicalContentH
 
-  console.log(`Container dimensions: cardH=${cardH}, pad=${pad}, physicalContentH=${physicalContentH}, contentH=${contentH}, scale=${props.scale}`)
 
   // Offscreen measurer - 创建一个和实际卡片完全一致的测量容器
   const temp = document.createElement('div')
@@ -494,7 +493,6 @@ async function generate() {
     return probe
   }
 
-  console.log(`=== Generate started: ${blocks.length} blocks total ===`)
 
   // 测试测量逻辑是否正确工作
   const testProbe = createScaledProbe()
@@ -503,17 +501,11 @@ async function generate() {
   temp.appendChild(testProbe)
   await new Promise(resolve => setTimeout(resolve, 10))
   const testHeight = testProbe.scrollHeight
-  console.log(`Measurement test: testHeight=${testHeight}, expected range: 20-100px`)
-
-  blocks.forEach((block, i) => {
-    console.log(`Block ${i}: ${block.type}`)
-  })
 
   const generated = []
   let acc = []
   
   for (let i = 0; i < blocks.length; i++) {
-    console.log(`\n--- Processing block ${i}/${blocks.length-1}: ${blocks[i].type} ---`)
     const block = blocks[i]
     const probe = createScaledProbe()
     
@@ -541,13 +533,6 @@ async function generate() {
       
       // 回到简单可靠的测量方法：scrollHeight * scale
       const scaledHeight = testProbe.scrollHeight * props.scale
-      console.log('Image block test:', {
-        scrollHeight: testProbe.scrollHeight,
-        scaledHeight: scaledHeight.toFixed(1),
-        scale: props.scale,
-        contentH,
-        fits: scaledHeight <= contentH
-      })
       if (scaledHeight <= contentH) {
         acc.push(block)
       } else {
@@ -572,9 +557,6 @@ async function generate() {
       const allowableOverage = 15 / props.scale // 按缩放比例调整允许的超出量
       const shouldCreateNewCard = overage > allowableOverage
 
-      console.log(`Regular block test: ${content} | scroll:${freshProbe.scrollHeight} | scaled:${scaledHeight.toFixed(1)} | contentH:${contentH} | overage:${overage.toFixed(1)} | newCard:${shouldCreateNewCard} | scale:${props.scale}`)
-      console.log(`  Block content preview: ${block.html.substring(0, 50).replace(/\n/g, ' ').replace(/<[^>]*>/g, '')}...`)
-      console.log(`  Probe styles: width=${freshProbe.style.width}, height=${freshProbe.style.height}`)
 
       if (shouldCreateNewCard) {
         // 如果当前累积内容不为空，先生成一张卡片
@@ -615,13 +597,6 @@ async function generate() {
             temp.innerHTML = ''
             temp.appendChild(singleProbe)
             const singleScaledHeight = singleProbe.scrollHeight * props.scale
-            console.log('Single block check:', {
-              type: block.type,
-              scrollHeight: singleProbe.scrollHeight,
-              scaledHeight: singleScaledHeight.toFixed(1),
-              contentH,
-              tooLarge: singleScaledHeight > contentH
-            })
             if (singleScaledHeight > contentH) {
               // 如果单个元素太大，尝试截断（但不截断图片和标题）
               if (block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
@@ -638,8 +613,6 @@ async function generate() {
   }
   
   if (acc.length) generated.push({ type: 'content', html: acc.map(b => b.html).join('') })
-
-  console.log(`=== Generate completed: ${generated.length} cards generated ===`)
 
   // Debug actual content heights after generation
   setTimeout(() => {
@@ -669,53 +642,9 @@ async function generate() {
       const isOverflowingHeight = scaledContentHeight > availableHeight
       const isOverflowingWidth = scaledContentWidth > availableWidth
 
-      console.log(`=== Card ${i} Debug Info ===`)
-      console.log('Card dimensions:', { width: cardWidth, height: cardHeight })
-      console.log('Inner dimensions:', { width: innerWidth, height: innerHeight })
-      console.log('Content scroll dimensions:', { width: contentWidth, height: contentHeight })
-      console.log('Scaled content dimensions:', { width: scaledContentWidth, height: scaledContentHeight })
-      console.log('Overflow check:', {
-        heightOverflow: isOverflowingHeight ? `${scaledContentHeight - availableHeight}px` : 'none',
-        widthOverflow: isOverflowingWidth ? `${scaledContentWidth - availableWidth}px` : 'none'
-      })
-      console.log('CSS properties:', {
-        contentTransform: contentStyle.transform,
-        contentPosition: contentStyle.position,
-        innerOverflow: innerStyle.overflow,
-        cardOverflow: cardStyle.overflow,
-        contentBoxSizing: contentStyle.boxSizing
-      })
-
-      const utilization = availableHeight > 0 ? ((scaledContentHeight / availableHeight) * 100).toFixed(1) : '0.0'
-      const wastedSpace = availableHeight - scaledContentHeight
-      console.log('Utilization:', `${utilization}% (${scaledContentHeight}/${availableHeight})`)
-      console.log('Wasted space:', wastedSpace)
-      console.log('Scale factor:', props.scale)
-      console.log('====================')
     })
   }, 200)
 
-  generated.forEach((card, i) => {
-    if (card.type === 'cover') {
-      console.log(`Card ${i}: cover`)
-    } else {
-      const content = card.html.length > 100 ? card.html.substring(0, 100) + '...' : card.html
-      console.log(`Card ${i}: content (${card.html.length} chars) - ${content.replace(/\n/g, ' ').replace(/<[^>]*>/g, '')}`)
-
-      // 测试这张卡片的实际高度利用率
-      setTimeout(() => {
-        const testProbe = createScaledProbe()
-        testProbe.innerHTML = card.html
-        temp.appendChild(testProbe)
-        setTimeout(() => {
-          const scaledHeight = testProbe.scrollHeight * props.scale
-          const utilization = contentH > 0 ? ((scaledHeight / contentH) * 100).toFixed(1) : '0'
-          console.log(`  -> Final card ${i} utilization: ${scaledHeight.toFixed(1)}/${contentH} = ${utilization}%`)
-          temp.removeChild(testProbe)
-        }, 50)
-      }, i * 20)
-    }
-  })
 
   // Determine cover background when no image: use second card content HTML if available
   if (!cover.value.coverImage) {
@@ -729,7 +658,9 @@ async function generate() {
     coverBgHtml.value = ''
   }
 
-  cards.value = generated
+  // 确保封面卡片始终在第一位
+  const finalCards = [{ type: 'cover' }, ...generated]
+  cards.value = finalCards
   document.body.removeChild(temp)
 
   // 恢复保存的卡片索引，确保不超出范围
@@ -915,7 +846,7 @@ function handleScroll() {
     let closestIndex = 0
     let closestDistance = Infinity
     
-    cards.value.forEach((card, index) => {
+    cards.value.forEach((_, index) => {
       const cardCenter = paddingLeft + index * cardWidth + 324 / 2
       const distance = Math.abs(cardCenter - stripCenter)
       
@@ -931,67 +862,89 @@ function handleScroll() {
 }
 
 async function exportAll() {
+  // 总是导出所有卡片（包括封面），不管在哪个tab
+  await exportAllCards()
+}
+
+
+
+async function exportAllCards() {
+  // 保存当前tab状态
+  const originalTab = currentTab.value
+
+  try {
+    // 强制切换到卡片模式来生成和导出所有卡片
+    currentTab.value = 'cards'
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 500)) // 等待DOM更新和样式应用
+
+    const result = await doExportAllCards()
+    return result
+  } finally {
+    // 无论成功还是失败，都恢复原来的tab
+    currentTab.value = originalTab
+    await nextTick()
+  }
+}
+
+async function doExportAllCards() {
   if (!stripRef.value) return
+
   exporting.value = true
   await nextTick()
+
+  // 只导出卡片列表中的所有卡片（包括封面卡片）
   const nodes = Array.from(stripRef.value.querySelectorAll('.card'))
-  let i = 1
-  for (const node of nodes) {
-    const cs = window.getComputedStyle(node)
-    const bg = cs.backgroundColor || '#ffffff'
 
-    // 特殊处理封面页面，确保blur效果被正确导出
-    let processedNode = node
-    let needsCleanup = false
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]
+    const isCover = node.querySelector('.cover') || node.classList.contains('cover')
 
-    if (node.classList.contains('cover')) {
-      // 克隆封面节点以避免修改原始DOM
-      processedNode = node.cloneNode(true)
-
-      // 确保blur效果在克隆的节点中正确应用
-      const bgHtml = processedNode.querySelector('.bg-html')
-      if (bgHtml) {
-        // 临时移除可能导致导出问题的样式
-        bgHtml.style.willChange = 'auto'
-        bgHtml.style.contain = 'none'
-
-        // 确保transform和filter样式被正确继承
-        const computedStyle = window.getComputedStyle(bgHtml)
-        bgHtml.style.filter = computedStyle.filter
-        bgHtml.style.opacity = computedStyle.opacity
-        bgHtml.style.transform = computedStyle.transform
-      }
-
-      needsCleanup = true
+    let suffix
+    if (isCover) {
+      suffix = '00-封面'
+    } else {
+      // 内容卡片编号，需要考虑封面卡片的存在
+      const coverExists = nodes.some(n => n.querySelector('.cover') || n.classList.contains('cover'))
+      const contentIndex = coverExists ? i : i + 1 // 如果有封面，内容卡片从当前索引开始；否则从索引+1开始
+      suffix = String(contentIndex).padStart(2, '0')
     }
 
-    try {
-      const dataUrl = await htmlToImage.toPng(processedNode, {
-        pixelRatio: 3,
-        backgroundColor: bg,
-        // 提高导出质量，特别是对于有复杂效果的元素
-        quality: 1.0,
-        // 确保包含所有样式
-        includeQueryParams: true,
-        // 处理可能的跨域图片
-        skipFonts: false,
-        // 增加超时时间
-        timeout: 30000
-      })
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = `uni-card-${i++}.png`
-      a.click()
-    } catch (e) {
-      console.error('导出失败', e)
-    }
-
-    // 如果创建了临时节点，需要清理
-    if (needsCleanup && processedNode !== node) {
-      // 临时节点会在下次垃圾回收时被清理
-    }
+    await exportSingleCard(node, suffix, isCover)
   }
+
+  alert(t('messages.exportSuccess'))
   exporting.value = false
+}
+
+async function exportSingleCard(node, suffix, isCover = false) {
+  const cs = window.getComputedStyle(node)
+  const bg = cs.backgroundColor || '#ffffff'
+
+  try {
+    const dataUrl = await htmlToImage.toPng(node, {
+      pixelRatio: 2,
+      backgroundColor: bg
+    })
+
+    if (!dataUrl || dataUrl.length < 100) {
+      return
+    }
+
+    // 使用标题名称作为文件名前缀
+    const title = cover.value.title || t('cardsPreview.title')
+    const sanitizedTitle = title.replace(/[<>:"/\\|?*]/g, '_').substring(0, 50)
+
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = `${sanitizedTitle}-${suffix}.png`
+    a.click()
+
+    // 添加小延迟避免浏览器阻止多个下载
+    await new Promise(resolve => setTimeout(resolve, 200))
+  } catch (e) {
+    // 静默处理错误
+  }
 }
 
 function loadCardIndex() {

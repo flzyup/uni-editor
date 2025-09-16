@@ -206,7 +206,13 @@ async function copyForWeChat() {
 
 
 async function saveCards() {
-  await cardsPreviewRef.value?.exportAll?.()
+  try {
+    await cardsPreviewRef.value?.exportAll?.()
+    // 导出成功提示可以在CardsPreview组件内部处理
+  } catch (error) {
+    console.error('导出卡片失败:', error)
+    alert($t('messages.exportFailed'))
+  }
 }
 
 
