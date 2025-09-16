@@ -6,7 +6,6 @@
         <div class="logo-text">Uni Editor</div>
       </a>
       <div class="toolbar">
-        <div class="toolbar-hint">{{ $t('header.hint') }}</div>
         <div class="spacer" />
         <a
           href="https://github.com/flzyup/uni-editor"
@@ -257,21 +256,23 @@ function handleResize(event) {
   const deltaX = event.clientX - initialMouseX.value
   const mainWidth = mainRef.value.clientWidth
   const splitterWidth = 6 // splitter width
+  const panelPadding = 32 // 16px * 2 for left and right padding
+  const availableWidth = mainWidth - panelPadding
   const minPanelWidth = 300 // minimum panel width
 
   const newLeftWidth = Math.max(
     minPanelWidth,
     Math.min(
-      mainWidth - splitterWidth - minPanelWidth,
+      availableWidth - splitterWidth - minPanelWidth,
       initialLeftWidth.value + deltaX
     )
   )
 
   leftPanelWidth.value = newLeftWidth
-  rightPanelWidth.value = mainWidth - splitterWidth - newLeftWidth
+  rightPanelWidth.value = availableWidth - splitterWidth - newLeftWidth
 
-  // Persist the split ratio
-  const splitRatio = newLeftWidth / mainWidth
+  // Persist the split ratio based on available width
+  const splitRatio = newLeftWidth / availableWidth
   try {
     localStorage.setItem('uni.splitRatio', String(splitRatio))
   } catch {}
@@ -290,6 +291,10 @@ function initializePanelSizes() {
 
   const mainWidth = mainRef.value.clientWidth
   const splitterWidth = 6
+  const panelPadding = 32 // 16px * 2 for left and right padding
+
+  // Available width after accounting for padding
+  const availableWidth = mainWidth - panelPadding
 
   // Try to restore saved split ratio
   let splitRatio = 0.5 // default 50/50 split
@@ -303,8 +308,8 @@ function initializePanelSizes() {
     }
   } catch {}
 
-  leftPanelWidth.value = Math.floor(mainWidth * splitRatio)
-  rightPanelWidth.value = mainWidth - splitterWidth - leftPanelWidth.value
+  leftPanelWidth.value = Math.floor(availableWidth * splitRatio)
+  rightPanelWidth.value = availableWidth - splitterWidth - leftPanelWidth.value
 }
 
 function handleWindowResize() {

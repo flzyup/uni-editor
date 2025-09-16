@@ -2,7 +2,6 @@ export default {
   // 头部导航
   header: {
     logo: 'Uni Editor',
-    hint: '所有的内容均保存在本地缓存，请放心编辑使用!',
     github: 'GitHub',
     feedback: '意见反馈',
     features: '已支持功能',

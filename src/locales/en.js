@@ -2,7 +2,6 @@ export default {
   // Header navigation
   header: {
     logo: 'Uni Editor',
-    hint: 'Content is saved in the local cache only. Please feel free & safe to edit and use it.',
     github: 'GitHub',
     feedback: 'Feedback',
     features: 'Supported Features',
