@@ -78,12 +78,12 @@
               :key="layout.id"
               class="layout-card"
               :class="{ active: currentCoverLayout === layout.id }"
+              :title="layout.description"
               @click="changeCoverLayout(layout.id)"
             >
               <div class="layout-preview" v-html="layout.icon"></div>
               <div class="layout-info">
                 <div class="layout-name">{{ layout.name }}</div>
-                <div class="layout-desc">{{ layout.description }}</div>
               </div>
             </div>
           </div>

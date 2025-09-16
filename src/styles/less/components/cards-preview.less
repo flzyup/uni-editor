@@ -24,9 +24,9 @@
   gap: 4px;
   padding: 12px 8px;
   margin: 4px 8px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -35,13 +35,14 @@
   .focus-ring();
 
   &:hover {
-    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
     color: var(--text);
   }
 
   &.active {
     background: var(--accent);
-    color: white;
+    color: var(--panel);
+    font-weight: 600;
   }
 
   svg {
@@ -73,16 +74,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  padding: 24px;
   background: color-mix(in srgb, var(--panel) 50%, var(--background));
   min-height: 0;
   min-width: 0; // 防止撑宽父容器
+  overflow: hidden; // 防止内容溢出
 }
 
 .preview-container {
   position: relative;
   max-width: 100%;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 // 取消封面预览的缩放，保持固定展示尺寸
@@ -94,10 +99,18 @@
 .card.cover-preview:hover { transform: none; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1); }
 
 .cover-preview {
-  // 使用固定尺寸确保预览效果
-  width: @card-width;
-  height: @card-height;
+  // 设置最大尺寸以防止溢出，同时保持卡片比例
+  width: min(@card-width, calc(100vw - 100px)); // 确保不超出视口
+  height: auto;
+  max-height: calc(100vh - 200px); // 确保不超出视口高度
+  aspect-ratio: @card-width / @card-height; // 保持宽高比
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  // 如果高度受限，则按高度来计算宽度
+  @media (max-height: 700px) {
+    height: calc(100vh - 250px);
+    width: auto;
+  }
 }
 
 // 布局选择区域
@@ -138,15 +151,16 @@
 
 // 提升选择器特异性，确保封面页布局选择区的按钮缩小生效
 .cover-design-page .layout-selection-section .layout-card {
-  padding: 8px;
-  gap: 6px;
+  padding: 6px;
+  gap: 4px;
 }
 .cover-design-page .layout-selection-section .layout-preview {
-  width: 24px;
-  height: 18px;
+  width: 20px;
+  height: 15px;
 }
 .cover-design-page .layout-selection-section .layout-name {
-  font-size: @font-size-xs;
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .edit-section {
@@ -170,9 +184,10 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 
-  // 在封面页的布局选择区域中使用单列
+  // 在封面页的布局选择区域中使用6列紧凑布局
   .layout-selection-section & {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
   }
 
   // 在右侧编辑面板中使用单列
@@ -213,8 +228,8 @@
 
   // 在封面页的布局选择区域中缩小按钮尺寸
   .layout-selection-section & {
-    gap: 6px;
-    padding: 8px;
+    gap: 4px;
+    padding: 6px;
   }
 }
 
@@ -236,8 +251,8 @@
 
   // 在封面页布局选择区域进一步缩小
   .layout-selection-section & {
-    width: 24px;
-    height: 18px;
+    width: 20px;
+    height: 15px;
   }
 }
 
@@ -607,7 +622,7 @@
 }
 
 .layout-name {
-  color: white;
+  color: var(--text);
   font-size: 10px;
   text-align: center;
   line-height: 1.2;
