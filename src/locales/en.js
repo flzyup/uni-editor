@@ -53,6 +53,8 @@ export default {
     showMeta: 'Show Info Bar',
     show: 'Show',
     hide: 'Hide',
+    wordCount: 'Full text {count} words',
+    readingTime: 'Reading time {minutes} min',
     syncTitle: 'Sync title from editor',
     syncSummary: 'Sync summary from editor',
     syncCoverImage: 'Sync cover image from editor',
@@ -129,6 +131,21 @@ export default {
     invalidImageFormat: 'Please select JPG or PNG format image'
   },
 
+  // Loading text
+  loading: {
+    // Article export
+    articlePreparing: 'Preparing to export...',
+    articleAdjusting: 'Adjusting export styles...',
+    articleGenerating: 'Generating image...',
+    articleSaving: 'Saving file...',
+    articleSuccess: 'Article saved successfully',
+
+    // Cards export
+    cardsPreparing: 'Preparing to export cards...',
+    cardsTotal: 'Preparing to export {count} cards...',
+    cardsExporting: 'Exporting card {current} of {total} ({current}/{total})...',
+    cardsComplete: 'Export completed!'
+  },
 
   // Footer copyright
   footer: {

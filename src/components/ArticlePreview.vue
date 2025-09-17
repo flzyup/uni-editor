@@ -43,7 +43,7 @@ async function exportArticle() {
   }
 
   isExporting.value = true
-  loadingText.value = '正在准备导出...'
+  loadingText.value = t('loading.articlePreparing')
 
   try {
     // 保存原始样式
@@ -55,7 +55,7 @@ async function exportArticle() {
       minWidth: articleContentRef.value.style.minWidth
     }
 
-    loadingText.value = '正在调整导出样式...'
+    loadingText.value = t('loading.articleAdjusting')
 
     // 临时调整样式用于导出
     articleContentRef.value.style.borderRadius = '0'
@@ -67,7 +67,7 @@ async function exportArticle() {
     // 等待样式应用
     await new Promise(resolve => setTimeout(resolve, 200))
 
-    loadingText.value = '正在生成图片...'
+    loadingText.value = t('loading.articleGenerating')
 
     const dataUrl = await htmlToImage.toPng(articleContentRef.value, {
       quality: 1,
@@ -89,7 +89,7 @@ async function exportArticle() {
     articleContentRef.value.style.maxWidth = original.maxWidth
     articleContentRef.value.style.minWidth = original.minWidth
 
-    loadingText.value = '正在保存文件...'
+    loadingText.value = t('loading.articleSaving')
 
     // 创建下载链接
     const link = document.createElement('a')
@@ -97,7 +97,7 @@ async function exportArticle() {
     link.href = dataUrl
     link.click()
 
-    success(t('messages.exportSuccess') || '长文保存成功')
+    success(t('loading.articleSuccess'))
   } catch (err) {
     console.error('导出长文失败:', err)
     error(t('messages.exportFailed') || '导出长文失败，请重试')

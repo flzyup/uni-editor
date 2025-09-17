@@ -62,8 +62,8 @@
                   </div>
                 </div>
                 <div v-if="showMeta" class="meta">
-                  <span>全文 {{ cover.wordCount }} 字</span>
-                  <span>阅读需 {{ cover.minutes }} 分钟</span>
+                  <span>{{ t('cardsPreview.wordCount', { count: cover.wordCount }) }}</span>
+                  <span>{{ t('cardsPreview.readingTime', { minutes: cover.minutes }) }}</span>
                 </div>
               </div>
             </div>
@@ -246,8 +246,8 @@
                 </div>
               </div>
               <div v-if="showMeta" class="meta">
-                <span>全文 {{ cover.wordCount }} 字</span>
-                <span>阅读需 {{ cover.minutes }} 分钟</span>
+                <span>{{ t('cardsPreview.wordCount', { count: cover.wordCount }) }}</span>
+                <span>{{ t('cardsPreview.readingTime', { minutes: cover.minutes }) }}</span>
               </div>
             </div>
           </template>
@@ -933,33 +933,34 @@ async function doExportAllCards() {
   if (!stripRef.value) return
 
   exporting.value = true
-  loadingText.value = '正在准备导出卡片...'
+  loadingText.value = t('loading.cardsPreparing')
   await nextTick()
 
   // 只导出卡片列表中的所有卡片（包括封面卡片）
   const nodes = Array.from(stripRef.value.querySelectorAll('.card'))
-  loadingText.value = `准备导出 ${nodes.length} 张卡片...`
+  loadingText.value = t('loading.cardsTotal', { count: nodes.length })
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]
     const isCover = node.querySelector('.cover') || node.classList.contains('cover')
 
+    // 统一的进度显示：第 X 张卡片 (当前序号/总数)
+    loadingText.value = t('loading.cardsExporting', { current: i + 1, total: nodes.length })
+
     let suffix
     if (isCover) {
       suffix = '00-封面'
-      loadingText.value = '正在导出封面卡片...'
     } else {
       // 内容卡片编号，需要考虑封面卡片的存在
       const coverExists = nodes.some(n => n.querySelector('.cover') || n.classList.contains('cover'))
       const contentIndex = coverExists ? i : i + 1 // 如果有封面，内容卡片从当前索引开始；否则从索引+1开始
       suffix = String(contentIndex).padStart(2, '0')
-      loadingText.value = `正在导出第 ${contentIndex} 张卡片...`
     }
 
     await exportSingleCard(node, suffix, isCover)
   }
 
-  loadingText.value = '导出完成！'
+  loadingText.value = t('loading.cardsComplete')
   success(t('messages.exportSuccess'))
   exporting.value = false
 }

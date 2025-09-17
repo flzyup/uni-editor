@@ -53,6 +53,8 @@ export default {
     showMeta: '显示信息条',
     show: '显示',
     hide: '隐藏',
+    wordCount: '全文 {count} 字',
+    readingTime: '阅读需 {minutes} 分钟',
     syncTitle: '从编辑器同步标题',
     syncSummary: '从编辑器同步摘要',
     syncCoverImage: '从编辑器同步封面图',
@@ -129,6 +131,21 @@ export default {
     invalidImageFormat: '请选择JPG或PNG格式的图片'
   },
 
+  // Loading 文本
+  loading: {
+    // 长文导出
+    articlePreparing: '正在准备导出...',
+    articleAdjusting: '正在调整导出样式...',
+    articleGenerating: '正在生成图片...',
+    articleSaving: '正在保存文件...',
+    articleSuccess: '长文保存成功',
+
+    // 卡片导出
+    cardsPreparing: '正在准备导出卡片...',
+    cardsTotal: '准备导出 {count} 张卡片...',
+    cardsExporting: '正在导出第 {current} 张卡片 ({current}/{total})...',
+    cardsComplete: '导出完成！'
+  },
 
   // 底部版权
   footer: {
