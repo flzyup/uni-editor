@@ -69,10 +69,14 @@ async function exportArticle() {
 
     loadingText.value = t('loading.articleGenerating')
 
+    // 获取当前主题的背景色
+    const computedStyle = window.getComputedStyle(articleContentRef.value)
+    const cardBgColor = computedStyle.getPropertyValue('background-color') || '#ffffff'
+
     const dataUrl = await htmlToImage.toPng(articleContentRef.value, {
       quality: 1,
       pixelRatio: 2,
-      backgroundColor: '#ffffff',
+      backgroundColor: cardBgColor,
       style: {
         borderRadius: '0',
         boxShadow: 'none',
