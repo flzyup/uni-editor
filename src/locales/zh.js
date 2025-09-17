@@ -149,7 +149,10 @@ export default {
 
   // 底部版权
   footer: {
-    copyright: '© 2025 Uni Editor. All rights reserved.'
+    copyright: '© 2025 Uni Editor. All rights reserved.',
+    exportCredit: '使用 Uni Editor 制造',
+    ribbonCredit: 'Uni Editor',
+    exportLink: 'https://uni-editor.com'
   },
 
   // 主题名称

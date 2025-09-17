@@ -149,7 +149,10 @@ export default {
 
   // Footer copyright
   footer: {
-    copyright: '© 2025 Uni Editor. All rights reserved.'
+    copyright: '© 2025 Uni Editor. All rights reserved.',
+    exportCredit: 'Created with Uni Editor',
+    ribbonCredit: 'Uni Editor',
+    exportLink: 'https://uni-editor.com'
   },
 
   // Theme names

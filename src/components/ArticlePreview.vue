@@ -52,37 +52,146 @@ async function exportArticle() {
       boxShadow: articleContentRef.value.style.boxShadow,
       width: articleContentRef.value.style.width,
       maxWidth: articleContentRef.value.style.maxWidth,
-      minWidth: articleContentRef.value.style.minWidth
+      minWidth: articleContentRef.value.style.minWidth,
+      transform: articleContentRef.value.style.transform,
+      transformOrigin: articleContentRef.value.style.transformOrigin
     }
+
+    // 声明在更大作用域中
+    let allElements = []
+    let elementStyles = []
 
     loadingText.value = t('loading.articleAdjusting')
 
-    // 临时调整样式用于导出
+    // 临时调整样式用于导出，保持与预览一致的宽度
     articleContentRef.value.style.borderRadius = '0'
     articleContentRef.value.style.boxShadow = 'none'
-    articleContentRef.value.style.width = 'auto'
-    articleContentRef.value.style.maxWidth = 'none'
-    articleContentRef.value.style.minWidth = '600px'
+    articleContentRef.value.style.width = '496px'
+    articleContentRef.value.style.maxWidth = '496px'
+    articleContentRef.value.style.minWidth = '496px'
+    articleContentRef.value.style.transform = 'none'
+    articleContentRef.value.style.transformOrigin = 'initial'
+
+    // 清理内容中可能导致错位的样式
+    allElements = Array.from(articleContentRef.value.querySelectorAll('*'))
+    elementStyles = []
+
+    allElements.forEach((el, index) => {
+      // 保存原始样式
+      elementStyles[index] = {
+        transform: el.style.transform,
+        transformOrigin: el.style.transformOrigin,
+        position: el.style.position,
+        top: el.style.top,
+        left: el.style.left,
+        right: el.style.right,
+        bottom: el.style.bottom
+      }
+
+      // 清理可能导致错位的样式
+      if (el.style.transform && el.style.transform !== 'none') {
+        el.style.transform = 'none'
+      }
+      if (el.style.position === 'absolute' || el.style.position === 'fixed') {
+        el.style.position = 'static'
+      }
+    })
 
     // 等待样式应用
-    await new Promise(resolve => setTimeout(resolve, 200))
+    await new Promise(resolve => setTimeout(resolve, 300))
 
     loadingText.value = t('loading.articleGenerating')
 
-    // 获取当前主题的背景色
+    // 获取当前主题的颜色值
     const computedStyle = window.getComputedStyle(articleContentRef.value)
     const cardBgColor = computedStyle.getPropertyValue('background-color') || '#ffffff'
+    const cardTextColor = computedStyle.getPropertyValue('color') || '#333333'
 
+    // 获取主题色（从容器的CSS变量中获取）
+    const containerStyle = window.getComputedStyle(articleContentRef.value.parentElement)
+    const accentColor = containerStyle.getPropertyValue('--card-accent') || '#3b82f6'
+
+    // 创建宣传 footer 元素
+    const footer = document.createElement('div')
+    footer.className = 'export-footer'
+    footer.innerHTML = `
+      <div class="footer-divider"></div>
+      <div class="footer-content">
+        <span class="footer-text">${t('footer.exportCredit')}</span>
+        <span class="footer-link">${t('footer.exportLink')}</span>
+      </div>
+    `
+    footer.style.cssText = `
+      margin-top: 40px;
+      padding: 20px 0;
+      text-align: center;
+      font-size: 12px;
+      color: ${cardTextColor};
+      opacity: 0.6;
+    `
+    footer.querySelector('.footer-divider').style.cssText = `
+      width: 60px;
+      height: 1px;
+      background: ${accentColor};
+      margin: 0 auto 12px;
+      opacity: 0.3;
+    `
+    footer.querySelector('.footer-content').style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    `
+    footer.querySelector('.footer-text').style.cssText = `
+      font-weight: 500;
+    `
+    footer.querySelector('.footer-link').style.cssText = `
+      font-family: 'Courier New', monospace;
+      font-weight: 400;
+      opacity: 0.8;
+    `
+
+    // 临时添加 footer
+    articleContentRef.value.appendChild(footer)
+
+    // 使用更保守的配置来避免渲染问题
     const dataUrl = await htmlToImage.toPng(articleContentRef.value, {
       quality: 1,
-      pixelRatio: 2,
+      pixelRatio: 1,  // 降低像素比例避免渲染问题
       backgroundColor: cardBgColor,
+      cacheBust: true,  // 避免缓存问题
+      imagePlaceholder: undefined,
+      skipAutoScale: true,
       style: {
         borderRadius: '0',
         boxShadow: 'none',
-        width: 'auto',
-        maxWidth: 'none',
-        minWidth: '600px'
+        width: '496px',
+        maxWidth: '496px',
+        minWidth: '496px',
+        transform: 'none',
+        transformOrigin: 'initial',
+        position: 'relative',
+        display: 'block',
+        margin: '0',
+        padding: '16px',
+        boxSizing: 'border-box'
+      }
+    })
+
+    // 移除临时 footer
+    articleContentRef.value.removeChild(footer)
+
+    // 恢复所有元素的原始样式
+    allElements.forEach((el, index) => {
+      if (elementStyles[index]) {
+        el.style.transform = elementStyles[index].transform || ''
+        el.style.transformOrigin = elementStyles[index].transformOrigin || ''
+        el.style.position = elementStyles[index].position || ''
+        el.style.top = elementStyles[index].top || ''
+        el.style.left = elementStyles[index].left || ''
+        el.style.right = elementStyles[index].right || ''
+        el.style.bottom = elementStyles[index].bottom || ''
       }
     })
 
@@ -92,6 +201,8 @@ async function exportArticle() {
     articleContentRef.value.style.width = original.width
     articleContentRef.value.style.maxWidth = original.maxWidth
     articleContentRef.value.style.minWidth = original.minWidth
+    articleContentRef.value.style.transform = original.transform
+    articleContentRef.value.style.transformOrigin = original.transformOrigin
 
     loadingText.value = t('loading.articleSaving')
 

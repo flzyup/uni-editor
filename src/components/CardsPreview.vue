@@ -957,7 +957,7 @@ async function doExportAllCards() {
       suffix = String(contentIndex).padStart(2, '0')
     }
 
-    await exportSingleCard(node, suffix, isCover)
+    await exportSingleCard(node, suffix, isCover, i === nodes.length - 1)
   }
 
   loadingText.value = t('loading.cardsComplete')
@@ -965,9 +965,74 @@ async function doExportAllCards() {
   exporting.value = false
 }
 
-async function exportSingleCard(node, suffix, isCover = false) {
+async function exportSingleCard(node, suffix, isCover = false, isLastCard = false) {
   const cs = window.getComputedStyle(node)
   const bg = cs.backgroundColor || '#ffffff'
+
+  let footer = null
+  let originalPosition = ''
+
+  // 如果是最后一张卡片，添加宣传信息
+  if (isLastCard) {
+    const cardTextColor = cs.getPropertyValue('color') || '#333333'
+    const containerStyle = window.getComputedStyle(node.parentElement)
+    const accentColor = containerStyle.getPropertyValue('--card-accent') || '#3b82f6'
+
+    footer = document.createElement('div')
+    footer.className = 'export-footer'
+    footer.innerHTML = `
+      <div class="footer-divider"></div>
+      <div class="footer-content">
+        <span class="footer-text">${t('footer.exportCredit')}</span>
+        <span class="footer-link">${t('footer.exportLink')}</span>
+      </div>
+    `
+    footer.style.cssText = `
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 10px;
+      color: ${cardTextColor};
+      opacity: 0.6;
+      width: 90%;
+      z-index: 1000;
+    `
+    footer.querySelector('.footer-divider').style.cssText = `
+      width: 40px;
+      height: 1px;
+      background: ${accentColor};
+      margin: 0 auto 8px;
+      opacity: 0.3;
+    `
+    footer.querySelector('.footer-content').style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    `
+    footer.querySelector('.footer-text').style.cssText = `
+      font-weight: 500;
+    `
+    footer.querySelector('.footer-link').style.cssText = `
+      font-family: 'Courier New', monospace;
+      font-weight: 400;
+      opacity: 0.8;
+      font-size: 9px;
+    `
+
+    // 确保卡片容器是相对定位
+    originalPosition = node.style.position
+    node.style.position = 'relative'
+
+    // 临时添加 footer
+    node.appendChild(footer)
+
+    // 等待DOM更新
+    await new Promise(resolve => setTimeout(resolve, 100))
+  }
 
   try {
     const dataUrl = await htmlToImage.toPng(node, {
@@ -975,7 +1040,14 @@ async function exportSingleCard(node, suffix, isCover = false) {
       backgroundColor: bg
     })
 
-    if (!dataUrl || dataUrl.length < 100) {
+    // 移除临时 footer
+    if (footer && footer.parentNode) {
+      footer.parentNode.removeChild(footer)
+      node.style.position = originalPosition || ''
+    }
+
+    if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+      console.warn('导出失败：无效的图片数据', { isLastCard, hasFooter: !!footer, dataUrlLength: dataUrl?.length })
       return
     }
 
@@ -991,6 +1063,11 @@ async function exportSingleCard(node, suffix, isCover = false) {
     // 添加小延迟避免浏览器阻止多个下载
     await new Promise(resolve => setTimeout(resolve, 200))
   } catch (e) {
+    // 移除临时 footer（如果存在）
+    if (footer && footer.parentNode) {
+      footer.parentNode.removeChild(footer)
+      node.style.position = originalPosition || ''
+    }
     // 静默处理错误
   }
 }
@@ -1353,3 +1430,4 @@ function restoreShowMeta() {
 
 defineExpose({ exportAll })
 </script>
+
