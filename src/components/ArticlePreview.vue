@@ -60,6 +60,7 @@ async function exportArticle() {
     // 声明在更大作用域中
     let allElements = []
     let elementStyles = []
+    let listItemData = []
 
     loadingText.value = t('loading.articleAdjusting')
 
@@ -95,6 +96,54 @@ async function exportArticle() {
       if (el.style.position === 'absolute' || el.style.position === 'fixed') {
         el.style.position = 'static'
       }
+    })
+
+    // 修复有序列表编号显示问题
+    const orderedLists = articleContentRef.value.querySelectorAll('ol')
+    listItemData = []
+
+    orderedLists.forEach((ol, olIndex) => {
+      const items = ol.querySelectorAll('li')
+      listItemData[olIndex] = []
+
+      items.forEach((li, liIndex) => {
+        // 保存原始::before内容
+        const computedStyle = window.getComputedStyle(li, '::before')
+        listItemData[olIndex][liIndex] = {
+          element: li,
+          originalContent: computedStyle.content,
+          actualNumber: liIndex + 1
+        }
+
+        // 创建实际的数字元素替换CSS counter
+        const numberSpan = document.createElement('span')
+        numberSpan.className = 'export-list-number'
+        numberSpan.textContent = (liIndex + 1).toString()
+        numberSpan.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 0;
+          width: 16px;
+          height: 16px;
+          border-radius: 8px;
+          background: var(--card-accent);
+          color: white;
+          font-size: 10px;
+          font-weight: bold;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-50%);
+          z-index: 2;
+          box-shadow:
+            0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
+            0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
+        `
+
+        // 暂时隐藏::before伪元素
+        li.style.setProperty('--before-display', 'none')
+        li.insertBefore(numberSpan, li.firstChild)
+      })
     })
 
     // 等待样式应用
@@ -181,6 +230,17 @@ async function exportArticle() {
 
     // 移除临时 footer
     articleContentRef.value.removeChild(footer)
+
+    // 清理有序列表的临时数字元素
+    const exportNumbers = articleContentRef.value.querySelectorAll('.export-list-number')
+    exportNumbers.forEach(span => span.remove())
+
+    // 恢复列表项的原始样式
+    listItemData.forEach((olData, olIndex) => {
+      olData.forEach((itemData, liIndex) => {
+        itemData.element.style.removeProperty('--before-display')
+      })
+    })
 
     // 恢复所有元素的原始样式
     allElements.forEach((el, index) => {

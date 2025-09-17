@@ -243,45 +243,31 @@
     position: relative;
     padding-left: 16px;
 
-    // 竖线（在圆点后面）
+    // 浅色背景线（与文字实际高度对齐）
     &::after {
       content: '';
       position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 2px; // 竖线在圆点中心
+      top: 0.3em; // 增加顶部偏移，与文字顶部精确对齐
+      bottom: 0.4em; // 与文字底部对齐
+      left: 2px;
       width: 1px;
-      background: color-mix(in srgb, var(--card-accent) 25%, transparent);
+      background: color-mix(in srgb, var(--card-accent) 15%, transparent);
       z-index: 1;
     }
 
-    // 圆点（在竖线上面）
+    // 深色实线（与文字实际高度对齐）
     &::before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 0;
-      width: 4px;
-      height: 4px;
-      border-radius: 2px;
-      background: var(--card-accent);
-      transform: translateY(-50%);
+      top: 0.3em; // 增加顶部偏移，与文字顶部精确对齐
+      left: 1px;
+      width: 3px;
+      height: 1.0em; // 减少高度，匹配文字的实际显示区域
+      background: color-mix(in srgb, var(--card-accent) 60%, transparent);
+      border-radius: 1.5px;
       z-index: 2;
-      // 增强光晕效果
-      box-shadow:
-        0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
-        0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
     }
 
-    // 第一个列表项不显示顶部竖线
-    &:first-child::after {
-      top: 50%;
-    }
-
-    // 最后一个列表项不显示底部竖线
-    &:last-child::after {
-      bottom: 50%;
-    }
   }
 
   ol {

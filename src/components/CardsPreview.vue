@@ -1034,6 +1034,47 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
     await new Promise(resolve => setTimeout(resolve, 100))
   }
 
+  // 修复有序列表编号显示问题
+  const orderedLists = node.querySelectorAll('ol')
+  const tempNumbers = []
+
+  orderedLists.forEach((ol) => {
+    const items = ol.querySelectorAll('li')
+
+    items.forEach((li, index) => {
+      // 创建实际的数字元素替换CSS counter
+      const numberSpan = document.createElement('span')
+      numberSpan.className = 'export-list-number'
+      numberSpan.textContent = (index + 1).toString()
+
+      // 获取主题色
+      const computedStyle = window.getComputedStyle(node)
+      const accentColor = computedStyle.getPropertyValue('--card-accent') || '#3b82f6'
+
+      numberSpan.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        background: ${accentColor};
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-50%);
+        z-index: 2;
+        box-shadow: 0 0 6px rgba(0,0,0,0.2);
+      `
+
+      li.insertBefore(numberSpan, li.firstChild)
+      tempNumbers.push(numberSpan)
+    })
+  })
+
   try {
     const dataUrl = await htmlToImage.toPng(node, {
       pixelRatio: 2,
@@ -1045,6 +1086,13 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
       footer.parentNode.removeChild(footer)
       node.style.position = originalPosition || ''
     }
+
+    // 清理有序列表的临时数字元素
+    tempNumbers.forEach(span => {
+      if (span.parentNode) {
+        span.parentNode.removeChild(span)
+      }
+    })
 
     if (!dataUrl || !dataUrl.startsWith('data:image/')) {
       console.warn('导出失败：无效的图片数据', { isLastCard, hasFooter: !!footer, dataUrlLength: dataUrl?.length })
@@ -1068,6 +1116,13 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
       footer.parentNode.removeChild(footer)
       node.style.position = originalPosition || ''
     }
+
+    // 清理有序列表的临时数字元素
+    tempNumbers.forEach(span => {
+      if (span.parentNode) {
+        span.parentNode.removeChild(span)
+      }
+    })
     // 静默处理错误
   }
 }
