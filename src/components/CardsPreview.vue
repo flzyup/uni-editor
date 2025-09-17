@@ -305,6 +305,12 @@
         </div>
       </div>
     </div>
+    <LoadingOverlay
+      :show="exporting"
+      :text="loadingText"
+      :theme="cardTheme"
+      :pageTheme="pageTheme"
+    />
   </div>
 </template>
 
@@ -314,6 +320,7 @@ import * as htmlToImage from 'html-to-image'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '../composables/useToast'
 import { highlightCodeBlocks } from '../utils/highlight.js'
+import LoadingOverlay from './LoadingOverlay.vue'
 
 const { t } = useI18n()
 const { success, error, warning } = useToast()
@@ -330,6 +337,7 @@ const props = defineProps({
 const stripRef = ref(null)
 const cards = ref([])
 const exporting = ref(false)
+const loadingText = ref('')
 const currentCardIndex = ref(0)
 const CARD_INDEX_KEY = 'uni.currentCardIndex'
 let scrollTimeout = null
@@ -925,10 +933,12 @@ async function doExportAllCards() {
   if (!stripRef.value) return
 
   exporting.value = true
+  loadingText.value = '正在准备导出卡片...'
   await nextTick()
 
   // 只导出卡片列表中的所有卡片（包括封面卡片）
   const nodes = Array.from(stripRef.value.querySelectorAll('.card'))
+  loadingText.value = `准备导出 ${nodes.length} 张卡片...`
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]
@@ -937,16 +947,19 @@ async function doExportAllCards() {
     let suffix
     if (isCover) {
       suffix = '00-封面'
+      loadingText.value = '正在导出封面卡片...'
     } else {
       // 内容卡片编号，需要考虑封面卡片的存在
       const coverExists = nodes.some(n => n.querySelector('.cover') || n.classList.contains('cover'))
       const contentIndex = coverExists ? i : i + 1 // 如果有封面，内容卡片从当前索引开始；否则从索引+1开始
       suffix = String(contentIndex).padStart(2, '0')
+      loadingText.value = `正在导出第 ${contentIndex} 张卡片...`
     }
 
     await exportSingleCard(node, suffix, isCover)
   }
 
+  loadingText.value = '导出完成！'
   success(t('messages.exportSuccess'))
   exporting.value = false
 }

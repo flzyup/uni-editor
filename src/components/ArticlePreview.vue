@@ -1,7 +1,12 @@
 <template>
   <div class="article-preview-container" :class="[pageTheme, 'card-theme', theme]">
     <div ref="articleContentRef" class="article-content content-rich" v-html="highlightedHtml"></div>
-    <LoadingOverlay :show="isExporting" :text="loadingText" />
+    <LoadingOverlay
+      :show="isExporting"
+      :text="loadingText"
+      :theme="theme"
+      :pageTheme="pageTheme"
+    />
   </div>
 </template>
 

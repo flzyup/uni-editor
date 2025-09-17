@@ -1,23 +1,67 @@
 <template>
   <teleport to="body">
-    <div v-if="show" class="loading-overlay" @click.stop>
+    <div v-if="show" class="loading-overlay" :class="[pageTheme, 'card-theme', theme]" @click.stop :style="overlayStyle">
       <div class="loading-content">
         <div class="loading-spinner">
-          <div class="spinner-ring"></div>
-          <div class="spinner-ring"></div>
-          <div class="spinner-ring"></div>
+          <div class="spinner-ring" :style="ring1Style"></div>
+          <div class="spinner-ring ring-2" :style="ring2Style"></div>
+          <div class="spinner-ring ring-3" :style="ring3Style"></div>
         </div>
-        <div class="loading-text">{{ text }}</div>
+        <div class="loading-text" :style="textStyle">{{ text }}</div>
       </div>
     </div>
   </teleport>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   show: { type: Boolean, default: false },
-  text: { type: String, default: '处理中...' }
+  text: { type: String, default: '处理中...' },
+  theme: { type: String, default: 'classic' },
+  pageTheme: { type: String, default: 'theme-dark' }
 })
+
+// 主题色映射
+const themeColors = {
+  classic: '#3b82f6',
+  minimal: '#6b7280',
+  paper: '#8b5cf6',
+  ocean: '#0ea5e9',
+  forest: '#10b981',
+  sunset: '#f59e0b',
+  grape: '#a855f7',
+  slate: '#64748b',
+  sand: '#d97706'
+}
+
+const accentColor = computed(() => {
+  return themeColors[props.theme] || themeColors.classic
+})
+
+const overlayStyle = computed(() => ({
+  background: `color-mix(in srgb, ${accentColor.value} 15%, rgba(0, 0, 0, 0.85))`
+}))
+
+const ring1Style = computed(() => ({
+  borderTopColor: accentColor.value,
+  boxShadow: `0 0 20px color-mix(in srgb, ${accentColor.value} 30%, transparent)`
+}))
+
+const ring2Style = computed(() => ({
+  borderTopColor: `color-mix(in srgb, ${accentColor.value} 80%, white)`,
+  boxShadow: `0 0 15px color-mix(in srgb, ${accentColor.value} 25%, transparent)`
+}))
+
+const ring3Style = computed(() => ({
+  borderTopColor: `color-mix(in srgb, ${accentColor.value} 60%, white)`,
+  boxShadow: `0 0 10px color-mix(in srgb, ${accentColor.value} 20%, transparent)`
+}))
+
+const textStyle = computed(() => ({
+  textShadow: `0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, ${accentColor.value} 40%, transparent)`
+}))
 </script>
 
 <style scoped>
@@ -27,8 +71,7 @@ defineProps({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,7 +101,6 @@ defineProps({
   width: 100%;
   height: 100%;
   border: 4px solid transparent;
-  border-top: 4px solid #fff;
   border-radius: 50%;
   animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
@@ -67,22 +109,20 @@ defineProps({
   animation-delay: -0.45s;
 }
 
-.spinner-ring:nth-child(2) {
+.ring-2 {
   animation-delay: -0.3s;
   width: 90%;
   height: 90%;
   top: 5%;
   left: 5%;
-  border-top-color: rgba(255, 255, 255, 0.7);
 }
 
-.spinner-ring:nth-child(3) {
+.ring-3 {
   animation-delay: -0.15s;
   width: 80%;
   height: 80%;
   top: 10%;
   left: 10%;
-  border-top-color: rgba(255, 255, 255, 0.4);
 }
 
 @keyframes spin {
@@ -94,12 +134,11 @@ defineProps({
   font-size: 18px;
   font-weight: 500;
   color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   animation: pulse 2s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.8; }
 }
 </style>
