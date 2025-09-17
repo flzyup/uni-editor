@@ -6,10 +6,14 @@ export default {
     feedback: 'Feedback',
     features: 'Supported Features',
     todo: 'Pending Features',
-    theme: 'Page Theme',
+    appearance: 'Appearance',
+    appearanceLight: 'Light',
+    appearanceDark: 'Dark',
+    language: 'Language',
+    // Compatibility: keep old naming
+    theme: 'Appearance',
     themeLight: 'Light',
-    themeDark: 'Dark',
-    language: 'Language'
+    themeDark: 'Dark'
   },
 
   // Main functional areas
@@ -21,7 +25,8 @@ export default {
     copyAll: 'Copy All',
     saveCards: 'Save Cards',
     saveArticle: 'Save Article',
-    theme: 'Theme',
+    colorTheme: 'Color Theme',
+    theme: 'Color Theme', // Compatibility
     scale: 'Scale'
   },
 
@@ -155,7 +160,20 @@ export default {
     exportLink: 'https://uni-editor.com'
   },
 
-  // Theme names
+  // Color theme names
+  colorThemes: {
+    classic: 'Classic',
+    minimal: 'Minimal',
+    paper: 'Paper',
+    ocean: 'Ocean',
+    forest: 'Forest',
+    sunset: 'Sunset',
+    grape: 'Grape',
+    slate: 'Slate',
+    sand: 'Sand'
+  },
+
+  // Compatibility: keep old naming
   themes: {
     classic: 'Classic',
     minimal: 'Minimal',

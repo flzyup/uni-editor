@@ -6,10 +6,14 @@ export default {
     feedback: '意见反馈',
     features: '已支持功能',
     todo: '待完善功能',
-    theme: '页面主题',
+    appearance: '外观',
+    appearanceLight: '浅色',
+    appearanceDark: '深色',
+    language: '语言',
+    // 兼容性：保持旧命名
+    theme: '外观',
     themeLight: '浅色',
-    themeDark: '深色',
-    language: '语言'
+    themeDark: '深色'
   },
 
   // 主要功能区域
@@ -21,7 +25,8 @@ export default {
     copyAll: '全部复制',
     saveCards: '保存卡片',
     saveArticle: '保存长文',
-    theme: '主题',
+    colorTheme: '色彩主题',
+    theme: '色彩主题', // 兼容性
     scale: '缩放'
   },
 
@@ -155,7 +160,20 @@ export default {
     exportLink: 'https://uni-editor.com'
   },
 
-  // 主题名称
+  // 色彩主题名称
+  colorThemes: {
+    classic: '经典',
+    minimal: '简约',
+    paper: '纸质',
+    ocean: '海洋',
+    forest: '森林',
+    sunset: '夕阳',
+    grape: '葡萄',
+    slate: '石板',
+    sand: '沙漠'
+  },
+
+  // 兼容性：保持旧命名
   themes: {
     classic: '经典',
     minimal: '简约',

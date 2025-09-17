@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :class="appThemeClass">
+  <div class="container" :class="[appThemeClass, globalColorThemeClass]">
     <header class="banner">
       <a href="https://uni-editor.com" target="_blank" class="logo" title="访问官网">
         <div class="logo-mark"></div>
@@ -33,10 +33,22 @@
         <FeaturesHint />
         <TodoHint />
         <LanguageSwitch />
-        <label class="muted small-text">{{ $t('header.theme') }}</label>
+        <label class="muted small-text">{{ $t('header.appearance') }}</label>
         <select class="select" v-model="appTheme" @change="persistTheme">
-          <option value="light">{{ $t('header.themeLight') }}</option>
-          <option value="dark">{{ $t('header.themeDark') }}</option>
+          <option value="light">{{ $t('header.appearanceLight') }}</option>
+          <option value="dark">{{ $t('header.appearanceDark') }}</option>
+        </select>
+        <label class="muted small-text">{{ $t('main.colorTheme') }}</label>
+        <select class="select" v-model="globalColorTheme" @change="persistColorTheme">
+          <option value="classic">{{ $t('colorThemes.classic') }}</option>
+          <option value="minimal">{{ $t('colorThemes.minimal') }}</option>
+          <option value="paper">{{ $t('colorThemes.paper') }}</option>
+          <option value="ocean">{{ $t('colorThemes.ocean') }}</option>
+          <option value="forest">{{ $t('colorThemes.forest') }}</option>
+          <option value="sunset">{{ $t('colorThemes.sunset') }}</option>
+          <option value="grape">{{ $t('colorThemes.grape') }}</option>
+          <option value="slate">{{ $t('colorThemes.slate') }}</option>
+          <option value="sand">{{ $t('colorThemes.sand') }}</option>
         </select>
       </div>
     </header>
@@ -76,35 +88,26 @@
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.preview') }}</div>
           <div class="toolbar">
-            <!-- 主题切换（左侧） -->
-            <label class="muted small-text">{{ $t('main.theme') }}</label>
-            <select class="select" v-model="previewTheme" @change="persistPreviewTheme">
-              <option v-for="t in previewThemes" :key="t" :value="t">{{ $t(`themes.${t}`) }}</option>
-            </select>
-
-            <div class="spacer"></div>
+            <!-- 左侧占位 -->
+            <div class="toolbar-left"></div>
 
             <!-- 模式切换（居中） -->
-            <div class="mode-tabs-center">
-              <div class="mode-tabs">
-                <button
-                  class="mode-tab"
-                  :class="{ active: previewMode === 'article' }"
-                  @click="setPreviewMode('article')"
-                >
-                  {{ $t('main.articleMode') }}
-                </button>
-                <button
-                  class="mode-tab"
-                  :class="{ active: previewMode === 'cards' }"
-                  @click="setPreviewMode('cards')"
-                >
-                  {{ $t('main.cardMode') }}
-                </button>
-              </div>
+            <div class="mode-tabs">
+              <button
+                class="mode-tab"
+                :class="{ active: previewMode === 'article' }"
+                @click="setPreviewMode('article')"
+              >
+                {{ $t('main.articleMode') }}
+              </button>
+              <button
+                class="mode-tab"
+                :class="{ active: previewMode === 'cards' }"
+                @click="setPreviewMode('cards')"
+              >
+                {{ $t('main.cardMode') }}
+              </button>
             </div>
-
-            <div class="spacer"></div>
 
             <!-- 缩放比例和操作按钮（右侧） -->
             <div class="toolbar-right">
@@ -135,7 +138,7 @@
           ref="articlePreviewRef"
           v-if="previewMode === 'article'"
           :html="html"
-          :theme="previewTheme"
+          :theme="globalColorTheme"
           :page-theme="appThemeClass"
         />
 
@@ -144,7 +147,7 @@
           <CardsPreview
             ref="cardsPreviewRef"
             :html="html"
-            :card-theme="previewTheme"
+            :card-theme="globalColorTheme"
             :page-theme="appThemeClass"
             :scale="cardScale"
           />
@@ -159,7 +162,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import UniEditor from './components/UniEditor.vue'
 import CardsPreview from './components/CardsPreview.vue'
 import ArticlePreview from './components/ArticlePreview.vue'
@@ -190,15 +193,18 @@ const rightPanelWidth = ref(0)
 const initialMouseX = ref(0)
 const initialLeftWidth = ref(0)
 
-// 预览模式和主题
+// 预览模式
 const previewMode = ref('article') // 'article' | 'cards'
-const previewThemes = ['classic','minimal','paper','ocean','forest','sunset','grape','slate','sand']
-const previewTheme = ref('classic')
+const colorThemes = ['classic','minimal','paper','ocean','forest','sunset','grape','slate','sand']
 const cardScale = ref(0.75) // 卡片模式缩放比例，范围 0.5-1.0
 
 // App light/dark theme (default light)
 const appTheme = ref('light')
 const appThemeClass = computed(() => appTheme.value === 'dark' ? 'theme-dark' : 'theme-light')
+
+// 全局色彩主题（唯一的色彩主题系统）
+const globalColorTheme = ref('classic')
+const globalColorThemeClass = computed(() => `global-theme-${globalColorTheme.value}`)
 
 
 function onHtml(val) {
@@ -208,8 +214,8 @@ function onHtml(val) {
 async function copyForWeChat() {
   const htmlRaw = await uniEditorRef.value?.getHTML?.()
   if (!htmlRaw) { warning($t('messages.emptyContent')); return }
-  const ok = await copyToWechat(previewTheme.value, appTheme.value)
-  const themeName = $t(`themes.${previewTheme.value}`)
+  const ok = await copyToWechat(globalColorTheme.value, appTheme.value)
+  const themeName = $t(`themes.${globalColorTheme.value}`)
   if (ok) {
     success($t('messages.copySuccess', { theme: themeName }))
   } else {
@@ -247,8 +253,8 @@ function persistTheme(){
   try { localStorage.setItem('uni.appTheme', appTheme.value) } catch {}
 }
 
-function persistPreviewTheme(){
-  try { localStorage.setItem('uni.previewTheme', previewTheme.value) } catch {}
+function persistColorTheme(){
+  try { localStorage.setItem('uni.globalColorTheme', globalColorTheme.value) } catch {}
 }
 
 function setPreviewMode(mode) {
@@ -352,10 +358,18 @@ onMounted(() => {
       appTheme.value = savedAppTheme
     }
 
-    // Restore preview theme
-    const savedPreviewTheme = localStorage.getItem('uni.previewTheme')
-    if (savedPreviewTheme && previewThemes.includes(savedPreviewTheme)) {
-      previewTheme.value = savedPreviewTheme
+    // Restore global color theme
+    const savedGlobalColorTheme = localStorage.getItem('uni.globalColorTheme')
+    if (savedGlobalColorTheme && colorThemes.includes(savedGlobalColorTheme)) {
+      globalColorTheme.value = savedGlobalColorTheme
+    } else {
+      // 兼容性：如果没有保存的全局色彩主题，尝试从旧的preview theme恢复
+      const savedPreviewTheme = localStorage.getItem('uni.previewTheme')
+      if (savedPreviewTheme && colorThemes.includes(savedPreviewTheme)) {
+        globalColorTheme.value = savedPreviewTheme
+        // 迁移到新的存储key
+        persistColorTheme()
+      }
     }
 
     // Restore preview mode
@@ -391,6 +405,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 全局色彩主题定义已移至 /src/styles/less/themes/global.less */
+
 .editor-scope {
   min-height: 0;
   display: grid;
@@ -405,6 +421,25 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
 }
 
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+}
+
+.toolbar-left {
+  flex: 1;
+}
+
+.toolbar .mode-tabs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  flex: 0 0 auto;
+}
+
 .mode-tabs {
   display: flex;
   border: 1px solid var(--border);
@@ -416,6 +451,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .mode-tab {
@@ -427,16 +464,27 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: all 0.2s ease;
   outline: none;
+  position: relative;
+  font-weight: 500;
 }
 
 .mode-tab:hover {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+  color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .mode-tab.active {
   background: var(--accent);
-  color: var(--panel);
+  color: white;
   font-weight: 600;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.mode-tab.active:hover {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+  color: white;
+  transform: translateY(-1px);
 }
 
 .mode-tab + .mode-tab {
@@ -479,13 +527,20 @@ onBeforeUnmount(() => {
 }
 
 .github-link:hover {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
   border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.github-link:hover svg {
+  color: var(--accent);
 }
 
 .github-link svg {
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 
 /* 反馈链接样式 */
@@ -505,14 +560,20 @@ onBeforeUnmount(() => {
 }
 
 .feedback-link:hover {
-  background: color-mix(in srgb, #f39c12 15%, transparent);
-  border-color: #f39c12;
-  color: #f39c12;
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+  border-color: var(--accent);
+  color: var(--accent);
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.feedback-link:hover svg {
+  color: var(--accent);
 }
 
 .feedback-link svg {
   flex-shrink: 0;
+  transition: color 0.2s ease;
 }
 
 /* 移动端适配 */
@@ -563,6 +624,11 @@ onBeforeUnmount(() => {
   outline: none;
   appearance: none;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.scale-slider:hover {
+  background: color-mix(in srgb, var(--accent) 30%, var(--border));
 }
 
 .scale-slider::-webkit-slider-thumb {
@@ -573,7 +639,13 @@ onBeforeUnmount(() => {
   background: var(--accent);
   cursor: pointer;
   border: 2px solid var(--panel);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: all 0.2s ease;
+}
+
+.scale-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .scale-slider::-moz-range-thumb {
@@ -583,7 +655,13 @@ onBeforeUnmount(() => {
   background: var(--accent);
   cursor: pointer;
   border: 2px solid var(--panel);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: all 0.2s ease;
+}
+
+.scale-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .scale-value {
@@ -622,13 +700,15 @@ onBeforeUnmount(() => {
 }
 
 .panel-splitter:hover .splitter-handle {
-  background: color-mix(in srgb, var(--accent) 80%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+  border-color: var(--accent);
   transform: scale(1.05);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .panel-splitter.resizing .splitter-handle {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 25%, var(--panel));
+  border-color: var(--accent);
   transform: scale(1.1);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
 }
@@ -649,12 +729,12 @@ onBeforeUnmount(() => {
 }
 
 .panel-splitter:hover .splitter-dots .dot {
-  background: var(--text);
+  background: var(--accent);
   transform: scale(1.2);
 }
 
 .panel-splitter.resizing .splitter-dots .dot {
-  background: white;
+  background: var(--accent);
   transform: scale(1.3);
 }
 

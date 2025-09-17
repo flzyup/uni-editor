@@ -49,10 +49,17 @@
   cursor: pointer;
   font-size: @font-size-sm;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    border-color: color-mix(in srgb, var(--border) 50%, transparent);
-    background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    background: color-mix(in srgb, var(--accent) 25%, var(--panel));
   }
 
   &:focus-visible {

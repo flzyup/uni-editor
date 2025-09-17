@@ -5,8 +5,21 @@
   --panel: @dark-panel;
   --muted: @dark-muted;
   --text: @dark-text;
-  --accent: @dark-accent;
   --border: @dark-border;
+
+  // 全局色彩主题变量
+  --global-accent-classic: #7c5cff;
+  --global-accent-minimal: #3cc8a6;
+  --global-accent-paper: #0f766e;
+  --global-accent-ocean: #60a5fa;
+  --global-accent-forest: #22c55e;
+  --global-accent-sunset: #fb7185;
+  --global-accent-grape: #a78bfa;
+  --global-accent-slate: #7dd3fc;
+  --global-accent-sand: #fbbf24;
+
+  // 默认 accent（classic主题），会被 global-theme-* 类覆盖
+  --accent: var(--global-accent-classic);
 }
 
 // 浅色主题覆盖
@@ -15,8 +28,8 @@
   --panel: @light-panel;
   --muted: @light-muted;
   --text: @light-text;
-  --accent: @light-accent;
   --border: @light-border;
+  // accent 将由 global-theme-* 类提供，不在这里覆盖
 }
 
 // 全局重置

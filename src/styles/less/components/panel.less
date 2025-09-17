@@ -34,5 +34,21 @@
   padding: 6px 8px;
   font-size: @font-size-sm;
   transition: all 0.2s ease;
-  .focus-ring();
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  option {
+    background: var(--panel);
+    color: var(--text);
+  }
 }
