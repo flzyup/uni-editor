@@ -206,7 +206,19 @@
     </div>
 
     <div v-if="currentTab === 'cards'" class="cards-page">
-      <div class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
+      <!-- Loading state for card generation -->
+      <div v-if="isGenerating" class="cards-loading">
+        <div class="loading-content">
+          <div class="loading-spinner">
+            <div class="spinner-ring" :style="ring1Style"></div>
+            <div class="spinner-ring ring-2" :style="ring2Style"></div>
+            <div class="spinner-ring ring-3" :style="ring3Style"></div>
+          </div>
+          <div class="loading-text" :style="textStyle">{{ t('cardsPreview.generating') }}</div>
+        </div>
+      </div>
+
+      <div v-else class="cards-strip" :class="{ exporting: exporting }" ref="stripRef">
         <div
           v-for="(c, idx) in cards"
           :key="idx"
@@ -274,7 +286,7 @@
       </div>
 
       <!-- 卡片导航（仅在卡片页面显示） -->
-      <div v-if="cards.length > 0" class="card-navigation">
+      <div v-if="cards.length > 0 && !isGenerating" class="card-navigation">
         <div class="nav-dots">
           <button
             v-for="(card, idx) in cards"
@@ -338,6 +350,7 @@ const stripRef = ref(null)
 const cards = ref([])
 const exporting = ref(false)
 const loadingText = ref('')
+const isGenerating = ref(false)
 const currentCardIndex = ref(0)
 const CARD_INDEX_KEY = 'uni.currentCardIndex'
 let scrollTimeout = null
@@ -383,6 +396,41 @@ const coverImageStyle = computed(() => ({
   objectPosition: cover.value.imagePosition || 'center center',
 }))
 
+// Loading spinner 样式（与LoadingOverlay保持一致）
+const themeColors = {
+  'card-theme-classic': '#3b82f6',
+  'card-theme-minimal': '#6b7280',
+  'card-theme-paper': '#8b5cf6',
+  'card-theme-ocean': '#0ea5e9',
+  'card-theme-forest': '#10b981',
+  'card-theme-sunset': '#f59e0b',
+  'card-theme-grape': '#a855f7',
+  'card-theme-slate': '#64748b',
+  'card-theme-sand': '#d97706'
+}
+
+const accentColor = computed(() => {
+  return themeColors[props.cardTheme] || themeColors['card-theme-classic']
+})
+
+const ring1Style = computed(() => ({
+  borderTopColor: accentColor.value,
+  boxShadow: `0 0 20px color-mix(in srgb, ${accentColor.value} 30%, transparent)`
+}))
+
+const ring2Style = computed(() => ({
+  borderTopColor: `color-mix(in srgb, ${accentColor.value} 80%, white)`,
+  boxShadow: `0 0 15px color-mix(in srgb, ${accentColor.value} 25%, transparent)`
+}))
+
+const ring3Style = computed(() => ({
+  borderTopColor: `color-mix(in srgb, ${accentColor.value} 60%, white)`,
+  boxShadow: `0 0 10px color-mix(in srgb, ${accentColor.value} 20%, transparent)`
+}))
+
+const textStyle = computed(() => ({
+  textShadow: `0 2px 4px rgba(0, 0, 0, 0.5), 0 0 20px color-mix(in srgb, ${accentColor.value} 40%, transparent)`
+}))
 
 // 封面布局相关
 const COVER_LAYOUT_KEY = 'uni.coverLayout'
@@ -499,12 +547,17 @@ function extractCoverData(root) {
 }
 
 async function generate() {
-  if (!props.html) {
-    cards.value = []
-    currentCardIndex.value = 0
-    persistCardIndex()
-    return
-  }
+  isGenerating.value = true
+  try {
+    // Add minimum delay to ensure loading state is visible
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    if (!props.html) {
+      cards.value = []
+      currentCardIndex.value = 0
+      persistCardIndex()
+      return
+    }
   // Apply syntax highlighting before processing
   const highlightedHtml = highlightCodeBlocks(props.html)
   const parser = new DOMParser()
@@ -959,6 +1012,9 @@ async function generate() {
 
   // 恢复保存的卡片索引，确保不超出范围
   restoreCardPosition(generated)
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 function truncateContent(html, maxHeight, container, scale) {
@@ -1790,3 +1846,89 @@ function restoreShowMeta() {
 
 defineExpose({ exportAll })
 </script>
+
+<style scoped>
+.cards-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+  backdrop-filter: blur(12px);
+  border-radius: 0 0 8px 0; /* 只有右下角圆角 */
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading-content {
+  text-align: center;
+  color: var(--text);
+}
+
+.loading-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.spinner-ring:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.ring-2 {
+  animation-delay: -0.3s;
+  width: 90%;
+  height: 90%;
+  top: 5%;
+  left: 5%;
+}
+
+.ring-3 {
+  animation-delay: -0.15s;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Ensure cards-page has relative positioning for absolute positioning of loading */
+.cards-page {
+  position: relative;
+  height: 100%;
+}
+</style>

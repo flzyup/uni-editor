@@ -68,7 +68,8 @@ export default {
     syncTitleSuccess: '标题同步成功',
     syncSummarySuccess: '摘要同步成功',
     syncCoverImageSuccess: '封面图同步成功',
-    syncNoContent: '编辑器中未找到相应内容'
+    syncNoContent: '编辑器中未找到相应内容',
+    generating: '正在生成卡片...'
   },
 
   // 封面布局

@@ -68,7 +68,8 @@ export default {
     syncTitleSuccess: 'Title synced successfully',
     syncSummarySuccess: 'Summary synced successfully',
     syncCoverImageSuccess: 'Cover image synced successfully',
-    syncNoContent: 'No corresponding content found in editor'
+    syncNoContent: 'No corresponding content found in editor',
+    generating: 'Generating cards...'
   },
 
   // Cover layouts
