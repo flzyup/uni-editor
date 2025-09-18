@@ -355,6 +355,8 @@ const currentCardIndex = ref(0)
 const CARD_INDEX_KEY = 'uni.currentCardIndex'
 let scrollTimeout = null
 let isUserClick = false
+let scheduledSync = null
+let pendingCardRatio = null
 
 const cover = ref({
   title: '',
@@ -1177,6 +1179,13 @@ function splitListToFit(html, maxHeight, container, scale, targetHeight = maxHei
 }
 
 
+function clampRatio(value) {
+  if (!Number.isFinite(value)) return 0
+  if (value < 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
 function scrollToCard(index) {
   if (!stripRef.value || index < 0 || index >= cards.value.length) return
 
@@ -1214,6 +1223,49 @@ function scrollToCard(index) {
     setTimeout(() => {
       isUserClick = false
     }, 500)
+  }
+}
+
+function applyCardRatio(ratio) {
+  if (!cards.value.length) return false
+
+  const clamped = clampRatio(ratio)
+  const contentCount = Math.max(cards.value.length - 1, 0)
+
+  if (contentCount <= 0) {
+    if (currentCardIndex.value !== 0) {
+      queueCardScroll(0)
+    }
+    return true
+  }
+
+  const targetContentIndex = Math.min(contentCount - 1, Math.floor(clamped * contentCount))
+  const targetCardIndex = targetContentIndex + 1 // 跳过封面
+
+  if (currentCardIndex.value === targetCardIndex) {
+    return true
+  }
+
+  queueCardScroll(targetCardIndex)
+  return true
+}
+
+function queueCardScroll(targetIndex) {
+  if (scheduledSync !== null) {
+    cancelAnimationFrame(scheduledSync)
+    scheduledSync = null
+  }
+
+  scheduledSync = requestAnimationFrame(() => {
+    scheduledSync = null
+    scrollToCard(targetIndex)
+  })
+}
+
+function setActiveCardByRatio(ratio) {
+  pendingCardRatio = clampRatio(ratio)
+  if (applyCardRatio(pendingCardRatio)) {
+    pendingCardRatio = null
   }
 }
 
@@ -1752,6 +1804,11 @@ onBeforeUnmount(() => {
   if (stripRef.value) {
     stripRef.value.removeEventListener('scroll', handleScroll)
   }
+  if (scheduledSync !== null) {
+    cancelAnimationFrame(scheduledSync)
+    scheduledSync = null
+  }
+  pendingCardRatio = null
 })
 
 // 子页签切换时，动态注册/注销滚动监听，并进入卡片页时对齐位置
@@ -1765,10 +1822,22 @@ watch(currentTab, async (tab) => {
     // 进入卡片页后滚动到当前索引
     const idx = Math.min(currentCardIndex.value, Math.max(0, cards.value.length - 1))
     scrollToCard(idx)
+    if (pendingCardRatio !== null) {
+      if (applyCardRatio(pendingCardRatio)) {
+        pendingCardRatio = null
+      }
+    }
   } else {
     if (stripRef.value) {
       stripRef.value.removeEventListener('scroll', handleScroll)
     }
+  }
+})
+
+watch(() => cards.value.length, () => {
+  if (pendingCardRatio === null) return
+  if (applyCardRatio(pendingCardRatio)) {
+    pendingCardRatio = null
   }
 })
 
@@ -2035,7 +2104,7 @@ function restoreShowMeta() {
   }
 }
 
-defineExpose({ exportAll })
+defineExpose({ exportAll, setActiveCardByRatio })
 </script>
 
 <style scoped>

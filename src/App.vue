@@ -189,6 +189,7 @@ const mainRef = ref(null)
 const html = ref('')
 const lastEditorScrollRatio = ref(0)
 let articleScrollFrame = null
+let cardSyncFrame = null
 
 // Splitter state
 const isResizing = ref(false)
@@ -225,12 +226,12 @@ function clampRatio(value) {
 function onEditorScroll(payload) {
   if (!payload) return
   const nextRatio = clampRatio(typeof payload.ratio === 'number' ? payload.ratio : 0)
-  if (typeof window !== 'undefined') {
-    window.__UNI_APP_SCROLL__ = payload
-  }
   lastEditorScrollRatio.value = nextRatio
-  if (previewMode.value !== 'article') return
-  scheduleArticleScroll(nextRatio)
+  if (previewMode.value === 'article') {
+    scheduleArticleScroll(nextRatio)
+  } else if (previewMode.value === 'cards') {
+    scheduleCardActivation(nextRatio)
+  }
 }
 
 function scheduleArticleScroll(ratio) {
@@ -251,17 +252,43 @@ function scheduleArticleScroll(ratio) {
   })
 }
 
-watch(previewMode, (mode) => {
-  if (mode !== 'article') return
-  nextTick(() => {
-    scheduleArticleScroll(lastEditorScrollRatio.value)
+function scheduleCardActivation(ratio) {
+  const targetRatio = clampRatio(ratio)
+  const cardsComponent = cardsPreviewRef.value
+  if (!cardsComponent || typeof cardsComponent.setActiveCardByRatio !== 'function') {
+    return
+  }
+
+  if (cardSyncFrame !== null) {
+    cancelAnimationFrame(cardSyncFrame)
+    cardSyncFrame = null
+  }
+
+  cardSyncFrame = requestAnimationFrame(() => {
+    cardSyncFrame = null
+    cardsComponent.setActiveCardByRatio(targetRatio)
   })
+}
+
+watch(previewMode, (mode) => {
+  if (mode === 'article') {
+    nextTick(() => {
+      scheduleArticleScroll(lastEditorScrollRatio.value)
+    })
+  } else if (mode === 'cards') {
+    nextTick(() => {
+      scheduleCardActivation(lastEditorScrollRatio.value)
+    })
+  }
 })
 
 watch(html, () => {
-  if (previewMode.value !== 'article') return
   nextTick(() => {
-    scheduleArticleScroll(lastEditorScrollRatio.value)
+    if (previewMode.value === 'article') {
+      scheduleArticleScroll(lastEditorScrollRatio.value)
+    } else if (previewMode.value === 'cards') {
+      scheduleCardActivation(lastEditorScrollRatio.value)
+    }
   })
 })
 
@@ -501,6 +528,10 @@ onBeforeUnmount(() => {
   if (articleScrollFrame !== null) {
     cancelAnimationFrame(articleScrollFrame)
     articleScrollFrame = null
+  }
+  if (cardSyncFrame !== null) {
+    cancelAnimationFrame(cardSyncFrame)
+    cardSyncFrame = null
   }
 })
 </script>

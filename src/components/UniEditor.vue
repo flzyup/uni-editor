@@ -417,9 +417,6 @@ function setupScrollSync() {
         const sizeChanged = Math.abs(maxScroll - state.lastMax) > 0.5
 
         if (ratioChanged || modeChanged || topChanged || sizeChanged) {
-          if (typeof window !== 'undefined') {
-            window.__UNI_EDITOR_SCROLL__ = { mode, ratio, scrollTop: currentTop, maxScroll }
-          }
           emit('editorScroll', {
             mode,
             ratio,
