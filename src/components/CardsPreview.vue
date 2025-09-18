@@ -1426,10 +1426,71 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
     })
   })
 
+  const cleanupTasks = []
+
   try {
+    // 在导出前强制应用所有计算的样式，包括blur效果
+    // 为所有bg-html元素确保filter效果
+    const bgElements = node.querySelectorAll('.bg-html')
+    bgElements.forEach(element => {
+      const computedStyle = window.getComputedStyle(element)
+      const filter = computedStyle.filter
+      if (filter && filter !== 'none') {
+        const originalFilter = element.style.filter
+        const originalWebkitFilter = element.style.webkitFilter
+        element.style.filter = filter
+        element.style.webkitFilter = filter
+        cleanupTasks.push(() => {
+          if (originalFilter) {
+            element.style.filter = originalFilter
+          } else {
+            element.style.removeProperty('filter')
+          }
+
+          if (originalWebkitFilter) {
+            element.style.webkitFilter = originalWebkitFilter
+          } else {
+            element.style.removeProperty('-webkit-filter')
+          }
+        })
+      }
+    })
+
+    if (isCover) {
+      const coverCleanups = applyCoverBackdropFallback(node)
+      cleanupTasks.push(...coverCleanups)
+    }
+
+    // 等待DOM稳定
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     const dataUrl = await htmlToImage.toPng(node, {
       pixelRatio: 2,
-      backgroundColor: bg
+      backgroundColor: bg,
+      useCORS: true,
+      allowTaint: true,
+      skipFonts: false,
+      cacheBust: true,
+      includeQueryParams: true,
+      filter: (domNode) => {
+        // 确保filter属性被保留
+        if (domNode.style && domNode.style.filter) {
+          domNode.style.webkitFilter = domNode.style.filter
+        }
+        return true
+      },
+      onclone: (clonedDoc, element) => {
+        // 在克隆的文档中确保所有样式正确应用
+        const clonedBgElements = element.querySelectorAll('.bg-html')
+        clonedBgElements.forEach((clonedElement, index) => {
+          if (bgElements[index]) {
+            const originalStyle = window.getComputedStyle(bgElements[index])
+            clonedElement.style.filter = originalStyle.filter
+            clonedElement.style.webkitFilter = originalStyle.filter
+          }
+        })
+        return element
+      }
     })
 
     // 移除临时 footer
@@ -1475,7 +1536,137 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
       }
     })
     // 静默处理错误
+  } finally {
+    while (cleanupTasks.length) {
+      const fn = cleanupTasks.pop()
+      try {
+        fn()
+      } catch (err) {
+        console.warn('清理导出临时样式失败', err)
+      }
+    }
   }
+}
+
+function applyCoverBackdropFallback(node) {
+  const cleanups = []
+  const imageSource = cover.value.coverImage || cover.value.derivedCoverImage
+  if (!imageSource) {
+    return cleanups
+  }
+
+  const backgroundImage = node.querySelector('.cover-background img')
+  if (!backgroundImage) {
+    return cleanups
+  }
+
+  const backgroundRect = backgroundImage.getBoundingClientRect()
+  const backgroundFit = cover.value.imageFit === 'contain' ? 'contain' : 'cover'
+  const backgroundPosition = cover.value.imagePosition || 'center center'
+
+  const targets = node.querySelectorAll('.cover-content, .title-overlay')
+
+  targets.forEach((target) => {
+    const computed = window.getComputedStyle(target)
+    const backdrop = computed.backdropFilter || computed.webkitBackdropFilter
+    if (!backdrop || backdrop === 'none') {
+      return
+    }
+
+    const targetRect = target.getBoundingClientRect()
+    const overlay = document.createElement('img')
+    overlay.className = 'export-backdrop-fallback'
+    overlay.src = backgroundImage.currentSrc || backgroundImage.src || imageSource
+    overlay.alt = ''
+    overlay.style.position = 'absolute'
+    overlay.style.pointerEvents = 'none'
+    overlay.style.top = `${backgroundRect.top - targetRect.top}px`
+    overlay.style.left = `${backgroundRect.left - targetRect.left}px`
+    overlay.style.width = `${backgroundRect.width}px`
+    overlay.style.height = `${backgroundRect.height}px`
+    overlay.style.objectFit = backgroundFit
+    overlay.style.objectPosition = backgroundPosition
+    overlay.style.filter = backdrop
+    overlay.style.transform = 'none'
+    overlay.style.opacity = '1'
+    overlay.style.zIndex = '0'
+    overlay.style.borderRadius = computed.borderRadius
+
+    const previousPosition = target.style.position
+    if (!previousPosition || previousPosition === 'static') {
+      target.style.position = 'relative'
+      cleanups.push(() => {
+        if (previousPosition) {
+          target.style.position = previousPosition
+        } else {
+          target.style.removeProperty('position')
+        }
+      })
+    }
+
+    const previousOverflow = target.style.overflow
+    if (computed.overflow !== 'hidden' && computed.overflow !== 'clip') {
+      target.style.overflow = 'hidden'
+      cleanups.push(() => {
+        if (previousOverflow) {
+          target.style.overflow = previousOverflow
+        } else {
+          target.style.removeProperty('overflow')
+        }
+      })
+    }
+
+    target.insertBefore(overlay, target.firstChild)
+    cleanups.push(() => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay)
+      }
+    })
+
+    const childCleanups = []
+    Array.from(target.children).forEach((child) => {
+      if (child === overlay) return
+
+      const childComputed = window.getComputedStyle(child)
+      const originalChildPosition = child.style.position
+      const originalChildZIndex = child.style.zIndex
+
+      if (!originalChildPosition || originalChildPosition === 'static') {
+        if (childComputed.position === 'static') {
+          child.style.position = 'relative'
+          childCleanups.push(() => {
+            child.style.removeProperty('position')
+          })
+        }
+      } else {
+        childCleanups.push(() => {
+          child.style.position = originalChildPosition
+        })
+      }
+
+      child.style.zIndex = '1'
+      childCleanups.push(() => {
+        if (originalChildZIndex) {
+          child.style.zIndex = originalChildZIndex
+        } else {
+          child.style.removeProperty('z-index')
+        }
+      })
+    })
+
+    cleanups.push(() => {
+      while (childCleanups.length) {
+        const fn = childCleanups.pop()
+        try {
+          fn()
+        } catch (err) {
+          console.warn('清理子元素临时样式失败', err)
+        }
+      }
+    })
+  })
+
+  return cleanups
 }
 
 function loadCardIndex() {

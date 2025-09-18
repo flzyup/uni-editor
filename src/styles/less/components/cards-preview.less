@@ -1347,6 +1347,7 @@
   gap: 8px;
   color: white;
   font-size: @font-size-sm;
+  line-height: 1.2; // 设置一致的行高确保垂直居中
   // 左侧增加额外内边距，避免文字贴边
   padding: 12px (@card-content-padding) 12px (@card-content-padding + 8px);
   // 使用更暗的背景色替代backdrop-filter，避免圆角问题
@@ -1369,18 +1370,54 @@
   border: none;
   border-radius: 0;
 
-  // 移除卡片四个角的圆角，但保持内部元素的圆角
+  // 移除卡片四个角的圆角，重置所有内部圆角
   .cover .meta {
-    // 重置meta的底部圆角为0，因为卡片本身已无圆角
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    // 重置meta的所有圆角为0，因为卡片本身已无圆角
+    border-radius: 0 !important;
+    // 强制确保导出时文字垂直居中
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    line-height: 1.2 !important; // 统一行高
+    min-height: 44px !important; // 确保足够高度
+    padding: 10px (@card-content-padding) 10px (@card-content-padding + 8px) !important; // 减少上下padding确保居中
   }
 
-  // 针对不同布局重置meta的圆角
+  // 为了兼容html-to-image，添加backup效果
+  .cover-content {
+    // 保持原有backdrop-filter，同时添加备用的半透明背景
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .cover-layout-minimal .cover-content {
+    // 极简布局更微妙的背景
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .cover-layout-center .cover-content {
+    // 居中布局适中的背景
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  // 确保bg-html的filter效果在导出时可见
+  .bg-html {
+    -webkit-filter: inherit;
+    filter: inherit;
+  }
+
+  // 针对所有封面布局重置meta的圆角
+  .cover-layout-minimal .meta,
+  .cover-layout-center .meta,
   .cover-layout-image-top .meta,
-  .cover-layout-image-bottom .meta {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+  .cover-layout-image-bottom .meta,
+  .cover-layout-magazine .meta {
+    border-radius: 0;
+  }
+
+  // 重置封面背景和内容区域的圆角
+  .cover-background,
+  .cover-content {
+    border-radius: 0;
   }
 }
 
