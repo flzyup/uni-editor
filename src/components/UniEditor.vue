@@ -15,13 +15,14 @@ import enMessages from '../locales/en.js'
 const props = defineProps({
   pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
 })
-const emit = defineEmits(['update:html'])
+const emit = defineEmits(['update:html', 'editorScroll'])
 
 const { locale } = useI18n()
 
 const elRef = ref(null)
 let vd = null
 let isVditorReady = false
+const scrollCleanups = []
 
 const CACHE_KEY = 'uni-editor-content'
 const MODE_CACHE_KEY = 'uni-editor-mode'
@@ -116,6 +117,7 @@ onMounted(async () => {
       emitHtml()
       // 添加模式变化监听
       addModeChangeListener()
+      setupScrollSync()
     },
   })
   window.addEventListener('keydown', onKey)
@@ -139,6 +141,7 @@ watch(locale, async (newLocale) => {
 
     // 销毁当前实例
     try {
+      cleanupScrollSync()
       vd.destroy()
     } catch (error) {
       console.warn('Failed to destroy Vditor:', error)
@@ -174,6 +177,7 @@ watch(locale, async (newLocale) => {
         emitHtml()
         // 重新添加模式变化监听
         addModeChangeListener()
+        setupScrollSync()
       },
     })
   }
@@ -330,6 +334,7 @@ function getFilenameFromContent(content) {
 
 onBeforeUnmount(() => {
   isVditorReady = false
+  cleanupScrollSync()
   if (vd) {
     vd.destroy?.()
     vd = null
@@ -363,6 +368,7 @@ function addModeChangeListener() {
             }
 
             saveModeToCache(currentMode)
+            setupScrollSync()
           }
         }, 150)
       })
@@ -378,6 +384,120 @@ function onKey(e) {
     if (e.shiftKey) document.execCommand('redo')
     else document.execCommand('undo')
   }
+}
+
+function setupScrollSync() {
+  cleanupScrollSync()
+  if (!vd || !vd.vditor) return
+
+  const modes = ['wysiwyg', 'ir', 'sv']
+  const state = {
+    rafId: 0,
+    lastMode: '',
+    lastTop: -1,
+    lastRatio: -1,
+    lastMax: -1,
+  }
+
+  const tick = () => {
+    const mode = vd.vditor.currentMode || modes.find(m => vd.vditor[m]) || 'wysiwyg'
+    const modeData = vd.vditor[mode]
+    const element = modeData?.element
+
+    if (element instanceof HTMLElement) {
+      const container = resolveScrollableContainer(element, mode)
+      if (container instanceof HTMLElement) {
+        const maxScroll = container.scrollHeight - container.clientHeight
+        const currentTop = container.scrollTop
+        const ratio = maxScroll > 0 ? currentTop / maxScroll : 0
+
+        const ratioChanged = Math.abs(ratio - state.lastRatio) > 0.001
+        const modeChanged = mode !== state.lastMode
+        const topChanged = Math.abs(currentTop - state.lastTop) > 0.5
+        const sizeChanged = Math.abs(maxScroll - state.lastMax) > 0.5
+
+        if (ratioChanged || modeChanged || topChanged || sizeChanged) {
+          if (typeof window !== 'undefined') {
+            window.__UNI_EDITOR_SCROLL__ = { mode, ratio, scrollTop: currentTop, maxScroll }
+          }
+          emit('editorScroll', {
+            mode,
+            ratio,
+            scrollTop: currentTop,
+            scrollHeight: container.scrollHeight,
+            clientHeight: container.clientHeight,
+          })
+          state.lastRatio = ratio
+          state.lastMode = mode
+          state.lastTop = currentTop
+          state.lastMax = maxScroll
+        }
+      }
+    }
+
+    state.rafId = requestAnimationFrame(tick)
+  }
+
+  state.rafId = requestAnimationFrame(tick)
+  scrollCleanups.push(() => {
+    cancelAnimationFrame(state.rafId)
+  })
+}
+
+function cleanupScrollSync() {
+  while (scrollCleanups.length) {
+    const dispose = scrollCleanups.pop()
+    try {
+      dispose?.()
+    } catch (error) {
+      console.warn('Failed to cleanup editor scroll listener:', error)
+    }
+  }
+}
+
+function resolveScrollableContainer(element, mode) {
+  const candidates = []
+
+  if (element.closest) {
+    candidates.push(element.closest(`.vditor-${mode}`))
+    candidates.push(element.closest('.vditor-content'))
+    candidates.push(element.closest('.vditor'))
+  }
+
+  if (element.parentElement) {
+    candidates.push(element.parentElement)
+  }
+
+  candidates.push(element)
+
+  for (const candidate of candidates) {
+    if (!(candidate instanceof HTMLElement)) continue
+    if (isScrollable(candidate)) {
+      return candidate
+    }
+  }
+
+  let current = element.parentElement
+  while (current && current !== document.body) {
+    if (isScrollable(current)) {
+      return current
+    }
+    current = current.parentElement
+  }
+
+  return element
+}
+
+function isScrollable(el) {
+  if (!(el instanceof HTMLElement)) return false
+  if (el === document.body || el === document.documentElement) return false
+  const style = window.getComputedStyle(el)
+  const overflowY = style.overflowY
+  if (overflowY === 'hidden') return false
+  if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+    return el.scrollHeight > el.clientHeight + 2
+  }
+  return el.scrollHeight > el.clientHeight + 2
 }
 
 defineExpose({ getHTML, exportMarkdown, importMarkdown })

@@ -67,6 +67,7 @@
           ref="uniEditorRef"
           :page-theme="appThemeClass"
           @update:html="onHtml"
+          @editor-scroll="onEditorScroll"
         />
       </section>
 
@@ -163,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import UniEditor from './components/UniEditor.vue'
 import CardsPreview from './components/CardsPreview.vue'
 import ArticlePreview from './components/ArticlePreview.vue'
@@ -186,6 +187,8 @@ const articlePreviewRef = ref(null)
 const mainRef = ref(null)
 
 const html = ref('')
+const lastEditorScrollRatio = ref(0)
+let articleScrollFrame = null
 
 // Splitter state
 const isResizing = ref(false)
@@ -211,6 +214,56 @@ const globalColorThemeClass = computed(() => `global-theme-${globalColorTheme.va
 function onHtml(val) {
   html.value = val
 }
+
+function clampRatio(value) {
+  if (!Number.isFinite(value)) return 0
+  if (value < 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
+function onEditorScroll(payload) {
+  if (!payload) return
+  const nextRatio = clampRatio(typeof payload.ratio === 'number' ? payload.ratio : 0)
+  if (typeof window !== 'undefined') {
+    window.__UNI_APP_SCROLL__ = payload
+  }
+  lastEditorScrollRatio.value = nextRatio
+  if (previewMode.value !== 'article') return
+  scheduleArticleScroll(nextRatio)
+}
+
+function scheduleArticleScroll(ratio) {
+  const targetRatio = clampRatio(ratio)
+  const previewComponent = articlePreviewRef.value
+  if (!previewComponent || typeof previewComponent.scrollToRatio !== 'function') {
+    return
+  }
+
+  if (articleScrollFrame !== null) {
+    cancelAnimationFrame(articleScrollFrame)
+    articleScrollFrame = null
+  }
+
+  articleScrollFrame = requestAnimationFrame(() => {
+    articleScrollFrame = null
+    previewComponent.scrollToRatio(targetRatio)
+  })
+}
+
+watch(previewMode, (mode) => {
+  if (mode !== 'article') return
+  nextTick(() => {
+    scheduleArticleScroll(lastEditorScrollRatio.value)
+  })
+})
+
+watch(html, () => {
+  if (previewMode.value !== 'article') return
+  nextTick(() => {
+    scheduleArticleScroll(lastEditorScrollRatio.value)
+  })
+})
 
 async function copyForWeChat() {
   const htmlRaw = await uniEditorRef.value?.getHTML?.()
@@ -445,6 +498,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleWindowResize)
   document.removeEventListener('mousemove', handleResize)
   document.removeEventListener('mouseup', stopResize)
+  if (articleScrollFrame !== null) {
+    cancelAnimationFrame(articleScrollFrame)
+    articleScrollFrame = null
+  }
 })
 </script>
 

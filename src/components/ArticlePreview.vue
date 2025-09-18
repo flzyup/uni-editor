@@ -1,5 +1,5 @@
 <template>
-  <div class="article-preview-container" :class="[pageTheme, 'card-theme', theme]">
+  <div ref="containerRef" class="article-preview-container" :class="[pageTheme, 'card-theme', theme]">
     <div ref="articleContentRef" class="article-content content-rich" v-html="highlightedHtml"></div>
     <LoadingOverlay
       :show="isExporting"
@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onBeforeUnmount } from 'vue'
 import * as htmlToImage from 'html-to-image'
 import { highlightCodeBlocks } from '../utils/highlight.js'
 import { useToast } from '../composables/useToast.js'
@@ -27,8 +27,10 @@ const props = defineProps({
 const { t } = useI18n()
 const { success, error } = useToast()
 const articleContentRef = ref(null)
+const containerRef = ref(null)
 const isExporting = ref(false)
 const loadingText = ref('')
+let scrollAnimationFrame = null
 
 // Apply syntax highlighting to HTML
 const highlightedHtml = computed(() => {
@@ -281,9 +283,42 @@ async function exportArticle() {
   }
 }
 
+function clampRatio(value) {
+  if (!Number.isFinite(value)) return 0
+  if (value < 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
+function scrollToRatio(ratio = 0) {
+  const container = containerRef.value
+  if (!container) return
+
+  const targetRatio = clampRatio(ratio)
+
+  if (scrollAnimationFrame !== null) {
+    cancelAnimationFrame(scrollAnimationFrame)
+    scrollAnimationFrame = null
+  }
+
+  scrollAnimationFrame = requestAnimationFrame(() => {
+    const maxScroll = container.scrollHeight - container.clientHeight
+    container.scrollTop = maxScroll > 0 ? maxScroll * targetRatio : 0
+    scrollAnimationFrame = null
+  })
+}
+
+onBeforeUnmount(() => {
+  if (scrollAnimationFrame !== null) {
+    cancelAnimationFrame(scrollAnimationFrame)
+    scrollAnimationFrame = null
+  }
+})
+
 // 暴露方法给父组件
 defineExpose({
-  exportArticle
+  exportArticle,
+  scrollToRatio
 })
 </script>
 
