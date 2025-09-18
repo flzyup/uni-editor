@@ -246,9 +246,9 @@
   }
 
   ul li {
-    margin: 8px 0;
+    margin: 8px 5px;
     position: relative;
-    padding-left: 8px;
+    padding-left: 16px;
 
     // 浅色背景线（与文字实际高度对齐）
     &::after {
@@ -352,7 +352,7 @@
   ol li {
     margin: 4px 0;
     position: relative;
-    padding-left: 13px; // 给数字留出空间，减少一半
+    padding-left: 24px; // 给数字留出空间，减少一半
     counter-increment: list-counter;
 
     // 数字（靠左对齐）
@@ -458,152 +458,141 @@
     }
   }
 
-  // 平级的列表项样式
-  .list-div-item {
-    display: block !important;
-    margin: 2px 0;
-    position: relative;
+}
 
-    // 根据层级设置缩进
-    &[data-level="0"] { padding-left: 20px; }
-    &[data-level="1"] { padding-left: 40px; }
-    &[data-level="2"] { padding-left: 60px; }
-    &[data-level="3"] { padding-left: 80px; }
-    &[data-level="4"] { padding-left: 100px; }
-    &[data-level="5"] { padding-left: 120px; }
-    &[data-level="6"] { padding-left: 140px; }
-    &[data-level="7"] { padding-left: 160px; }
-    &[data-level="8"] { padding-left: 180px; }
-    &[data-level="9"] { padding-left: 200px; }
+// 全局的列表项样式（卡片模式使用）
+.list-div-item {
+  display: block !important;
+  margin: 2px 0;
+  position: relative;
 
-    // 无序列表样式
-    &[data-list-type="unordered"] {
-        // 根据层级设置伪元素的位置
-        &[data-level="0"]::after { left: 2px; }
-        &[data-level="1"]::after { left: 22px; }
-        &[data-level="2"]::after { left: 42px; }
-        &[data-level="3"]::after { left: 62px; }
-        &[data-level="4"]::after { left: 82px; }
-        &[data-level="5"]::after { left: 102px; }
-        &[data-level="6"]::after { left: 122px; }
-        &[data-level="7"]::after { left: 142px; }
-        &[data-level="8"]::after { left: 162px; }
-        &[data-level="9"]::after { left: 182px; }
+  // 根据层级设置缩进
+  &[data-level="0"] { padding-left: 24px; }
+  &[data-level="1"] { padding-left: 40px; }
+  &[data-level="2"] { padding-left: 60px; }
+  &[data-level="3"] { padding-left: 80px; }
+  &[data-level="4"] { padding-left: 100px; }
+  &[data-level="5"] { padding-left: 120px; }
+  &[data-level="6"] { padding-left: 140px; }
+  &[data-level="7"] { padding-left: 160px; }
+  &[data-level="8"] { padding-left: 180px; }
+  &[data-level="9"] { padding-left: 200px; }
 
-        &[data-level="0"]::before { left: 1px; }
-        &[data-level="1"]::before { left: 21px; }
-        &[data-level="2"]::before { left: 41px; }
-        &[data-level="3"]::before { left: 61px; }
-        &[data-level="4"]::before { left: 81px; }
-        &[data-level="5"]::before { left: 101px; }
-        &[data-level="6"]::before { left: 121px; }
-        &[data-level="7"]::before { left: 141px; }
-        &[data-level="8"]::before { left: 161px; }
-        &[data-level="9"]::before { left: 181px; }
+  // 无序列表样式
+  &[data-list-type="unordered"] {
+      // 根据层级设置伪元素的位置
+      &[data-level="0"]::after { left: 8px; }
+      &[data-level="1"]::after { left: 22px; }
+      &[data-level="2"]::after { left: 42px; }
+      &[data-level="3"]::after { left: 62px; }
+      &[data-level="4"]::after { left: 82px; }
+      &[data-level="5"]::after { left: 102px; }
+      &[data-level="6"]::after { left: 122px; }
+      &[data-level="7"]::after { left: 142px; }
+      &[data-level="8"]::after { left: 162px; }
+      &[data-level="9"]::after { left: 182px; }
 
-        // 浅色背景线（与文字实际高度对齐）
+      &[data-level="0"]::before { left: 7px; }
+      &[data-level="1"]::before { left: 21px; }
+      &[data-level="2"]::before { left: 41px; }
+      &[data-level="3"]::before { left: 61px; }
+      &[data-level="4"]::before { left: 81px; }
+      &[data-level="5"]::before { left: 101px; }
+      &[data-level="6"]::before { left: 121px; }
+      &[data-level="7"]::before { left: 141px; }
+      &[data-level="8"]::before { left: 161px; }
+      &[data-level="9"]::before { left: 181px; }
+
+      // 浅色背景线（与文字实际高度对齐）
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0.3em;
+        bottom: 0.4em;
+        width: 1px;
+        background: color-mix(in srgb, var(--card-accent) 15%, transparent);
+        z-index: 1;
+      }
+
+      // 深色实线（与文字实际高度对齐）
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0.3em;
+        width: 3px;
+        height: 1.0em;
+        background: color-mix(in srgb, var(--card-accent) 60%, transparent);
+        border-radius: 1.5px;
+        z-index: 2;
+      }
+
+      // 待办项样式（包含复选框）
+      &[data-has-checkbox="true"] {
+        padding-right: 4px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        line-height: 1.6;
+
+        // 根据层级设置复选框的缩进，覆盖默认的padding-left
+        &[data-level="0"] { padding-left: 20px; }
+        &[data-level="1"] { padding-left: 40px; }
+        &[data-level="2"] { padding-left: 60px; }
+        &[data-level="3"] { padding-left: 80px; }
+        &[data-level="4"] { padding-left: 100px; }
+        &[data-level="5"] { padding-left: 120px; }
+        &[data-level="6"] { padding-left: 140px; }
+        &[data-level="7"] { padding-left: 160px; }
+        &[data-level="8"] { padding-left: 180px; }
+        &[data-level="9"] { padding-left: 200px; }
+
+        &::before,
         &::after {
-          content: '';
-          position: absolute;
-          top: 0.3em;
-          bottom: 0.4em;
-          width: 1px;
-          background: color-mix(in srgb, var(--card-accent) 15%, transparent);
-          z-index: 1;
+          display: none;
         }
 
-        // 深色实线（与文字实际高度对齐）
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0.3em;
-          width: 3px;
-          height: 1.0em;
-          background: color-mix(in srgb, var(--card-accent) 60%, transparent);
-          border-radius: 1.5px;
-          z-index: 2;
-        }
+        > *:not(input) { flex: 1; }
 
-        // 待办项样式（包含复选框）
-        &[data-has-checkbox="true"] {
-          padding-right: 4px;
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          line-height: 1.6;
+        > input[type="checkbox"] {
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 5px;
+          border: 2px solid color-mix(in srgb, var(--card-accent) 45%, transparent);
+          background: color-mix(in srgb, var(--card-accent) 6%, var(--card-bg));
+          margin-top: 2px;
+          margin-left: 0;
+          flex-shrink: 0;
+          position: relative;
+          cursor: pointer;
+          transition: all 0.2s ease;
 
-          // 根据层级设置复选框的缩进，覆盖默认的padding-left
-          &[data-level="0"] { padding-left: 20px; }
-          &[data-level="1"] { padding-left: 40px; }
-          &[data-level="2"] { padding-left: 60px; }
-          &[data-level="3"] { padding-left: 80px; }
-          &[data-level="4"] { padding-left: 100px; }
-          &[data-level="5"] { padding-left: 120px; }
-          &[data-level="6"] { padding-left: 140px; }
-          &[data-level="7"] { padding-left: 160px; }
-          &[data-level="8"] { padding-left: 180px; }
-          &[data-level="9"] { padding-left: 200px; }
+          &:hover:not(:disabled) {
+            border-color: color-mix(in srgb, var(--card-accent) 70%, transparent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--card-accent) 12%, transparent);
+          }
 
-          &::before,
+          &:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+          }
+
           &::after {
-            display: none;
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 9px;
+            border-right: 2px solid color-mix(in srgb, var(--card-bg) 25%, white);
+            border-bottom: 2px solid color-mix(in srgb, var(--card-bg) 25%, white);
+            top: 50%;
+            left: 50%;
+            transform-origin: center;
+            transform: translate(-55%, -60%) rotate(45deg) scale(0.4);
+            opacity: 0;
+            transition: opacity 0.15s ease, transform 0.15s ease;
           }
 
-          > *:not(input) { flex: 1; }
-
-          > input[type="checkbox"] {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            border: 2px solid color-mix(in srgb, var(--card-accent) 45%, transparent);
-            background: color-mix(in srgb, var(--card-accent) 6%, var(--card-bg));
-            margin-top: 2px;
-            margin-left: 0;
-            flex-shrink: 0;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
-            &:hover:not(:disabled) {
-              border-color: color-mix(in srgb, var(--card-accent) 70%, transparent);
-              box-shadow: 0 0 0 4px color-mix(in srgb, var(--card-accent) 12%, transparent);
-            }
-
-            &:disabled {
-              cursor: not-allowed;
-              opacity: 0.65;
-            }
-
-            &::after {
-              content: '';
-              position: absolute;
-              width: 6px;
-              height: 9px;
-              border-right: 2px solid color-mix(in srgb, var(--card-bg) 25%, white);
-              border-bottom: 2px solid color-mix(in srgb, var(--card-bg) 25%, white);
-              top: 50%;
-              left: 50%;
-              transform-origin: center;
-              transform: translate(-55%, -60%) rotate(45deg) scale(0.4);
-              opacity: 0;
-              transition: opacity 0.15s ease, transform 0.15s ease;
-            }
-
-            &:checked {
-              background: var(--card-accent);
-              border-color: var(--card-accent);
-              box-shadow: 0 4px 12px color-mix(in srgb, var(--card-accent) 25%, transparent);
-
-              &::after {
-                opacity: 1;
-                transform: translate(-55%, -60%) rotate(45deg) scale(0.85);
-              }
-            }
-          }
-
-          // 根据data-checked属性设置选中状态（用于静态渲染）
-          &[data-checked="true"] > input[type="checkbox"] {
+          &:checked {
             background: var(--card-accent);
             border-color: var(--card-accent);
             box-shadow: 0 4px 12px color-mix(in srgb, var(--card-accent) 25%, transparent);
@@ -614,80 +603,80 @@
             }
           }
         }
+
+        // 根据data-checked属性设置选中状态（用于静态渲染）
+        &[data-checked="true"] > input[type="checkbox"] {
+          background: var(--card-accent);
+          border-color: var(--card-accent);
+          box-shadow: 0 4px 12px color-mix(in srgb, var(--card-accent) 25%, transparent);
+
+          &::after {
+            opacity: 1;
+            transform: translate(-55%, -60%) rotate(45deg) scale(0.85);
+          }
+        }
       }
     }
+  }
 
-    // 有序列表样式
-    &[data-list-type="ordered"] {
-      counter-reset: list-counter;
+  // 有序列表样式
+  &[data-list-type="ordered"] {
+    counter-reset: list-counter;
 
-      // 根据层级设置数字的位置
-      &[data-level="0"]::before { left: 2px; }
-      &[data-level="1"]::before { left: 22px; }
-      &[data-level="2"]::before { left: 42px; }
-      &[data-level="3"]::before { left: 62px; }
-      &[data-level="4"]::before { left: 82px; }
-      &[data-level="5"]::before { left: 102px; }
-      &[data-level="6"]::before { left: 122px; }
-      &[data-level="7"]::before { left: 142px; }
-      &[data-level="8"]::before { left: 162px; }
-      &[data-level="9"]::before { left: 182px; }
+    // 根据层级设置数字的位置
+    &[data-level="0"]::before { left: 2px; }
+    &[data-level="1"]::before { left: 22px; }
+    &[data-level="2"]::before { left: 42px; }
+    &[data-level="3"]::before { left: 62px; }
+    &[data-level="4"]::before { left: 82px; }
+    &[data-level="5"]::before { left: 102px; }
+    &[data-level="6"]::before { left: 122px; }
+    &[data-level="7"]::before { left: 142px; }
+    &[data-level="8"]::before { left: 162px; }
+    &[data-level="9"]::before { left: 182px; }
 
-      // 使用data-number属性显示数字
-      &[data-number]::before {
-        content: attr(data-number);
-        position: absolute;
-        top: 50%;
-        width: 16px;
-        height: 16px;
-        border-radius: 8px;
-        background: var(--card-accent);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transform: translateY(-50%);
-        z-index: 2;
-        box-shadow:
-          0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
-          0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
-      }
-
-      // 如果没有data-number属性，则使用counter（兜底）
-      &:not([data-number])::before {
-        content: counter(list-counter);
-        counter-increment: list-counter;
-        position: absolute;
-        top: 50%;
-        width: 16px;
-        height: 16px;
-        border-radius: 8px;
-        background: var(--card-accent);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transform: translateY(-50%);
-        z-index: 2;
-        box-shadow:
-          0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
-          0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
-      }
+    // 使用data-number属性显示数字
+    &[data-number]::before {
+      content: attr(data-number);
+      position: absolute;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--card-accent);
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-50%);
+      z-index: 2;
+      box-shadow:
+        0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
+        0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
     }
 
-    // 嵌套列表容器
-    .list-div-container {
-      margin-left: 8px;
-      padding-left: 10px;
-    }
-
-    // 支持原有的嵌套列表类名
-    &.list-nested {
-      margin-left: 8px;
-      padding-left: 10px;
+    // 如果没有data-number属性，则使用counter（兜底）
+    &:not([data-number])::before {
+      content: counter(list-counter);
+      counter-increment: list-counter;
+      position: absolute;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      background: var(--card-accent);
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-50%);
+      z-index: 2;
+      box-shadow:
+        0 0 6px color-mix(in srgb, var(--card-accent) 80%, transparent),
+        0 0 12px color-mix(in srgb, var(--card-accent) 40%, transparent);
     }
   }

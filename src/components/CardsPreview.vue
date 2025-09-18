@@ -519,7 +519,7 @@ async function generate() {
     const flattenedItems = []
 
     // 递归提取所有层级的列表项，转换为平级结构
-    const extractItems = (list, level = 0, parentType = 'unordered', parentNumber = 1) => {
+    const extractItems = (list, level = 0) => {
       const isOrdered = list.tagName === 'OL'
       const startNum = parseInt(list.getAttribute('start') || '1')
       const items = Array.from(list.children).filter(child => child.tagName === 'LI')
@@ -567,7 +567,7 @@ async function generate() {
         // 递归处理嵌套列表
         const originalNestedLists = li.querySelectorAll('ul, ol')
         originalNestedLists.forEach(nestedList => {
-          extractItems(nestedList, level + 1, isOrdered ? 'ordered' : 'unordered', startNum + index)
+          extractItems(nestedList, level + 1)
         })
       })
     }
