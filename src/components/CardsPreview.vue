@@ -346,6 +346,10 @@ let isUserClick = false
 const cover = ref({
   title: '',
   summary: '',
+  derivedTitle: '',
+  derivedSummary: '',
+  coverImage: null,
+  derivedCoverImage: null,
   wordCount: 0,
   minutes: 1,
   originalSummary: '',
@@ -420,7 +424,14 @@ const coverLayouts = computed(() => [
   }
 ])
 
-watch(() => [props.html, props.cardTheme, props.scale], async () => {
+watch(() => props.html, async (newHtml, oldHtml) => {
+  if (newHtml !== oldHtml) {
+    await nextTick()
+    await generate()
+  }
+}, { immediate: false })
+
+watch(() => [props.cardTheme, props.scale], async () => {
   await nextTick()
   await generate()
 }, { immediate: false })
@@ -440,31 +451,51 @@ onMounted(async () => {
 
 function extractCoverData(root) {
   // 使用统一的提取函数
-  const title = extractTitleFromContent(root) || t('cardsPreview.title')
-  const summary = extractSummaryFromContent(root)
-  const coverImage = extractCoverImageFromContent(root)
+  const extractedTitle = extractTitleFromContent(root) || t('cardsPreview.title')
+  const extractedSummary = extractSummaryFromContent(root)
+  const extractedCoverImage = extractCoverImageFromContent(root)
   const { wordCount, minutes } = extractWordCountAndMinutes(root)
 
-  // 只有当当前封面数据为空时才更新，保持用户编辑的内容
-  if (!cover.value.title && !cover.value.summary) {
-    cover.value = {
-      title,
-      summary,
-      wordCount,
-      minutes,
-      coverImage,
-      originalSummary: summary, // 保存完整摘要
-      imageFit: cover.value.imageFit || 'cover',
-      imagePosition: cover.value.imagePosition || 'center center',
-    }
+  const previousDerivedTitle = cover.value.derivedTitle || ''
+  const previousDerivedSummary = cover.value.derivedSummary || cover.value.originalSummary || ''
+  const previousDerivedImage = cover.value.derivedCoverImage
+
+  const hasCustomTitle = previousDerivedTitle
+    ? (cover.value.title && cover.value.title !== previousDerivedTitle)
+    : false
+  const hasCustomSummary = previousDerivedSummary
+    ? (cover.value.summary && cover.value.summary !== previousDerivedSummary)
+    : false
+  let hasCustomImage = false
+  if (previousDerivedImage === undefined) {
+    hasCustomImage = false
+  } else if (previousDerivedImage === null) {
+    hasCustomImage = !!cover.value.coverImage
   } else {
-    // 只更新字数、阅读时间和封面图
-    cover.value.wordCount = wordCount
-    cover.value.minutes = minutes
-    if (!cover.value.coverImage) {
-      cover.value.coverImage = coverImage
-    }
+    hasCustomImage = !!cover.value.coverImage && cover.value.coverImage !== previousDerivedImage
   }
+
+  cover.value.wordCount = wordCount
+  cover.value.minutes = minutes
+
+  cover.value.derivedTitle = extractedTitle
+  cover.value.derivedSummary = extractedSummary
+  cover.value.originalSummary = extractedSummary
+  cover.value.derivedCoverImage = extractedCoverImage
+
+  if (!hasCustomTitle || !cover.value.title) {
+    cover.value.title = extractedTitle
+  }
+
+  if (!hasCustomSummary || !cover.value.summary) {
+    cover.value.summary = extractedSummary
+  }
+
+  if (!hasCustomImage) {
+    cover.value.coverImage = extractedCoverImage
+  }
+
+  persistCoverData()
 }
 
 async function generate() {
@@ -479,21 +510,165 @@ async function generate() {
   const parser = new DOMParser()
   const doc = parser.parseFromString(highlightedHtml, 'text/html')
   const content = doc.body
+
+  // 将列表转换为平级div结构，便于独立分割
+  const convertListToDiv = (listEl) => {
+    if (!listEl || !['UL', 'OL'].includes(listEl.tagName)) return listEl
+
+    const result = document.createDocumentFragment()
+    const flattenedItems = []
+
+    // 递归提取所有层级的列表项，转换为平级结构
+    const extractItems = (list, level = 0, parentType = 'unordered', parentNumber = 1) => {
+      const isOrdered = list.tagName === 'OL'
+      const startNum = parseInt(list.getAttribute('start') || '1')
+      const items = Array.from(list.children).filter(child => child.tagName === 'LI')
+
+      items.forEach((li, index) => {
+        const itemDiv = document.createElement('div')
+        itemDiv.className = 'list-div-item'
+
+        // 复制li的类名和属性
+        if (li.className) {
+          itemDiv.className += ` ${li.className}`
+        }
+        Array.from(li.attributes).forEach(attr => {
+          if (attr.name !== 'class') {
+            itemDiv.setAttribute(attr.name, attr.value)
+          }
+        })
+
+        // 设置层级和类型信息
+        itemDiv.setAttribute('data-level', String(level))
+        itemDiv.setAttribute('data-list-type', isOrdered ? 'ordered' : 'unordered')
+
+        // 设置编号信息
+        if (isOrdered) {
+          itemDiv.setAttribute('data-number', String(startNum + index))
+        }
+
+        // 检查是否包含checkbox
+        const checkbox = li.querySelector('input[type="checkbox"]')
+        if (checkbox) {
+          itemDiv.setAttribute('data-has-checkbox', 'true')
+          itemDiv.setAttribute('data-checked', checkbox.checked ? 'true' : 'false')
+        }
+
+        // 获取li的内容，但移除嵌套列表
+        const liClone = li.cloneNode(true)
+        const nestedLists = liClone.querySelectorAll('ul, ol')
+        nestedLists.forEach(nestedList => nestedList.remove())
+
+        // 设置当前项的文本内容
+        itemDiv.innerHTML = liClone.innerHTML
+
+        flattenedItems.push(itemDiv)
+
+        // 递归处理嵌套列表
+        const originalNestedLists = li.querySelectorAll('ul, ol')
+        originalNestedLists.forEach(nestedList => {
+          extractItems(nestedList, level + 1, isOrdered ? 'ordered' : 'unordered', startNum + index)
+        })
+      })
+    }
+
+    // 提取所有项目
+    extractItems(listEl)
+
+    // 将所有项目添加到结果中
+    flattenedItems.forEach(item => {
+      result.appendChild(item)
+    })
+
+    return result
+  }
+
+  // 第一步：在最开始就将所有ul/ol列表转换为div结构
+  const allLists = content.querySelectorAll('ul, ol')
+  allLists.forEach((list) => {
+    const convertedList = convertListToDiv(list)
+    list.parentNode.replaceChild(convertedList, list)
+  })
+
   extractCoverData(content)
 
   const blocks = []
-  content.childNodes.forEach(node => {
-    if (node.nodeType === 1) {
-      const el = node
-      const tag = el.tagName.toLowerCase()
-      if (['p','h1','h2','h3','h4','blockquote','pre','ul','ol','table','img'].includes(tag)) {
-        blocks.push({ type: tag, html: el.outerHTML, element: el })
-      }
-    } else if (node.nodeType === 3) {
-      const text = node.textContent.trim()
-      if (text) blocks.push({ type: 'p', html: `<p>${text}</p>`, element: null })
+  const allowedTags = new Set(['p','h1','h2','h3','h4','blockquote','pre','ul','ol','div','table','img','figure'])
+  const wrapperTags = new Set(['div','section','article','main','header','footer'])
+
+  const appendTextBlock = (text) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    blocks.push({ type: 'p', html: `<p>${trimmed}</p>`, element: null })
+  }
+
+  // 合并blocks的HTML
+  const assembleBlocksHtml = (blockList) => {
+    return blockList.map(block => block.html).join('')
+  }
+
+  const transformSingleItemList = (listEl) => {
+    if (!listEl || !['UL', 'OL'].includes(listEl.tagName)) return null
+
+    const items = Array.from(listEl.children).filter(child => child.tagName === 'LI')
+    if (items.length !== 1) return null
+
+    const li = items[0]
+    const nestedLists = Array.from(li.children).filter(child => ['UL', 'OL'].includes(child.tagName))
+    if (!nestedLists.length) return null
+
+    const transformedBlocks = []
+
+    const headingClone = li.cloneNode(true)
+    Array.from(headingClone.children)
+      .filter(child => ['UL', 'OL'].includes(child.tagName))
+      .forEach(child => headingClone.removeChild(child))
+
+    const headingHtml = headingClone.innerHTML.trim()
+
+    if (headingHtml) {
+      const headingList = listEl.cloneNode(false)
+      headingList.innerHTML = ''
+      const headingLi = li.cloneNode(false)
+      headingLi.innerHTML = headingHtml
+      headingList.appendChild(headingLi)
+      transformedBlocks.push({ type: listEl.tagName.toLowerCase(), html: headingList.outerHTML, element: null })
     }
-  })
+
+    nestedLists.forEach((nested) => {
+      const nestedClone = nested.cloneNode(true)
+      nestedClone.classList.add('list-nested')
+      transformedBlocks.push({ type: nested.tagName.toLowerCase(), html: nestedClone.outerHTML, element: null })
+    })
+
+    return transformedBlocks.length ? transformedBlocks : null
+  }
+
+  const traverseNodes = (nodeList) => {
+    nodeList.forEach((node) => {
+      if (node.nodeType === 1) {
+        const el = node
+        const tag = el.tagName.toLowerCase()
+
+        if (allowedTags.has(tag)) {
+          blocks.push({ type: tag, html: el.outerHTML, element: el })
+          return
+        }
+
+        if (wrapperTags.has(tag) || el.hasAttribute('data-block') || el.hasAttribute('data-type')) {
+          traverseNodes(Array.from(el.childNodes))
+          return
+        }
+
+        // 对于未识别的标签，尝试提取文本
+        appendTextBlock(el.textContent || '')
+      } else if (node.nodeType === 3) {
+        appendTextBlock(node.textContent || '')
+      }
+    })
+  }
+
+  traverseNodes(Array.from(content.childNodes))
 
   // Fixed card size (324x540), inner padding 16
   const cardW = 324
@@ -546,9 +721,16 @@ async function generate() {
 
   const generated = []
   let acc = []
-  
+  let currentAccHeight = 0
+
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
+
+    // 防止无限循环：如果blocks数组增长过大，中断处理
+    if (blocks.length > 10000) {
+      console.error('Blocks array grew too large, breaking loop to prevent infinite recursion')
+      break
+    }
     const probe = createScaledProbe()
     
     // 特殊处理图片，确保图片能完整显示
@@ -564,7 +746,7 @@ async function generate() {
       
       // 测试加入当前累积内容
       const testProbe = createScaledProbe()
-      testProbe.innerHTML = acc.map(b => b.html).join('') + block.html
+      testProbe.innerHTML = assembleBlocksHtml(acc) + block.html
       temp.innerHTML = ''
       temp.appendChild(testProbe)
       
@@ -577,14 +759,21 @@ async function generate() {
       const scaledHeight = testProbe.scrollHeight * props.scale
       if (scaledHeight <= contentH) {
         acc.push(block)
+        currentAccHeight = scaledHeight
       } else {
-        if (acc.length) generated.push({ type: 'content', html: acc.map(b => b.html).join('') })
+        if (acc.length) generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
         acc = [block]
+        const blockProbe = createScaledProbe()
+        blockProbe.innerHTML = block.html
+        temp.innerHTML = ''
+        temp.appendChild(blockProbe)
+        await new Promise(resolve => setTimeout(resolve, 10))
+        currentAccHeight = blockProbe.scrollHeight * props.scale
       }
     } else {
       // 创建新的probe元素，确保每次测量都是干净的
       const freshProbe = createScaledProbe()
-      freshProbe.innerHTML = acc.map(b => b.html).join('') + block.html
+      freshProbe.innerHTML = assembleBlocksHtml(acc) + block.html
       temp.innerHTML = ''
       temp.appendChild(freshProbe)
 
@@ -592,7 +781,6 @@ async function generate() {
       await new Promise(resolve => setTimeout(resolve, 10))
 
       const scaledHeight = freshProbe.scrollHeight * props.scale
-      const content = acc.map(b => b.type).join('+') + '+' + block.type
 
       // 更智能的空间利用：如果接近边界但没有超出太多，就允许
       const overage = scaledHeight - contentH
@@ -601,9 +789,48 @@ async function generate() {
 
 
       if (shouldCreateNewCard) {
-        // 如果当前累积内容不为空，先生成一张卡片
+        if (block.type === 'ul' || block.type === 'ol') {
+          const spaceLeft = Math.max(0, contentH - currentAccHeight)
+
+          if (spaceLeft > 16 && currentAccHeight > 0) {
+            const partial = splitListToFit(block.html, physicalContentH, temp, props.scale, spaceLeft, false)
+            if (partial.fitHtml) {
+              acc.push({ type: block.type, html: partial.fitHtml, element: null })
+              generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
+              acc = []
+              currentAccHeight = 0
+
+              if (partial.remainHtml) {
+                blocks.splice(i + 1, 0, { type: block.type, html: partial.remainHtml, element: null })
+              }
+              continue
+            }
+          }
+
+          if (acc.length) {
+            generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
+          }
+          acc = []
+          currentAccHeight = 0
+
+          const { fitHtml, remainHtml } = splitListToFit(block.html, physicalContentH, temp, props.scale, contentH, true)
+          acc = [{ type: block.type, html: fitHtml, element: null }]
+
+          const listProbe = createScaledProbe()
+          listProbe.innerHTML = fitHtml
+          temp.innerHTML = ''
+          temp.appendChild(listProbe)
+          await new Promise(resolve => setTimeout(resolve, 10))
+          currentAccHeight = listProbe.scrollHeight * props.scale
+
+          if (remainHtml) {
+            blocks.splice(i + 1, 0, { type: block.type, html: remainHtml, element: null })
+          }
+          continue
+        }
+
         if (acc.length) {
-          generated.push({ type: 'content', html: acc.map(b => b.html).join('') })
+          generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
         }
 
         // 如果是标题类型，尝试与下一个内容组合
@@ -616,45 +843,54 @@ async function generate() {
 
           const combinedScaledHeight = combinedProbe.scrollHeight * props.scale
           if (combinedScaledHeight <= contentH) {
-            // 标题和下一个内容可以组合在一起
             acc = [block, nextBlock]
-            i++ // 跳过下一个块，因为已经处理了
-          } else {
-            acc = [block]
-          }
-        } else {
-          // 新卡片仅包含当前块，必要时对块进行拆分/截断
-          if (block.type === 'ul' || block.type === 'ol') {
-            const { fitHtml, remainHtml } = splitListToFit(block.html, physicalContentH, temp, props.scale)
-            acc = [{ type: block.type, html: fitHtml, element: null }]
-            if (remainHtml) {
-              blocks.splice(i + 1, 0, { type: block.type, html: remainHtml, element: null })
-            }
-          } else {
-            acc = [block]
-
-            // 检查单个元素是否过大
-            const singleProbe = createScaledProbe()
-            singleProbe.innerHTML = block.html
-            temp.innerHTML = ''
-            temp.appendChild(singleProbe)
-            const singleScaledHeight = singleProbe.scrollHeight * props.scale
-            if (singleScaledHeight > contentH) {
-              // 如果单个元素太大，尝试截断（但不截断图片和标题）
-              if (block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
-                const truncated = truncateContent(block.html, contentH, temp, props.scale)
-                acc = [{ type: block.type, html: truncated, element: null }]
-              }
-            }
+            currentAccHeight = combinedScaledHeight
+            blocks.splice(i + 1, 1)
+            continue
           }
         }
+
+        acc = [block]
+
+        const singleProbe = createScaledProbe()
+        singleProbe.innerHTML = block.html
+        temp.innerHTML = ''
+        temp.appendChild(singleProbe)
+        await new Promise(resolve => setTimeout(resolve, 10))
+        const singleScaledHeight = singleProbe.scrollHeight * props.scale
+        currentAccHeight = singleScaledHeight
+
+        if (singleScaledHeight > contentH && block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type) && !block.html.includes('list-div-container')) {
+          const truncated = truncateContent(block.html, contentH, temp, props.scale)
+          acc = [{ type: block.type, html: truncated, element: null }]
+
+          const truncatedProbe = createScaledProbe()
+          truncatedProbe.innerHTML = truncated
+          temp.innerHTML = ''
+          temp.appendChild(truncatedProbe)
+          await new Promise(resolve => setTimeout(resolve, 10))
+          currentAccHeight = truncatedProbe.scrollHeight * props.scale
+        } else if (block.html.includes('list-div-container')) {
+          // 转换后的列表太长，移到新卡片
+          if (acc.length) {
+            generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
+          }
+          acc = [block]
+          currentAccHeight = singleScaledHeight
+        }
+
+        continue
       } else {
         acc.push(block)
+        currentAccHeight = scaledHeight
       }
     }
   }
-  
-  if (acc.length) generated.push({ type: 'content', html: acc.map(b => b.html).join('') })
+
+  if (acc.length) {
+    const finalHtml = assembleBlocksHtml(acc)
+    generated.push({ type: 'content', html: finalHtml })
+  }
 
   // Debug actual content heights after generation
   setTimeout(() => {
@@ -698,6 +934,22 @@ async function generate() {
     }
   } else {
     coverBgHtml.value = ''
+  }
+
+  // Fallback: if no cards were generated but the content is not empty,
+  // render the raw HTML once so the tab never appears blank.
+  if (!generated.length) {
+    const fallbackHtml = Array.from(content.childNodes)
+      .map((node) => {
+        if (node.nodeType === 1) return node.outerHTML
+        if (node.nodeType === 3) return node.textContent || ''
+        return ''
+      })
+      .join('')
+
+    if (fallbackHtml.trim()) {
+      generated.push({ type: 'content', html: `<div class="content-html content-rich">${fallbackHtml}</div>` })
+    }
   }
 
   // 确保封面卡片始终在第一位
@@ -762,69 +1014,112 @@ function truncateContent(html, maxHeight, container, scale) {
   return html
 }
 
-// 针对列表（ul/ol）按 li 进行拆分，保证结构正确不被压平
-function splitListToFit(html, maxHeight, container, scale) {
+
+
+// 针对列表（ul/ol）按 li 进行拆分，简单可靠版本
+function splitListToFit(html, maxHeight, container, scale, targetHeight = maxHeight, forceAtLeastOne = true) {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
   const list = doc.body.firstElementChild
-  if (!list || !['UL','OL'].includes(list.tagName)) {
+  if (!list || !['UL', 'OL'].includes(list.tagName)) {
     return { fitHtml: html, remainHtml: '' }
   }
 
-  const isOrdered = list.tagName === 'OL'
-  const originalStart = isOrdered ? parseInt(list.getAttribute('start') || '1') : null
-  const items = Array.from(list.children).filter(el => el.tagName === 'LI')
+  const tagName = list.tagName.toLowerCase()
+  const isOrdered = tagName === 'ol'
+  const originalStart = isOrdered ? parseInt(list.getAttribute('start') || '1') : 1
+  const items = Array.from(list.children).filter((el) => el.tagName === 'LI')
 
-  const fitList = document.createElement(list.tagName.toLowerCase())
-  if (isOrdered && originalStart && originalStart !== 1) fitList.setAttribute('start', String(originalStart))
+  const effectiveTarget = Math.max(0, Math.min(targetHeight, maxHeight))
 
-  let fitCount = 0
-  for (let idx = 0; idx < items.length; idx++) {
-    const liClone = items[idx].cloneNode(true)
-    fitList.appendChild(liClone)
+  const cloneItem = (index) => items[index].cloneNode(true)
 
-    // 测量当前 fitList 高度
+  const copyAttributes = (source, target, startOffset = 0) => {
+    Array.from(source.attributes).forEach((attr) => {
+      if (isOrdered && attr.name === 'start') return
+      target.setAttribute(attr.name, attr.value)
+    })
+    if (isOrdered) {
+      const startValue = originalStart + startOffset
+      if (startValue !== 1) target.setAttribute('start', String(startValue))
+    }
+  }
+
+  const createListNode = (startIndex, endIndex, startOffset = 0) => {
+    const newList = document.createElement(tagName)
+    copyAttributes(list, newList, startOffset)
+    for (let i = startIndex; i < endIndex; i++) {
+      newList.appendChild(cloneItem(i))
+    }
+    return newList
+  }
+
+  const measureList = (node) => {
     const probe = document.createElement('div')
     probe.className = 'content-html content-rich'
-    probe.style.width = (292 / scale) + 'px' // 使用未缩放的宽度进行测量
-    probe.style.height = (508 / scale) + 'px' // 使用物理内容高度
+    probe.style.width = (292 / scale) + 'px'
+    probe.style.height = (508 / scale) + 'px'
     probe.style.boxSizing = 'border-box'
     probe.style.padding = '0 16px'
     probe.style.overflow = 'hidden'
     probe.style.position = 'relative'
-    probe.appendChild(fitList.cloneNode(true))
+    probe.appendChild(node)
+
     container.innerHTML = ''
     container.appendChild(probe)
+    const scaledHeight = probe.scrollHeight * scale
+    return scaledHeight
+  }
 
-    const unscaledHeight = probe.scrollHeight
-    const scaledHeight = unscaledHeight * scale
-    if (scaledHeight <= maxHeight) {
-      fitCount = idx + 1
-      continue
+  // 如果只有一个项目，检查它是否能放下
+  if (items.length <= 1) {
+    const testList = createListNode(0, items.length, 0)
+    const height = measureList(testList)
+    if (height <= effectiveTarget || (forceAtLeastOne && items.length > 0)) {
+      container.innerHTML = ''
+      return { fitHtml: html, remainHtml: '' }
+    }
+
+    container.innerHTML = ''
+    return { fitHtml: '', remainHtml: html }
+  }
+
+  let fitCount = 0
+
+  for (let i = 1; i <= items.length; i++) {
+    const testList = createListNode(0, i, 0)
+    const height = measureList(testList)
+    if (height <= effectiveTarget) {
+      fitCount = i
     } else {
-      // 超出，撤回最后一个
-      fitList.removeChild(fitList.lastElementChild)
       break
     }
   }
 
-  // 所有项都能放下
+  // 清理测量容器中的节点，避免影响后续测量
+  container.innerHTML = ''
+
   if (fitCount >= items.length) {
     return { fitHtml: list.outerHTML, remainHtml: '' }
   }
 
-  // 构建剩余列表
-  const remainList = document.createElement(list.tagName.toLowerCase())
-  if (isOrdered) {
-    const start = (originalStart || 1) + fitCount
-    if (start !== 1) remainList.setAttribute('start', String(start))
-  }
-  for (let i = fitCount; i < items.length; i++) {
-    remainList.appendChild(items[i].cloneNode(true))
+  if (fitCount === 0) {
+    if (!forceAtLeastOne) {
+      return { fitHtml: '', remainHtml: list.outerHTML }
+    }
+    // 强制至少一个，但不做复杂处理
+    fitCount = 1
   }
 
-  return { fitHtml: fitList.outerHTML, remainHtml: remainList.outerHTML }
+  const fitListNode = createListNode(0, fitCount, 0)
+  const remainListNode = createListNode(fitCount, items.length, fitCount)
+
+  const fitHtml = fitListNode.outerHTML
+  const remainHtml = remainListNode.childElementCount > 0 ? remainListNode.outerHTML : ''
+
+  return { fitHtml, remainHtml }
 }
+
 
 function scrollToCard(index) {
   if (!stripRef.value || index < 0 || index >= cards.value.length) return
@@ -1276,6 +1571,7 @@ function syncTitle() {
   const title = extractTitleFromContent(content)
   if (title) {
     cover.value.title = title
+    cover.value.derivedTitle = title
     persistCoverData()
     success(t('cardsPreview.syncTitleSuccess'))
   } else {
@@ -1296,6 +1592,8 @@ function syncSummary() {
   const summary = extractSummaryFromContent(content)
   if (summary) {
     cover.value.summary = summary
+    cover.value.derivedSummary = summary
+    cover.value.originalSummary = summary
     persistCoverData()
     success(t('cardsPreview.syncSummarySuccess'))
   } else {
@@ -1316,6 +1614,7 @@ function syncCoverImage() {
   const coverImage = extractCoverImageFromContent(content)
   if (coverImage) {
     cover.value.coverImage = coverImage
+    cover.value.derivedCoverImage = coverImage
     // 有图片时清除HTML背景
     coverBgHtml.value = ''
     persistCoverData()
@@ -1430,6 +1729,9 @@ function persistCoverData() {
       title: cover.value.title,
       summary: cover.value.summary,
       originalSummary: cover.value.originalSummary,
+      derivedTitle: cover.value.derivedTitle,
+      derivedSummary: cover.value.derivedSummary,
+      derivedCoverImage: cover.value.derivedCoverImage,
       coverImage: cover.value.coverImage,
       layout: currentCoverLayout.value,
       imageFit: cover.value.imageFit,
@@ -1459,10 +1761,13 @@ function restoreCoverData() {
     const saved = localStorage.getItem('uni.coverData')
     if (saved) {
       const coverData = JSON.parse(saved)
-      if (coverData.title) cover.value.title = coverData.title
-      if (coverData.summary) cover.value.summary = coverData.summary
-      if (coverData.originalSummary) cover.value.originalSummary = coverData.originalSummary
-      if (coverData.coverImage) cover.value.coverImage = coverData.coverImage
+      if (Object.prototype.hasOwnProperty.call(coverData, 'title')) cover.value.title = coverData.title
+      if (Object.prototype.hasOwnProperty.call(coverData, 'summary')) cover.value.summary = coverData.summary
+      if (Object.prototype.hasOwnProperty.call(coverData, 'originalSummary')) cover.value.originalSummary = coverData.originalSummary
+      if (Object.prototype.hasOwnProperty.call(coverData, 'derivedTitle')) cover.value.derivedTitle = coverData.derivedTitle
+      if (Object.prototype.hasOwnProperty.call(coverData, 'derivedSummary')) cover.value.derivedSummary = coverData.derivedSummary
+      if (Object.prototype.hasOwnProperty.call(coverData, 'derivedCoverImage')) cover.value.derivedCoverImage = coverData.derivedCoverImage
+      if (Object.prototype.hasOwnProperty.call(coverData, 'coverImage')) cover.value.coverImage = coverData.coverImage
       if (coverData.layout) currentCoverLayout.value = coverData.layout
       if (coverData.imageFit) cover.value.imageFit = coverData.imageFit
       if (coverData.imagePosition) cover.value.imagePosition = coverData.imagePosition
@@ -1485,4 +1790,3 @@ function restoreShowMeta() {
 
 defineExpose({ exportAll })
 </script>
-

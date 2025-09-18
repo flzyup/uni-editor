@@ -27,7 +27,9 @@ export default {
     saveArticle: 'Save Article',
     colorTheme: 'Color Theme',
     theme: 'Color Theme', // Compatibility
-    scale: 'Scale'
+    scale: 'Scale',
+    exportMarkdown: 'Export MD',
+    importMarkdown: 'Import MD'
   },
 
   // Cards preview related
@@ -130,6 +132,11 @@ export default {
     emptyContent: 'Editor content is empty',
     exportSuccess: 'Cards exported successfully',
     exportFailed: 'Export failed, please try again',
+    exportMarkdownSuccess: 'Markdown file exported successfully',
+    exportMarkdownFailed: 'Markdown export failed, please try again',
+    importMarkdownSuccess: 'Markdown file imported successfully',
+    importMarkdownFailed: 'Markdown import failed, please try again',
+    invalidMarkdownFile: 'Please select a valid Markdown file (.md)',
     imageUploadSuccess: 'Image uploaded successfully',
     imageUploadFailed: 'Image upload failed',
     imageSizeExceeded: 'Image size cannot exceed 5MB',

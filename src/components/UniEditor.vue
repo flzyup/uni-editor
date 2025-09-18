@@ -100,13 +100,11 @@ onMounted(async () => {
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
-      'quote', 'line', 'code', 'inline-code', '|',
+      'quote', 'line', 'code', 'inline-code',
       'table', 'insert-before', 'insert-after','|',
       'line', 'link', 'emoji', '|', //'upload',
       'undo', 'redo', '|',
-      'edit-mode', 'both',
-      'code-theme','content-theme',  '|',
-      'edit-mode', 'export'
+      'edit-mode',
       // 'devtools', '|'
     ],
     counter: { enable: true },
@@ -203,6 +201,133 @@ function getHTML() {
   return vd?.getHTML?.() || Promise.resolve('')
 }
 
+function exportMarkdown() {
+  if (!vd) return Promise.reject('Editor not ready')
+
+  try {
+    const markdownContent = vd.getValue()
+    if (!markdownContent) {
+      return Promise.reject('No content to export')
+    }
+
+    // 提取文件名
+    let filename = getFilenameFromContent(markdownContent)
+
+    // 创建下载链接
+    const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+
+    // 触发下载
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    return Promise.resolve()
+  } catch (error) {
+    return Promise.reject(error)
+  }
+}
+
+function importMarkdown() {
+  return new Promise((resolve, reject) => {
+    if (!vd) {
+      reject('Editor not ready')
+      return
+    }
+
+    // 创建文件输入元素
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.md,.markdown,text/markdown'
+    input.style.display = 'none'
+
+    input.onchange = (event) => {
+      const file = event.target.files?.[0]
+      if (!file) {
+        reject('No file selected')
+        return
+      }
+
+      // 验证文件类型
+      const fileExtension = file.name.toLowerCase().split('.').pop()
+      if (!['md', 'markdown'].includes(fileExtension)) {
+        reject('Invalid file type')
+        return
+      }
+
+      // 读取文件内容
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result
+          if (typeof content === 'string') {
+            // 设置编辑器内容
+            vd.setValue(content)
+            // 手动触发HTML更新，确保右侧预览区域更新
+            setTimeout(() => {
+              emitHtml()
+            }, 100)
+            resolve(content)
+          } else {
+            reject('Failed to read file content')
+          }
+        } catch (error) {
+          reject(error)
+        }
+      }
+
+      reader.onerror = () => {
+        reject('Failed to read file')
+      }
+
+      reader.readAsText(file, 'utf-8')
+    }
+
+    input.oncancel = () => {
+      reject('Import cancelled')
+    }
+
+    // 触发文件选择
+    document.body.appendChild(input)
+    input.click()
+    document.body.removeChild(input)
+  })
+}
+
+function getFilenameFromContent(content) {
+  // 查找第一个标题（# 或 ## 等）
+  const lines = content.split('\n')
+
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    // 匹配 markdown 标题格式：# 标题, ## 标题, ### 标题 等
+    const headerMatch = trimmedLine.match(/^#{1,6}\s+(.+)$/)
+    if (headerMatch) {
+      let title = headerMatch[1].trim()
+
+      // 清理标题，移除不适合作为文件名的字符
+      title = title
+        .replace(/[<>:"/\\|?*]/g, '') // 移除Windows不支持的字符
+        .replace(/\s+/g, '_') // 空格替换为下划线
+        .replace(/[^\w\u4e00-\u9fa5_-]/g, '') // 只保留字母、数字、中文、下划线和连字符
+        .substring(0, 50) // 限制长度
+
+      if (title) {
+        return `${title}.md`
+      }
+    }
+  }
+
+  // 如果没有找到标题，使用时间戳格式
+  const now = new Date()
+  const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', '_')
+  return `uni-editor-export_${timestamp}.md`
+}
+
 onBeforeUnmount(() => {
   isVditorReady = false
   if (vd) {
@@ -255,7 +380,7 @@ function onKey(e) {
   }
 }
 
-defineExpose({ getHTML })
+defineExpose({ getHTML, exportMarkdown, importMarkdown })
 </script>
 
 <style scoped>

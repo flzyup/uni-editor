@@ -27,7 +27,9 @@ export default {
     saveArticle: '保存长文',
     colorTheme: '色彩主题',
     theme: '色彩主题', // 兼容性
-    scale: '缩放'
+    scale: '缩放',
+    exportMarkdown: '导出MD',
+    importMarkdown: '导入MD'
   },
 
   // 卡片预览相关
@@ -130,6 +132,11 @@ export default {
     emptyContent: '编辑器内容为空',
     exportSuccess: '卡片导出成功',
     exportFailed: '导出失败，请重试',
+    exportMarkdownSuccess: 'Markdown文件导出成功',
+    exportMarkdownFailed: 'Markdown导出失败，请重试',
+    importMarkdownSuccess: 'Markdown文件导入成功',
+    importMarkdownFailed: 'Markdown导入失败，请重试',
+    invalidMarkdownFile: '请选择有效的Markdown文件（.md）',
     imageUploadSuccess: '图片上传成功',
     imageUploadFailed: '图片上传失败',
     imageSizeExceeded: '图片大小不能超过5MB',

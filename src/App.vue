@@ -58,8 +58,9 @@
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.editor') }}</div>
           <div class="spacer" />
-          <div class="toolbar">
-
+          <div class="toolbar editor-actions">
+            <button class="btn" @click="importMarkdown">{{ $t('main.importMarkdown') }}</button>
+            <button class="btn" @click="exportMarkdown">{{ $t('main.exportMarkdown') }}</button>
           </div>
         </div>
         <UniEditor
@@ -248,6 +249,49 @@ async function saveArticle() {
   }
 }
 
+async function exportMarkdown() {
+  if (!uniEditorRef.value) {
+    error($t('messages.exportMarkdownFailed'))
+    return
+  }
+
+  try {
+    await uniEditorRef.value.exportMarkdown()
+    success($t('messages.exportMarkdownSuccess'))
+  } catch (err) {
+    console.error('导出Markdown失败:', err)
+    if (err === 'No content to export') {
+      warning($t('messages.emptyContent'))
+    } else {
+      error($t('messages.exportMarkdownFailed'))
+    }
+  }
+}
+
+async function importMarkdown() {
+  if (!uniEditorRef.value) {
+    error($t('messages.importMarkdownFailed'))
+    return
+  }
+
+  try {
+    await uniEditorRef.value.importMarkdown()
+    success($t('messages.importMarkdownSuccess'))
+  } catch (err) {
+    if (err === 'Invalid file type') {
+      console.warn('导入Markdown失败: 非法文件类型')
+      warning($t('messages.invalidMarkdownFile'))
+    } else if (err === 'Import cancelled' || err === 'No file selected') {
+      // 用户取消或未选择文件，不记录为错误
+      console.info('Markdown导入已取消')
+      return
+    } else {
+      console.error('导入Markdown失败:', err)
+      error($t('messages.importMarkdownFailed'))
+    }
+  }
+}
+
 
 function persistTheme(){
   try { localStorage.setItem('uni.appTheme', appTheme.value) } catch {}
@@ -427,6 +471,11 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   width: 100%;
   position: relative;
+}
+
+.editor-actions {
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .toolbar-left {
