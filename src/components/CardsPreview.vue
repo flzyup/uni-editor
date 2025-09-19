@@ -747,21 +747,6 @@ async function generate(shouldShowLoading = false) {
   temp.className = `card card-theme ${props.cardTheme} ${props.pageTheme}`
   document.body.appendChild(temp)
 
-
-  function waitForImages(container) {
-    const images = Array.from(container.querySelectorAll('img')).filter(img => !img.complete)
-    if (!images.length) return null
-    return Promise.all(images.map(img => new Promise((resolve) => {
-      const done = () => {
-        img.removeEventListener('load', done)
-        img.removeEventListener('error', done)
-        resolve()
-      }
-      img.addEventListener('load', done, { once: true })
-      img.addEventListener('error', done, { once: true })
-    })))
-  }
-
   // 优化的测量方法：复用probe元素，减少DOM创建
   const reusableProbe = document.createElement('div')
   reusableProbe.className = 'content-html content-rich'
@@ -789,7 +774,6 @@ async function generate(shouldShowLoading = false) {
   measureContent('<p>warmup</p>')
   const generated = []
   let acc = []
-  let currentAccHeight = 0
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
@@ -823,7 +807,6 @@ async function generate(shouldShowLoading = false) {
 
         if (combinedHeight <= contentH) {
           acc = [block, nextBlock]
-          currentAccHeight = combinedHeight
           blocks.splice(i + 1, 1)
           continue
         }
@@ -832,18 +815,15 @@ async function generate(shouldShowLoading = false) {
       // 新卡片从当前块开始
       acc = [block]
       const singleHeight = measureContent(block.html)
-      currentAccHeight = singleHeight
 
       // 如果单个块太大，尝试截断（除了图片和标题）
       if (singleHeight > contentH && block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
         const truncated = truncateContent(block.html, contentH, temp, props.scale)
         acc = [{ type: block.type, html: truncated, element: null }]
-        currentAccHeight = measureContent(truncated)
       }
     } else {
       // 可以放入当前卡片
       acc.push(block)
-      currentAccHeight = scaledHeight
     }
   }
 
@@ -851,8 +831,6 @@ async function generate(shouldShowLoading = false) {
     const finalHtml = assembleBlocksHtml(acc)
     generated.push({ type: 'content', html: finalHtml })
   }
-
-
 
   // Determine cover background when no image: use second card content HTML if available
   if (!cover.value.coverImage) {
