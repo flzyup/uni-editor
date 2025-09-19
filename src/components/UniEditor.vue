@@ -23,6 +23,7 @@ const elRef = ref(null)
 let vd = null
 let isVditorReady = false
 const scrollCleanups = []
+let cleanupModeListener = null
 
 const CACHE_KEY = 'uni-editor-content'
 const MODE_CACHE_KEY = 'uni-editor-mode'
@@ -77,6 +78,7 @@ function saveContent(content) {
 
 const initial = loadCachedContent()
 const initialMode = loadCachedMode()
+let lastSavedMode = initialMode
 
 function getEditorTheme(v) {
   return v === 'theme-dark' ? 'dark' : 'classic'
@@ -142,6 +144,7 @@ watch(locale, async (newLocale) => {
     // 销毁当前实例
     try {
       cleanupScrollSync()
+      cleanupModeChangeListener()
       vd.destroy()
     } catch (error) {
       console.warn('Failed to destroy Vditor:', error)
@@ -149,11 +152,13 @@ watch(locale, async (newLocale) => {
 
     // 重新初始化
     await nextTick()
+    const cachedMode = loadCachedMode()
+    lastSavedMode = cachedMode
     vd = new Vditor(elRef.value, {
       value: currentContent,
       cache: { enable: false },
       height: '100%',
-      mode: loadCachedMode(), // 使用缓存的模式
+      mode: cachedMode, // 使用缓存的模式
       lang: getVditorLang(newLocale),
       toolbarConfig: { pin: true },
       toolbar: [
@@ -334,6 +339,7 @@ function getFilenameFromContent(content) {
 
 onBeforeUnmount(() => {
   isVditorReady = false
+  cleanupModeChangeListener()
   cleanupScrollSync()
   if (vd) {
     vd.destroy?.()
@@ -343,37 +349,77 @@ onBeforeUnmount(() => {
 })
 
 function addModeChangeListener() {
-  if (!vd || !vd.vditor?.element) return
+  if (!vd || !vd.vditor) return
 
-  // 监听编辑模式按钮点击
-  const toolbar = vd.vditor.element.querySelector('.vditor-toolbar')
-  if (toolbar) {
-    // 查找编辑模式相关的按钮
-    const modeButtons = toolbar.querySelectorAll('[data-type="edit-mode"], [data-type="both"]')
+  cleanupModeChangeListener()
 
+  const editModeElement = vd.vditor.toolbar?.elements?.['edit-mode']
+    || vd.vditor.element?.querySelector?.('.vditor-toolbar__item button[data-type="edit-mode"]')?.parentElement
+
+  if (!(editModeElement instanceof HTMLElement)) {
+    return
+  }
+
+  const resolveCurrentMode = () => {
+    if (typeof vd.getCurrentMode === 'function') {
+      const mode = vd.getCurrentMode()
+      if (mode) return mode
+    }
+
+    const active = editModeElement.querySelector('button.vditor-menu--current')
+    return active?.dataset?.mode || lastSavedMode || 'wysiwyg'
+  }
+
+  const persistModeIfNeeded = () => {
+    const mode = resolveCurrentMode()
+    if (!mode || mode === lastSavedMode) {
+      return
+    }
+    lastSavedMode = mode
+    saveModeToCache(mode)
+    setupScrollSync()
+  }
+
+  const handleModeButtonClick = () => {
+    // 等待 Vditor 完成模式切换后再读取状态
+    setTimeout(persistModeIfNeeded, 0)
+  }
+
+  const modeButtons = Array.from(editModeElement.querySelectorAll('button[data-mode]'))
+  modeButtons.forEach(button => {
+    button.addEventListener('click', handleModeButtonClick)
+  })
+
+  const observer = new MutationObserver(() => {
+    persistModeIfNeeded()
+  })
+
+  observer.observe(editModeElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+    subtree: true,
+  })
+
+  // 初始化时同步一次，处理程序化模式切换
+  persistModeIfNeeded()
+
+  cleanupModeListener = () => {
+    observer.disconnect()
     modeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        // 延迟检查模式变化，因为 Vditor 需要时间更新
-        setTimeout(() => {
-          if (vd && vd.vditor) {
-            // 检查当前活跃的编辑器类型
-            let currentMode = 'wysiwyg' // 默认值
-
-            if (vd.vditor.sv && vd.vditor.sv.element.style.display !== 'none') {
-              currentMode = 'sv'
-            } else if (vd.vditor.ir && vd.vditor.ir.element.style.display !== 'none') {
-              currentMode = 'ir'
-            } else if (vd.vditor.wysiwyg && vd.vditor.wysiwyg.element.style.display !== 'none') {
-              currentMode = 'wysiwyg'
-            }
-
-            saveModeToCache(currentMode)
-            setupScrollSync()
-          }
-        }, 150)
-      })
+      button.removeEventListener('click', handleModeButtonClick)
     })
   }
+}
+
+function cleanupModeChangeListener() {
+  if (typeof cleanupModeListener === 'function') {
+    try {
+      cleanupModeListener()
+    } catch (error) {
+      console.warn('Failed to cleanup editor mode listener:', error)
+    }
+  }
+  cleanupModeListener = null
 }
 
 function onKey(e) {

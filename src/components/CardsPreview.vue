@@ -46,7 +46,7 @@
                         top: '0',
                         left: '0',
                         boxSizing: 'border-box',
-                        padding: '0 16px'
+                        padding: `${CARD_CONTENT_PADDING}px`
                       }"
                     ></div>
                   </template>
@@ -245,7 +245,7 @@
                       top: '0',
                       left: '0',
                       boxSizing: 'border-box',
-                      padding: '0 16px'
+                      padding: `${CARD_CONTENT_PADDING}px`
                     }"
                   ></div>
                 </template>
@@ -277,7 +277,7 @@
                   top: '0',
                   left: '0',
                   boxSizing: 'border-box',
-                  padding: '0 16px'
+                  padding: `${CARD_CONTENT_PADDING}px`
                 }"
               ></div>
             </div>
@@ -346,6 +346,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['generated'])
+
+const CARD_CONTENT_PADDING = 16
 
 // pageTheme 通过 CSS 继承从父组件获取，无需再次应用类名
 
@@ -727,7 +729,7 @@ async function generate(shouldShowLoading = false) {
   // Fixed card size (324x540), inner padding 16
   const cardW = 324
   const cardH = 540
-  const pad = 16
+  const pad = CARD_CONTENT_PADDING
   const contentW = cardW - pad * 2
   // 实际内容区域高度，需要与渲染时的设置保持一致
   const physicalContentH = cardH - pad * 2
@@ -753,7 +755,7 @@ async function generate(shouldShowLoading = false) {
   reusableProbe.style.width = (contentW / props.scale) + 'px'
   reusableProbe.style.height = (physicalContentH / props.scale) + 'px'
   reusableProbe.style.boxSizing = 'border-box'
-  reusableProbe.style.padding = '0 16px'
+  reusableProbe.style.padding = pad + 'px'
   reusableProbe.style.overflow = 'hidden'
   reusableProbe.style.position = 'relative'
   reusableProbe.style.fontFamily = 'var(--font-family-base, "Microsoft YaHei", sans-serif)'
