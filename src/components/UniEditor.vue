@@ -102,7 +102,7 @@ onMounted(async () => {
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
       'quote', 'line', 'code', 'inline-code',
-      'table', 'insert-before', 'insert-after','|',
+      'table', 'insert-before', 'insert-after', '|',
       'line', 'link', 'emoji', '|', //'upload',
       'undo', 'redo', '|',
       'edit-mode',
@@ -160,11 +160,11 @@ watch(locale, async (newLocale) => {
         'headings', 'bold', 'italic', 'strike', '|',
         'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
         'quote', 'line', 'code', 'inline-code', '|',
-        'table', 'insert-before', 'insert-after','|',
+        'table', 'insert-before', 'insert-after', '|',
         'line', 'link', 'emoji', '|', //'upload',
         'undo', 'redo', '|',
         'edit-mode', 'both',
-        'code-theme','content-theme',  '|',
+        'code-theme', 'content-theme', '|',
         'export'
         // 'devtools', '|'
       ],
@@ -500,14 +500,31 @@ function isScrollable(el) {
 defineExpose({ getHTML, exportMarkdown, importMarkdown })
 </script>
 
-<style scoped>
-.editor-wrap { height: 100%; min-height: 0; display: flex; }
-.vditor-host { border-top: 1px solid var(--border); flex: 1; min-height: 0; }
-:deep(.vditor) { background: var(--panel); color: var(--text); border: none; }
+<style lang="less" scoped>
+@import '../styles/less/variables/layout.less';
+.editor-wrap {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+}
+
+.vditor-host {
+  border-top: 1px solid var(--border);
+  flex: 1;
+  min-height: 0;
+}
+
+:deep(.vditor) {
+  background: var(--panel);
+  color: var(--text);
+  border: none;
+}
+
 :deep(.vditor .vditor-toolbar) {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
+
 /* 提升深色模式下工具栏可读性 */
 :deep(.vditor .vditor-toolbar) .vditor-tooltipped,
 :deep(.vditor .vditor-toolbar) button,
@@ -517,6 +534,7 @@ defineExpose({ getHTML, exportMarkdown, importMarkdown })
   fill: var(--text) !important;
   stroke: var(--text) !important;
 }
+
 /* Vditor 工具栏按钮悬停和激活状态，使用统一主题色 */
 :deep(.vditor .vditor-toolbar button:hover) {
   background: color-mix(in srgb, var(--accent) 15%, var(--panel)) !important;
@@ -526,34 +544,41 @@ defineExpose({ getHTML, exportMarkdown, importMarkdown })
   stroke: var(--text) !important;
   transform: translateY(-1px);
 }
+
 :deep(.vditor .vditor-toolbar button:active) {
   background: color-mix(in srgb, var(--accent) 25%, var(--panel)) !important;
   transform: translateY(0px);
 }
+
 /* Vditor 工具栏按钮激活状态（选中状态）*/
 :deep(.vditor .vditor-toolbar button.vditor-toolbar--current) {
   background: color-mix(in srgb, var(--accent) 20%, var(--panel)) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
 }
+
 /* Vditor 分隔符样式 */
 :deep(.vditor .vditor-toolbar .vditor-toolbar__divider) {
   background: var(--border) !important;
 }
+
 /* Vditor 下拉菜单样式 */
 :deep(.vditor .vditor-panel) {
   background: var(--panel) !important;
   border: 1px solid var(--border) !important;
   box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
 }
+
 :deep(.vditor .vditor-panel button) {
   color: var(--text) !important;
   background: transparent !important;
   border: none !important;
 }
+
 :deep(.vditor .vditor-panel button:hover) {
   background: color-mix(in srgb, var(--accent) 15%, var(--panel)) !important;
 }
+
 /* Vditor tooltip 样式 */
 :deep(.vditor-tooltipped__tip) {
   background: var(--panel) !important;
@@ -561,7 +586,18 @@ defineExpose({ getHTML, exportMarkdown, importMarkdown })
   border: 1px solid var(--border) !important;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
-:deep(.vditor-reset) { color: var(--text); }
-:deep(.vditor-reset a) { color: var(--accent); }
-:deep(.vditor-reset blockquote) { border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+:deep(.vditor-reset) {
+  color: var(--text);
+}
+
+:deep(.vditor-reset a) {
+  color: var(--accent);
+}
+
+:deep(.vditor-reset blockquote) {
+  padding: @general-content-padding;
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
 </style>
