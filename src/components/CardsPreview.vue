@@ -637,9 +637,9 @@ async function generate(shouldShowLoading = false) {
 
         flattenedItems.push(itemDiv)
 
-        // 递归处理嵌套列表
-        const originalNestedLists = li.querySelectorAll('ul, ol')
-        originalNestedLists.forEach(nestedList => {
+        // 递归处理嵌套列表 - 只处理直接子列表，避免重复处理
+        const directChildLists = Array.from(li.children).filter(child => ['UL', 'OL'].includes(child.tagName))
+        directChildLists.forEach(nestedList => {
           extractItems(nestedList, level + 1)
         })
       })
@@ -666,7 +666,7 @@ async function generate(shouldShowLoading = false) {
   extractCoverData(content)
 
   const blocks = []
-  const allowedTags = new Set(['p','h1','h2','h3','h4','blockquote','pre','ul','ol','div','table','img','figure'])
+  const allowedTags = new Set(['p','h1','h2','h3','h4','blockquote','pre','table','img','figure'])
   const wrapperTags = new Set(['div','section','article','main','header','footer'])
 
   const appendTextBlock = (text) => {
@@ -680,42 +680,6 @@ async function generate(shouldShowLoading = false) {
     return blockList.map(block => block.html).join('')
   }
 
-  const transformSingleItemList = (listEl) => {
-    if (!listEl || !['UL', 'OL'].includes(listEl.tagName)) return null
-
-    const items = Array.from(listEl.children).filter(child => child.tagName === 'LI')
-    if (items.length !== 1) return null
-
-    const li = items[0]
-    const nestedLists = Array.from(li.children).filter(child => ['UL', 'OL'].includes(child.tagName))
-    if (!nestedLists.length) return null
-
-    const transformedBlocks = []
-
-    const headingClone = li.cloneNode(true)
-    Array.from(headingClone.children)
-      .filter(child => ['UL', 'OL'].includes(child.tagName))
-      .forEach(child => headingClone.removeChild(child))
-
-    const headingHtml = headingClone.innerHTML.trim()
-
-    if (headingHtml) {
-      const headingList = listEl.cloneNode(false)
-      headingList.innerHTML = ''
-      const headingLi = li.cloneNode(false)
-      headingLi.innerHTML = headingHtml
-      headingList.appendChild(headingLi)
-      transformedBlocks.push({ type: listEl.tagName.toLowerCase(), html: headingList.outerHTML, element: null })
-    }
-
-    nestedLists.forEach((nested) => {
-      const nestedClone = nested.cloneNode(true)
-      nestedClone.classList.add('list-nested')
-      transformedBlocks.push({ type: nested.tagName.toLowerCase(), html: nestedClone.outerHTML, element: null })
-    })
-
-    return transformedBlocks.length ? transformedBlocks : null
-  }
 
   const traverseNodes = (nodeList) => {
     nodeList.forEach((node) => {
@@ -723,8 +687,16 @@ async function generate(shouldShowLoading = false) {
         const el = node
         const tag = el.tagName.toLowerCase()
 
-        if (allowedTags.has(tag)) {
-          blocks.push({ type: tag, html: el.outerHTML, element: el })
+        const isListDiv = tag === 'div' && (
+          el.classList.contains('list-div-item') ||
+          el.classList.contains('list-div-container') ||
+          el.classList.contains('list-nested') ||
+          el.dataset?.block === 'list-item'
+        )
+
+        if (allowedTags.has(tag) || isListDiv) {
+          const type = isListDiv ? 'div' : tag
+          blocks.push({ type, html: el.outerHTML, element: el })
           return
         }
 
@@ -742,6 +714,15 @@ async function generate(shouldShowLoading = false) {
   }
 
   traverseNodes(Array.from(content.childNodes))
+
+  const typeCounts = blocks.reduce((acc, block) => {
+    acc[block.type] = (acc[block.type] || 0) + 1
+    return acc
+  }, {})
+  console.debug('[CardsPreview] blocks prepared', {
+    total: blocks.length,
+    typeCounts,
+  })
 
   // Fixed card size (324x540), inner padding 16
   const cardW = 324
@@ -766,14 +747,6 @@ async function generate(shouldShowLoading = false) {
   temp.className = `card card-theme ${props.cardTheme} ${props.pageTheme}`
   document.body.appendChild(temp)
 
-  async function prepareProbe(probe) {
-    const pending = waitForImages(probe)
-    if (pending) {
-      await pending
-    }
-    // force layout reflow
-    void probe.getBoundingClientRect()
-  }
 
   function waitForImages(container) {
     const images = Array.from(container.querySelectorAll('img')).filter(img => !img.complete)
@@ -789,22 +762,31 @@ async function generate(shouldShowLoading = false) {
     })))
   }
 
-  // 回到简单可靠的测量方法
-  function createScaledProbe() {
-    const probe = document.createElement('div')
-    probe.className = 'content-html content-rich'
-    probe.style.width = (contentW / props.scale) + 'px' // 使用未缩放的宽度进行测量
-    probe.style.height = (physicalContentH / props.scale) + 'px' // 使用物理内容高度
-    probe.style.boxSizing = 'border-box'
-    probe.style.padding = '0 16px'
-    probe.style.overflow = 'hidden'
-    probe.style.position = 'relative' // 确保正确的定位上下文
-    probe.style.fontFamily = 'var(--font-family-base, "Microsoft YaHei", sans-serif)'
-    probe.style.lineHeight = '1.6'
-    probe.style.fontSize = '16px'
-    probe.style.wordBreak = 'break-word'
-    return probe
+  // 优化的测量方法：复用probe元素，减少DOM创建
+  const reusableProbe = document.createElement('div')
+  reusableProbe.className = 'content-html content-rich'
+  reusableProbe.style.width = (contentW / props.scale) + 'px'
+  reusableProbe.style.height = (physicalContentH / props.scale) + 'px'
+  reusableProbe.style.boxSizing = 'border-box'
+  reusableProbe.style.padding = '0 16px'
+  reusableProbe.style.overflow = 'hidden'
+  reusableProbe.style.position = 'relative'
+  reusableProbe.style.fontFamily = 'var(--font-family-base, "Microsoft YaHei", sans-serif)'
+  reusableProbe.style.lineHeight = '1.6'
+  reusableProbe.style.fontSize = '16px'
+  reusableProbe.style.wordBreak = 'break-word'
+
+  function measureContent(html) {
+    reusableProbe.innerHTML = html
+    temp.innerHTML = ''
+    temp.appendChild(reusableProbe)
+    // 强制重排，获取准确的高度
+    void reusableProbe.offsetHeight
+    return reusableProbe.scrollHeight * props.scale
   }
+
+  // 预热测量容器，避免首次测量的额外开销
+  measureContent('<p>warmup</p>')
   const generated = []
   let acc = []
   let currentAccHeight = 0
@@ -817,145 +799,51 @@ async function generate(shouldShowLoading = false) {
       console.error('Blocks array grew too large, breaking loop to prevent infinite recursion')
       break
     }
-    const probe = createScaledProbe()
-    
-    // 特殊处理图片，确保图片能完整显示
-    if (block.type === 'img') {
-      // 创建临时测试元素，应用图片样式
-      const testProbe = createScaledProbe()
-      testProbe.innerHTML = assembleBlocksHtml(acc) + block.html
-      temp.innerHTML = ''
-      temp.appendChild(testProbe)
 
-      await prepareProbe(testProbe)
+    // 快速估算：先用当前累积内容 + 新块测量
+    const testHtml = assembleBlocksHtml(acc) + block.html
+    const scaledHeight = measureContent(testHtml)
 
-      const scaledHeight = testProbe.scrollHeight * props.scale
-      if (scaledHeight <= contentH) {
-        acc.push(block)
-        currentAccHeight = scaledHeight
-      } else {
-        if (acc.length) generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
-        acc = [block]
-        const blockProbe = createScaledProbe()
-        blockProbe.innerHTML = block.html
-        temp.innerHTML = ''
-        temp.appendChild(blockProbe)
-        await prepareProbe(blockProbe)
-        currentAccHeight = blockProbe.scrollHeight * props.scale
+    // 更智能的空间利用：如果接近边界但没有超出太多，就允许
+    const overage = scaledHeight - contentH
+    const allowableOverage = 15 / props.scale
+    const shouldCreateNewCard = overage > allowableOverage
+
+    if (shouldCreateNewCard) {
+      // 完成当前卡片
+      if (acc.length) {
+        generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
       }
-    } else {
-      // 创建新的probe元素，确保每次测量都是干净的
-      const freshProbe = createScaledProbe()
-      freshProbe.innerHTML = assembleBlocksHtml(acc) + block.html
-      temp.innerHTML = ''
-      temp.appendChild(freshProbe)
-      await prepareProbe(freshProbe)
 
-      const scaledHeight = freshProbe.scrollHeight * props.scale
+      // 如果是标题类型，尝试与下一个内容组合
+      if (['h1', 'h2', 'h3', 'h4'].includes(block.type) && i + 1 < blocks.length) {
+        const nextBlock = blocks[i + 1]
+        const combinedHtml = block.html + nextBlock.html
+        const combinedHeight = measureContent(combinedHtml)
 
-      // 更智能的空间利用：如果接近边界但没有超出太多，就允许
-      const overage = scaledHeight - contentH
-      const allowableOverage = 15 / props.scale // 按缩放比例调整允许的超出量
-      const shouldCreateNewCard = overage > allowableOverage
-
-
-      if (shouldCreateNewCard) {
-        if (block.type === 'ul' || block.type === 'ol') {
-          const spaceLeft = Math.max(0, contentH - currentAccHeight)
-
-          if (spaceLeft > 16 && currentAccHeight > 0) {
-            const partial = splitListToFit(block.html, physicalContentH, temp, props.scale, spaceLeft, false)
-            if (partial.fitHtml) {
-              acc.push({ type: block.type, html: partial.fitHtml, element: null })
-              generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
-              acc = []
-              currentAccHeight = 0
-
-              if (partial.remainHtml) {
-                blocks.splice(i + 1, 0, { type: block.type, html: partial.remainHtml, element: null })
-              }
-              continue
-            }
-          }
-
-          if (acc.length) {
-            generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
-          }
-          acc = []
-          currentAccHeight = 0
-
-          const { fitHtml, remainHtml } = splitListToFit(block.html, physicalContentH, temp, props.scale, contentH, true)
-          acc = [{ type: block.type, html: fitHtml, element: null }]
-
-      const listProbe = createScaledProbe()
-      listProbe.innerHTML = fitHtml
-      temp.innerHTML = ''
-      temp.appendChild(listProbe)
-      await prepareProbe(listProbe)
-      currentAccHeight = listProbe.scrollHeight * props.scale
-
-          if (remainHtml) {
-            blocks.splice(i + 1, 0, { type: block.type, html: remainHtml, element: null })
-          }
+        if (combinedHeight <= contentH) {
+          acc = [block, nextBlock]
+          currentAccHeight = combinedHeight
+          blocks.splice(i + 1, 1)
           continue
         }
-
-        if (acc.length) {
-          generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
-        }
-
-        // 如果是标题类型，尝试与下一个内容组合
-        if (['h1', 'h2', 'h3', 'h4'].includes(block.type) && i + 1 < blocks.length) {
-          const nextBlock = blocks[i + 1]
-          const combinedProbe = createScaledProbe()
-          combinedProbe.innerHTML = block.html + nextBlock.html
-          temp.innerHTML = ''
-          temp.appendChild(combinedProbe)
-          await prepareProbe(combinedProbe)
-
-          const combinedScaledHeight = combinedProbe.scrollHeight * props.scale
-          if (combinedScaledHeight <= contentH) {
-            acc = [block, nextBlock]
-            currentAccHeight = combinedScaledHeight
-            blocks.splice(i + 1, 1)
-            continue
-          }
-        }
-
-        acc = [block]
-
-        const singleProbe = createScaledProbe()
-        singleProbe.innerHTML = block.html
-        temp.innerHTML = ''
-        temp.appendChild(singleProbe)
-        await prepareProbe(singleProbe)
-        const singleScaledHeight = singleProbe.scrollHeight * props.scale
-        currentAccHeight = singleScaledHeight
-
-        if (singleScaledHeight > contentH && block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type) && !block.html.includes('list-div-container')) {
-          const truncated = truncateContent(block.html, contentH, temp, props.scale)
-          acc = [{ type: block.type, html: truncated, element: null }]
-
-          const truncatedProbe = createScaledProbe()
-          truncatedProbe.innerHTML = truncated
-          temp.innerHTML = ''
-          temp.appendChild(truncatedProbe)
-          await prepareProbe(truncatedProbe)
-          currentAccHeight = truncatedProbe.scrollHeight * props.scale
-        } else if (block.html.includes('list-div-container')) {
-          // 转换后的列表太长，移到新卡片
-          if (acc.length) {
-            generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
-          }
-          acc = [block]
-          currentAccHeight = singleScaledHeight
-        }
-
-        continue
-      } else {
-        acc.push(block)
-        currentAccHeight = scaledHeight
       }
+
+      // 新卡片从当前块开始
+      acc = [block]
+      const singleHeight = measureContent(block.html)
+      currentAccHeight = singleHeight
+
+      // 如果单个块太大，尝试截断（除了图片和标题）
+      if (singleHeight > contentH && block.type !== 'img' && !['h1', 'h2', 'h3', 'h4'].includes(block.type)) {
+        const truncated = truncateContent(block.html, contentH, temp, props.scale)
+        acc = [{ type: block.type, html: truncated, element: null }]
+        currentAccHeight = measureContent(truncated)
+      }
+    } else {
+      // 可以放入当前卡片
+      acc.push(block)
+      currentAccHeight = scaledHeight
     }
   }
 
@@ -964,36 +852,6 @@ async function generate(shouldShowLoading = false) {
     generated.push({ type: 'content', html: finalHtml })
   }
 
-  // Debug actual content heights after generation
-  setTimeout(() => {
-    const cards = document.querySelectorAll('.card .scaled-content .content-html')
-    cards.forEach((contentEl, i) => {
-      const scaledContentContainer = contentEl.closest('.scaled-content')
-      const cardEl = contentEl.closest('.card')
-      const innerEl = contentEl.closest('.inner')
-
-      // Get computed styles
-      const contentStyle = window.getComputedStyle(contentEl)
-      const cardStyle = window.getComputedStyle(cardEl)
-      const innerStyle = window.getComputedStyle(innerEl)
-
-      const cardHeight = cardEl?.offsetHeight || 0
-      const cardWidth = cardEl?.offsetWidth || 0
-      const innerHeight = innerEl?.offsetHeight || 0
-      const innerWidth = innerEl?.offsetWidth || 0
-      const contentHeight = contentEl.scrollHeight
-      const contentWidth = contentEl.scrollWidth
-      const scaledContentHeight = contentHeight * props.scale
-      const scaledContentWidth = contentWidth * props.scale
-      const availableHeight = innerHeight
-      const availableWidth = innerWidth
-
-      // Check for overflow
-      const isOverflowingHeight = scaledContentHeight > availableHeight
-      const isOverflowingWidth = scaledContentWidth > availableWidth
-
-    })
-  }, 200)
 
 
   // Determine cover background when no image: use second card content HTML if available
@@ -1024,8 +882,37 @@ async function generate(shouldShowLoading = false) {
     }
   }
 
+    // 移除连续重复的卡片内容，避免因分割逻辑导致的重复页面
+    const deduped = []
+    const duplicateSummaries = []
+    const summarizeCard = (card) => card.html
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80)
+
+    for (const card of generated) {
+      const last = deduped[deduped.length - 1]
+      if (last && last.type === card.type && last.html === card.html) {
+        duplicateSummaries.push({
+          type: card.type,
+          snippet: summarizeCard(card),
+          index: deduped.length,
+        })
+        continue
+      }
+      deduped.push(card)
+    }
+
+    console.debug('[CardsPreview] cards generated', {
+      total: generated.length,
+      deduped: deduped.length,
+      duplicatesRemoved: generated.length - deduped.length,
+      duplicates: duplicateSummaries,
+    })
+
     // 确保封面卡片始终在第一位
-    const finalCards = [{ type: 'cover' }, ...generated]
+    const finalCards = [{ type: 'cover' }, ...deduped]
     cards.value = finalCards
     // 恢复保存的卡片索引，确保不超出范围
     restoreCardPosition(generated)
@@ -1060,21 +947,12 @@ function truncateContent(html, maxHeight, container, scale) {
       truncated = text.substring(0, mid) + (mid < text.length ? '...' : '')
       element.textContent = truncated
 
-      // 创建新的测量元素
-      const probe = document.createElement('div')
-      probe.className = 'content-html content-rich'
-      probe.style.width = (292 / scale) + 'px' // 使用未缩放的宽度进行测量
-      probe.style.height = (508 / scale) + 'px' // 使用物理内容高度
-      probe.style.boxSizing = 'border-box'
-      probe.style.padding = '0 16px'
-      probe.style.overflow = 'hidden'
-      probe.style.position = 'relative'
-      probe.innerHTML = element.outerHTML
-
+      // 使用复用的测量方法
+      reusableProbe.innerHTML = element.outerHTML
       container.innerHTML = ''
-      container.appendChild(probe)
+      container.appendChild(reusableProbe)
 
-      const unscaledHeight = probe.scrollHeight
+      const unscaledHeight = reusableProbe.scrollHeight
       const scaledHeight = unscaledHeight * scale
       if (scaledHeight <= maxHeight) {
         left = mid
@@ -1093,109 +971,6 @@ function truncateContent(html, maxHeight, container, scale) {
 
 
 
-// 针对列表（ul/ol）按 li 进行拆分，简单可靠版本
-function splitListToFit(html, maxHeight, container, scale, targetHeight = maxHeight, forceAtLeastOne = true) {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const list = doc.body.firstElementChild
-  if (!list || !['UL', 'OL'].includes(list.tagName)) {
-    return { fitHtml: html, remainHtml: '' }
-  }
-
-  const tagName = list.tagName.toLowerCase()
-  const isOrdered = tagName === 'ol'
-  const originalStart = isOrdered ? parseInt(list.getAttribute('start') || '1') : 1
-  const items = Array.from(list.children).filter((el) => el.tagName === 'LI')
-
-  const effectiveTarget = Math.max(0, Math.min(targetHeight, maxHeight))
-
-  const cloneItem = (index) => items[index].cloneNode(true)
-
-  const copyAttributes = (source, target, startOffset = 0) => {
-    Array.from(source.attributes).forEach((attr) => {
-      if (isOrdered && attr.name === 'start') return
-      target.setAttribute(attr.name, attr.value)
-    })
-    if (isOrdered) {
-      const startValue = originalStart + startOffset
-      if (startValue !== 1) target.setAttribute('start', String(startValue))
-    }
-  }
-
-  const createListNode = (startIndex, endIndex, startOffset = 0) => {
-    const newList = document.createElement(tagName)
-    copyAttributes(list, newList, startOffset)
-    for (let i = startIndex; i < endIndex; i++) {
-      newList.appendChild(cloneItem(i))
-    }
-    return newList
-  }
-
-  const measureList = (node) => {
-    const probe = document.createElement('div')
-    probe.className = 'content-html content-rich'
-    probe.style.width = (292 / scale) + 'px'
-    probe.style.height = (508 / scale) + 'px'
-    probe.style.boxSizing = 'border-box'
-    probe.style.padding = '0 16px'
-    probe.style.overflow = 'hidden'
-    probe.style.position = 'relative'
-    probe.appendChild(node)
-
-    container.innerHTML = ''
-    container.appendChild(probe)
-    const scaledHeight = probe.scrollHeight * scale
-    return scaledHeight
-  }
-
-  // 如果只有一个项目，检查它是否能放下
-  if (items.length <= 1) {
-    const testList = createListNode(0, items.length, 0)
-    const height = measureList(testList)
-    if (height <= effectiveTarget || (forceAtLeastOne && items.length > 0)) {
-      container.innerHTML = ''
-      return { fitHtml: html, remainHtml: '' }
-    }
-
-    container.innerHTML = ''
-    return { fitHtml: '', remainHtml: html }
-  }
-
-  let fitCount = 0
-
-  for (let i = 1; i <= items.length; i++) {
-    const testList = createListNode(0, i, 0)
-    const height = measureList(testList)
-    if (height <= effectiveTarget) {
-      fitCount = i
-    } else {
-      break
-    }
-  }
-
-  // 清理测量容器中的节点，避免影响后续测量
-  container.innerHTML = ''
-
-  if (fitCount >= items.length) {
-    return { fitHtml: list.outerHTML, remainHtml: '' }
-  }
-
-  if (fitCount === 0) {
-    if (!forceAtLeastOne) {
-      return { fitHtml: '', remainHtml: list.outerHTML }
-    }
-    // 强制至少一个，但不做复杂处理
-    fitCount = 1
-  }
-
-  const fitListNode = createListNode(0, fitCount, 0)
-  const remainListNode = createListNode(fitCount, items.length, fitCount)
-
-  const fitHtml = fitListNode.outerHTML
-  const remainHtml = remainListNode.childElementCount > 0 ? remainListNode.outerHTML : ''
-
-  return { fitHtml, remainHtml }
-}
 
 
 function clampRatio(value) {
@@ -1546,11 +1321,13 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
       filter: (domNode) => {
         // 确保filter属性被保留
         if (domNode.style && domNode.style.filter) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - webkitFilter is deprecated but needed for compatibility
           domNode.style.webkitFilter = domNode.style.filter
         }
         return true
       },
-      onclone: (clonedDoc, element) => {
+      onclone: (_, element) => {
         // 在克隆的文档中确保所有样式正确应用
         const clonedBgElements = element.querySelectorAll('.bg-html')
         clonedBgElements.forEach((clonedElement, index) => {
