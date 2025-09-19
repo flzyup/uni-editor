@@ -342,7 +342,10 @@ const props = defineProps({
   cardTheme: { type: String, default: 'card-theme-slate' },
   pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
   scale: { type: Number, default: 0.75 }, // 缩放比例 0.5-1.0
+  showLoading: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['generated'])
 
 // pageTheme 通过 CSS 继承从父组件获取，无需再次应用类名
 
@@ -357,6 +360,7 @@ let scrollTimeout = null
 let isUserClick = false
 let scheduledSync = null
 let pendingCardRatio = null
+let regenerateTimer = null
 
 const cover = ref({
   title: '',
@@ -474,11 +478,19 @@ const coverLayouts = computed(() => [
   }
 ])
 
-watch(() => props.html, async (newHtml, oldHtml) => {
-  if (newHtml !== oldHtml) {
+watch(() => props.html, (newHtml, oldHtml) => {
+  if (newHtml === oldHtml) return
+  if (regenerateTimer) clearTimeout(regenerateTimer)
+
+  const delay = props.showLoading ? 0 : 180
+  regenerateTimer = setTimeout(async () => {
+    regenerateTimer = null
+    const start = performance.now()
     await nextTick()
     await generate(props.showLoading)
-  }
+    const duration = performance.now() - start
+    console.debug('[CardsPreview] regenerate', { duration, showLoading: props.showLoading })
+  }, delay)
 }, { immediate: false })
 
 watch(() => [props.cardTheme, props.scale], async () => {
@@ -557,6 +569,7 @@ async function generate(shouldShowLoading = false) {
     isGenerating.value = false
   }
 
+  let temp = null
   try {
     if (!props.html) {
       cards.value = []
@@ -742,7 +755,7 @@ async function generate(shouldShowLoading = false) {
 
 
   // Offscreen measurer - 创建一个和实际卡片完全一致的测量容器
-  const temp = document.createElement('div')
+  temp = document.createElement('div')
   temp.style.position = 'absolute'
   temp.style.visibility = 'hidden'
   temp.style.width = contentW + 'px'
@@ -752,6 +765,29 @@ async function generate(shouldShowLoading = false) {
   temp.style.position = 'relative' // 和实际 inner 容器一样
   temp.className = `card card-theme ${props.cardTheme} ${props.pageTheme}`
   document.body.appendChild(temp)
+
+  async function prepareProbe(probe) {
+    const pending = waitForImages(probe)
+    if (pending) {
+      await pending
+    }
+    // force layout reflow
+    void probe.getBoundingClientRect()
+  }
+
+  function waitForImages(container) {
+    const images = Array.from(container.querySelectorAll('img')).filter(img => !img.complete)
+    if (!images.length) return null
+    return Promise.all(images.map(img => new Promise((resolve) => {
+      const done = () => {
+        img.removeEventListener('load', done)
+        img.removeEventListener('error', done)
+        resolve()
+      }
+      img.addEventListener('load', done, { once: true })
+      img.addEventListener('error', done, { once: true })
+    })))
+  }
 
   // 回到简单可靠的测量方法
   function createScaledProbe() {
@@ -769,16 +805,6 @@ async function generate(shouldShowLoading = false) {
     probe.style.wordBreak = 'break-word'
     return probe
   }
-
-
-  // 测试测量逻辑是否正确工作
-  const testProbe = createScaledProbe()
-  testProbe.innerHTML = '<p>This is a test paragraph to verify measurement works correctly.</p>'
-  temp.innerHTML = ''
-  temp.appendChild(testProbe)
-  await new Promise(resolve => setTimeout(resolve, 10))
-  const testHeight = testProbe.scrollHeight
-
   const generated = []
   let acc = []
   let currentAccHeight = 0
@@ -796,26 +822,13 @@ async function generate(shouldShowLoading = false) {
     // 特殊处理图片，确保图片能完整显示
     if (block.type === 'img') {
       // 创建临时测试元素，应用图片样式
-      const imgTestProbe = createScaledProbe()
-      imgTestProbe.innerHTML = block.html
-      temp.innerHTML = ''
-      temp.appendChild(imgTestProbe)
-      
-      // 等待图片加载，样式由CSS处理
-      const img = imgTestProbe.querySelector('img')
-      
-      // 测试加入当前累积内容
       const testProbe = createScaledProbe()
       testProbe.innerHTML = assembleBlocksHtml(acc) + block.html
       temp.innerHTML = ''
       temp.appendChild(testProbe)
-      
-      // 图片样式由CSS处理
-      
-      // 给一些时间让布局稳定
-      await new Promise(resolve => setTimeout(resolve, 50))
-      
-      // 回到简单可靠的测量方法：scrollHeight * scale
+
+      await prepareProbe(testProbe)
+
       const scaledHeight = testProbe.scrollHeight * props.scale
       if (scaledHeight <= contentH) {
         acc.push(block)
@@ -827,7 +840,7 @@ async function generate(shouldShowLoading = false) {
         blockProbe.innerHTML = block.html
         temp.innerHTML = ''
         temp.appendChild(blockProbe)
-        await new Promise(resolve => setTimeout(resolve, 10))
+        await prepareProbe(blockProbe)
         currentAccHeight = blockProbe.scrollHeight * props.scale
       }
     } else {
@@ -836,9 +849,7 @@ async function generate(shouldShowLoading = false) {
       freshProbe.innerHTML = assembleBlocksHtml(acc) + block.html
       temp.innerHTML = ''
       temp.appendChild(freshProbe)
-
-      // 给一些时间让布局稳定
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await prepareProbe(freshProbe)
 
       const scaledHeight = freshProbe.scrollHeight * props.scale
 
@@ -876,12 +887,12 @@ async function generate(shouldShowLoading = false) {
           const { fitHtml, remainHtml } = splitListToFit(block.html, physicalContentH, temp, props.scale, contentH, true)
           acc = [{ type: block.type, html: fitHtml, element: null }]
 
-          const listProbe = createScaledProbe()
-          listProbe.innerHTML = fitHtml
-          temp.innerHTML = ''
-          temp.appendChild(listProbe)
-          await new Promise(resolve => setTimeout(resolve, 10))
-          currentAccHeight = listProbe.scrollHeight * props.scale
+      const listProbe = createScaledProbe()
+      listProbe.innerHTML = fitHtml
+      temp.innerHTML = ''
+      temp.appendChild(listProbe)
+      await prepareProbe(listProbe)
+      currentAccHeight = listProbe.scrollHeight * props.scale
 
           if (remainHtml) {
             blocks.splice(i + 1, 0, { type: block.type, html: remainHtml, element: null })
@@ -900,6 +911,7 @@ async function generate(shouldShowLoading = false) {
           combinedProbe.innerHTML = block.html + nextBlock.html
           temp.innerHTML = ''
           temp.appendChild(combinedProbe)
+          await prepareProbe(combinedProbe)
 
           const combinedScaledHeight = combinedProbe.scrollHeight * props.scale
           if (combinedScaledHeight <= contentH) {
@@ -916,7 +928,7 @@ async function generate(shouldShowLoading = false) {
         singleProbe.innerHTML = block.html
         temp.innerHTML = ''
         temp.appendChild(singleProbe)
-        await new Promise(resolve => setTimeout(resolve, 10))
+        await prepareProbe(singleProbe)
         const singleScaledHeight = singleProbe.scrollHeight * props.scale
         currentAccHeight = singleScaledHeight
 
@@ -928,7 +940,7 @@ async function generate(shouldShowLoading = false) {
           truncatedProbe.innerHTML = truncated
           temp.innerHTML = ''
           temp.appendChild(truncatedProbe)
-          await new Promise(resolve => setTimeout(resolve, 10))
+          await prepareProbe(truncatedProbe)
           currentAccHeight = truncatedProbe.scrollHeight * props.scale
         } else if (block.html.includes('list-div-container')) {
           // 转换后的列表太长，移到新卡片
@@ -1015,11 +1027,12 @@ async function generate(shouldShowLoading = false) {
     // 确保封面卡片始终在第一位
     const finalCards = [{ type: 'cover' }, ...generated]
     cards.value = finalCards
-    document.body.removeChild(temp)
-
     // 恢复保存的卡片索引，确保不超出范围
     restoreCardPosition(generated)
   } finally {
+    if (temp && temp.parentNode) {
+      temp.parentNode.removeChild(temp)
+    }
     isGenerating.value = false
     emit('generated')
   }
@@ -1813,6 +1826,10 @@ onBeforeUnmount(() => {
   if (scheduledSync !== null) {
     cancelAnimationFrame(scheduledSync)
     scheduledSync = null
+  }
+  if (regenerateTimer) {
+    clearTimeout(regenerateTimer)
+    regenerateTimer = null
   }
   pendingCardRatio = null
 })
