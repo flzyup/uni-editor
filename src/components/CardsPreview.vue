@@ -477,13 +477,13 @@ const coverLayouts = computed(() => [
 watch(() => props.html, async (newHtml, oldHtml) => {
   if (newHtml !== oldHtml) {
     await nextTick()
-    await generate()
+    await generate(props.showLoading)
   }
 }, { immediate: false })
 
 watch(() => [props.cardTheme, props.scale], async () => {
   await nextTick()
-  await generate()
+  await generate(props.showLoading)
 }, { immediate: false })
 
 onMounted(async () => {
@@ -495,7 +495,7 @@ onMounted(async () => {
 
   // 如果挂载时已经有 HTML 内容，立即生成卡片
   if (props.html && props.html.trim()) {
-    await generate()
+    await generate(props.showLoading)
   }
 })
 
@@ -548,20 +548,25 @@ function extractCoverData(root) {
   persistCoverData()
 }
 
-async function generate() {
-  isGenerating.value = true
-  try {
-    // Add minimum delay to ensure loading state is visible
+async function generate(shouldShowLoading = false) {
+  if (shouldShowLoading) {
+    isGenerating.value = true
+    // Add minimum delay to ensure loading state is visible during imports
     await new Promise(resolve => setTimeout(resolve, 300))
+  } else {
+    isGenerating.value = false
+  }
 
+  try {
     if (!props.html) {
       cards.value = []
       currentCardIndex.value = 0
       persistCardIndex()
       return
     }
-  // Apply syntax highlighting before processing
-  const highlightedHtml = highlightCodeBlocks(props.html)
+
+    // Apply syntax highlighting before processing
+    const highlightedHtml = highlightCodeBlocks(props.html)
   const parser = new DOMParser()
   const doc = parser.parseFromString(highlightedHtml, 'text/html')
   const content = doc.body
@@ -1007,15 +1012,16 @@ async function generate() {
     }
   }
 
-  // 确保封面卡片始终在第一位
-  const finalCards = [{ type: 'cover' }, ...generated]
-  cards.value = finalCards
-  document.body.removeChild(temp)
+    // 确保封面卡片始终在第一位
+    const finalCards = [{ type: 'cover' }, ...generated]
+    cards.value = finalCards
+    document.body.removeChild(temp)
 
-  // 恢复保存的卡片索引，确保不超出范围
-  restoreCardPosition(generated)
+    // 恢复保存的卡片索引，确保不超出范围
+    restoreCardPosition(generated)
   } finally {
     isGenerating.value = false
+    emit('generated')
   }
 }
 

@@ -152,6 +152,8 @@
             :card-theme="globalColorTheme"
             :page-theme="appThemeClass"
             :scale="cardScale"
+            :show-loading="isImportingMarkdown"
+            @generated="handleCardsGenerated"
           />
         </div>
       </section>
@@ -187,6 +189,7 @@ const articlePreviewRef = ref(null)
 const mainRef = ref(null)
 
 const html = ref('')
+const isImportingMarkdown = ref(false)
 const lastEditorScrollRatio = ref(0)
 let articleScrollFrame = null
 let cardSyncFrame = null
@@ -351,13 +354,16 @@ async function exportMarkdown() {
 async function importMarkdown() {
   if (!uniEditorRef.value) {
     error($t('messages.importMarkdownFailed'))
+    isImportingMarkdown.value = false
     return
   }
 
   try {
+    isImportingMarkdown.value = true
     await uniEditorRef.value.importMarkdown()
     success($t('messages.importMarkdownSuccess'))
   } catch (err) {
+    isImportingMarkdown.value = false
     if (err === 'Invalid file type') {
       console.warn('导入Markdown失败: 非法文件类型')
       warning($t('messages.invalidMarkdownFile'))
@@ -472,6 +478,12 @@ function initializePanelSizes() {
 
 function handleWindowResize() {
   initializePanelSizes()
+}
+
+function handleCardsGenerated() {
+  if (isImportingMarkdown.value) {
+    isImportingMarkdown.value = false
+  }
 }
 
 onMounted(() => {
