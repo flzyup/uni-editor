@@ -561,7 +561,7 @@ defineExpose({ getHTML, exportMarkdown, importMarkdown })
   border: 1px solid var(--border) !important;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 10%, transparent) !important;
 }
-:deep(.vditor-reset) { color: var(--ed-text); }
-:deep(.vditor-reset a) { color: var(--ed-accent); }
-:deep(.vditor-reset blockquote) { border-left: 3px solid var(--ed-accent); background: color-mix(in oklab, var(--ed-accent) 10%, transparent); }
+:deep(.vditor-reset) { color: var(--text); }
+:deep(.vditor-reset a) { color: var(--accent); }
+:deep(.vditor-reset blockquote) { border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 </style>

@@ -1,77 +1,7 @@
-// 编辑器主题样式
-.editor-theme {
-  --ed-bg: #0f1218;
-  --ed-text: #e8eaed;
-  --ed-muted: #b0b5bd;
-  --ed-accent: #7c5cff;
-  --ed-code-bg: #0b0e14;
-  --ed-quote: #8fb3ff;
-  --ed-h-font: @font-family-base, @font-family-serif;
-  --ed-body-font: @font-family-base;
-  
-  // 生成所有主题
-  &.classic {
-    --ed-bg: #10131a;
-    --ed-text: #e8eaed;
-    --ed-muted: #aab0bb;
-    --ed-accent: #7c5cff;
-    --ed-quote: #8fb3ff;
-    --ed-code-bg: #0b0e14;
-    --ed-h-font: Inter, "Noto Serif SC", serif;
-  }
-  
-  &.minimal {
-    --ed-bg: #0e0f12;
-    --ed-text: #eef1f5;
-    --ed-muted: #a0a6af;
-    --ed-accent: #3cc8a6;
-    --ed-quote: #66e0c8;
-    --ed-code-bg: #0a0b0d;
-    --ed-h-font: Inter, sans-serif;
-  }
-  
-  &.night {
-    --ed-bg: #0b0c0f;
-    --ed-text: #f1f5f9;
-    --ed-muted: #94a3b8;
-    --ed-accent: #60a5fa;
-    --ed-quote: #93c5fd;
-    --ed-code-bg: #0a0f18;
-    --ed-h-font: Inter, sans-serif;
-  }
-  
-  &.coffee {
-    --ed-bg: #12100e;
-    --ed-text: #f3efe7;
-    --ed-muted: #c8c0b6;
-    --ed-accent: #d4a373;
-    --ed-quote: #e9c46a;
-    --ed-code-bg: #1a1714;
-    --ed-h-font: "Noto Serif SC", serif;
-  }
-  
-  &.paper {
-    --ed-bg: #f7f7f2;
-    --ed-text: #2b2b2b;
-    --ed-muted: #5c5c5c;
-    --ed-accent: #0f766e;
-    --ed-quote: #0ea5a4;
-    --ed-code-bg: #efefe8;
-    --ed-h-font: "Noto Serif SC", serif;
-  }
-  
-  &.pop {
-    --ed-bg: #0f0b19;
-    --ed-text: #f6f5ff;
-    --ed-muted: #c7c4ff;
-    --ed-accent: #ff6ad5;
-    --ed-quote: #ffd166;
-    --ed-code-bg: #140e24;
-    --ed-h-font: Inter, sans-serif;
-  }
-}
+// Editor surface styles reuse the global design tokens to stay consistent
+// with the active page theme. No additional accent variables are introduced
+// so everything inherits from --accent / --text / --panel etc.
 
-// 编辑器容器样式
 .editor-shell {
   height: calc(100dvh - @header-height - @footer-height);
   .flex-column();
@@ -88,64 +18,64 @@
 .editor-host {
   flex: 1;
   min-height: 0;
-  background: var(--ed-bg);
+  background: var(--panel);
 }
 
-// Vditor 样式覆盖
 .editor-host .vditor {
-  background: var(--ed-bg);
-  
+  background: var(--panel);
+
   .vditor-toolbar {
     background: var(--panel);
     border-bottom-color: var(--border);
   }
-  
+
   .vditor-reset {
-    color: var(--ed-text);
-    font-family: var(--ed-body-font);
-    
+    color: var(--text);
+    font-family: @font-family-base;
+
     p {
       line-height: 1.8;
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
-      font-family: var(--ed-h-font);
+      font-family: @font-family-base;
       font-weight: 700;
-      color: var(--ed-text);
+      color: var(--text);
       margin-top: 1.4em;
     }
-    
+
     a {
-      color: var(--ed-accent);
+      color: var(--accent);
       text-decoration: none;
     }
-    
+
     blockquote {
-      border-left: 4px solid var(--ed-quote);
-      background: color-mix(in srgb, var(--ed-quote) 12%, transparent);
-      color: var(--ed-text);
+      border-left: 4px solid var(--accent);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--text);
       padding: 10px 14px;
     }
-    
+
     pre {
-      background: var(--ed-code-bg);
-      color: var(--ed-text);
+      background: color-mix(in srgb, var(--panel) 85%, rgba(0, 0, 0, 0.85));
+      color: var(--text);
       border-radius: @content-border-radius;
       padding: 12px;
     }
-    
+
     code {
-      background: color-mix(in srgb, var(--ed-code-bg) 65%, transparent);
+      background: color-mix(in srgb, var(--accent) 20%, transparent);
+      color: var(--text);
       padding: 2px 6px;
       border-radius: 6px;
     }
-    
+
     table {
       border-collapse: collapse;
       width: 100%;
-      
+
       th, td {
-        border: 1px solid color-mix(in srgb, var(--ed-muted) 30%, transparent);
+        border: 1px solid color-mix(in srgb, var(--muted) 30%, transparent);
         padding: 8px 10px;
       }
     }
