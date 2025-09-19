@@ -14,8 +14,9 @@ import enMessages from '../locales/en.js'
 
 const props = defineProps({
   pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
+  document: { type: Object, default: null }, // 当前文档对象
 })
-const emit = defineEmits(['update:html', 'editorScroll'])
+const emit = defineEmits(['update:html', 'update:mode', 'editorScroll'])
 
 const { locale } = useI18n()
 
@@ -24,33 +25,25 @@ let vd = null
 let isVditorReady = false
 const scrollCleanups = []
 
-const CACHE_KEY = 'uni-editor-content'
-const MODE_CACHE_KEY = 'uni-editor-mode'
-
-function loadCachedContent() {
-  try {
-    return localStorage.getItem(CACHE_KEY) || getDefaultContent()
-  } catch (e) {
-    return getDefaultContent()
+// 获取当前文档内容
+function getCurrentContent() {
+  if (props.document && props.document.content) {
+    return props.document.content
   }
+  return getDefaultContent()
 }
 
-function loadCachedMode() {
-  try {
-    const savedMode = localStorage.getItem(MODE_CACHE_KEY)
-    // Vditor 支持的模式: 'wysiwyg', 'ir', 'sv'
-    return ['wysiwyg', 'ir', 'sv'].includes(savedMode) ? savedMode : 'wysiwyg'
-  } catch (e) {
-    return 'wysiwyg'
+// 获取当前文档模式
+function getCurrentMode() {
+  if (props.document && props.document.mode) {
+    return props.document.mode
   }
+  return 'wysiwyg'
 }
 
-function saveModeToCache(mode) {
-  try {
-    localStorage.setItem(MODE_CACHE_KEY, mode)
-  } catch (e) {
-    console.warn('Failed to save editor mode to localStorage:', e)
-  }
+// 模式变化时触发事件
+function onModeChange(mode) {
+  emit('update:mode', mode)
 }
 
 function getDefaultContent() {

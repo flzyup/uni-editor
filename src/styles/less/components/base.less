@@ -2,10 +2,17 @@
 :root {
   // 默认深色主题变量
   --bg: @dark-bg;
+  --bg-primary: @dark-bg;
+  --bg-secondary: @dark-panel;
+  --bg-hover: rgba(255, 255, 255, 0.05);
   --panel: @dark-panel;
   --muted: @dark-muted;
   --text: @dark-text;
+  --text-secondary: rgba(255, 255, 255, 0.7);
   --border: @dark-border;
+  --primary: var(--accent);
+  --warning: #fbbf24;
+  --danger: #ef4444;
 
   // 全局色彩主题变量
   --global-accent-classic: #7c5cff;
@@ -25,10 +32,17 @@
 // 浅色主题覆盖
 .theme-light {
   --bg: @light-bg;
+  --bg-primary: @light-bg;
+  --bg-secondary: @light-panel;
+  --bg-hover: rgba(0, 0, 0, 0.05);
   --panel: @light-panel;
   --muted: @light-muted;
   --text: @light-text;
+  --text-secondary: rgba(0, 0, 0, 0.6);
   --border: @light-border;
+  --primary: var(--accent);
+  --warning: #f59e0b;
+  --danger: #dc2626;
   // accent 将由 global-theme-* 类提供，不在这里覆盖
 }
 

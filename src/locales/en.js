@@ -194,6 +194,23 @@ export default {
     sand: 'Sand'
   },
 
+  // Document Management
+  documents: {
+    newDocument: 'New Document',
+    untitled: 'Untitled Document',
+    welcome: 'Welcome Document',
+    copy: 'Copy',
+    rename: 'Rename',
+    duplicate: 'Duplicate',
+    close: 'Close',
+    renameTitle: 'Rename Document',
+    renamePlaceholder: 'Enter document name',
+    exportAll: 'Export All Documents',
+    importDocuments: 'Import Documents',
+    confirmClose: 'Confirm close document?',
+    unsavedChanges: 'Document has unsaved changes'
+  },
+
   // Common
   common: {
     expand: 'Expand',

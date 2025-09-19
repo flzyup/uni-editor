@@ -194,6 +194,23 @@ export default {
     sand: '沙漠'
   },
 
+  // 文档管理
+  documents: {
+    newDocument: '新建文档',
+    untitled: '无标题文档',
+    welcome: '欢迎文档',
+    copy: '副本',
+    rename: '重命名',
+    duplicate: '复制',
+    close: '关闭',
+    renameTitle: '重命名文档',
+    renamePlaceholder: '请输入文档名称',
+    exportAll: '导出所有文档',
+    importDocuments: '导入文档',
+    confirmClose: '确认关闭文档？',
+    unsavedChanges: '文档有未保存的更改'
+  },
+
   // 通用
   common: {
     expand: '展开',
