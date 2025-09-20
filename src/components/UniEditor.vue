@@ -1,84 +1,685 @@
 <template>
-  <div class="editor-wrap">
-    <div ref="elRef" class="vditor-host"></div>
+  <div class="uni-editor">
+    <!-- 文档标签页 -->
+    <div class="document-tabs" v-if="openTabs.length > 0">
+      <div class="tabs-container">
+        <div class="tabs-main">
+          <div class="tabs-scroll" ref="tabsScrollRef">
+            <div
+              v-for="tab in openTabs"
+              :key="tab.id"
+              class="tab"
+              :class="{
+                active: tab.id === activeTabId,
+                modified: isDocumentModified(tab.id)
+              }"
+              @click="selectTab(tab.id)"
+            >
+              <div class="tab-content">
+                <div class="tab-title" :title="getDocument(tab.id)?.title">
+                  {{ getDocument(tab.id)?.title || t('documents.untitled') }}
+                </div>
+                <div
+                  class="tab-close"
+                  @click.stop="closeTab(tab.id)"
+                  v-if="openTabs.length > 1"
+                  :title="isDocumentModified(tab.id) ? t('documents.unsavedChangesTitle') : t('documents.closeTabTitle')"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                    <path d="M9.5 3.5L8.5 2.5L6 5L3.5 2.5L2.5 3.5L5 6L2.5 8.5L3.5 9.5L6 7L8.5 9.5L9.5 8.5L7 6L9.5 3.5Z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabs-actions">
+            <button class="action-btn" @click="toggleDocumentManager" :title="showDocumentManager ? t('documents.hideManager') : t('documents.showManager')">
+              <svg v-if="showDocumentManager" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 6.5A1.5 1.5 0 0 1 2.5 5h3.38a1.5 1.5 0 0 1 1.06.44L8.38 7H13.5A1.5 1.5 0 0 1 15 8.354l-.8 5.32A1.5 1.5 0 0 1 12.72 15H3.28a1.5 1.5 0 0 1-1.48-1.326L1 6.5Z"/>
+                <path d="M15 6.5H1V3.5A1.5 1.5 0 0 1 2.5 2h3.38a1.5 1.5 0 0 1 1.06.44L8.38 4H13.5A1.5 1.5 0 0 1 15 5.5v1Z"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V5h12V3.5a.5.5 0 0 0-.5-.5h-11zM14 6H2v6.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V6z"/>
+              </svg>
+            </button>
+            <button class="action-btn" @click="createNewDocument" :title="t('documents.newDocument')">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="tabs-scrollbar" v-show="showScrollbar">
+          <div
+            class="tabs-scrollbar-thumb"
+            :style="{
+              width: scrollbarThumbWidth + '%',
+              transform: `translateX(${scrollbarThumbPosition}px)`
+            }"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文档管理器 -->
+    <div class="document-manager" v-if="showDocumentManager">
+      <div class="manager-header">
+        <div class="header-title">
+          <h3>{{ t('documents.manager') }}</h3>
+          <span class="document-count">
+            <template v-if="searchQuery.trim()">
+              {{ t('documents.documentCount', { count: filteredDocumentsAll.length }) }}/{{ allDocuments.length }}
+            </template>
+            <template v-else>
+              {{ t('documents.documentCount', { count: filteredDocuments.length }) }}
+              <span v-if="showLoadMore">
+                /{{ allDocuments.length }}
+              </span>
+            </template>
+          </span>
+        </div>
+        <div class="header-search">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            :placeholder="$t('common.search') || '搜索文档...'"
+            @input="handleSearch"
+          >
+          <svg v-if="!searchQuery" class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+          <button v-else class="search-clear" @click="clearSearch" title="清除搜索">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="manager-content">
+        <div class="document-list">
+          <div
+            v-for="doc in filteredDocuments"
+            :key="doc.id"
+            class="document-item"
+            :class="{
+              active: doc.id === activeTabId,
+              closed: !isTabOpen(doc.id),
+              modified: isDocumentModified(doc.id),
+              selected: selectedDocumentId === doc.id
+            }"
+            @click="selectDocument(doc.id)"
+            @dblclick="openDocument(doc.id)"
+          >
+            <div class="document-info">
+              <div class="document-title">
+                <span class="title-text">{{ doc.title }}</span>
+              </div>
+              <div class="document-meta">
+                <span class="doc-date">{{ formatDate(doc.updatedAt) }}</span>
+                <span class="doc-size">{{ t('documents.charactersCount', { count: doc.content?.length || 0 }) }}</span>
+              </div>
+            </div>
+            <div class="document-actions" @click.stop>
+              <button
+                class="doc-action-btn"
+                @click.stop="handleDocumentTabAction(doc.id)"
+                :title="getTabActionTitle(doc.id)"
+              >
+                <!-- 未打开：显示打开图标 -->
+                <svg v-if="!isTabOpen(doc.id)" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                <!-- 已打开但非活跃：显示定位图标 -->
+                <svg v-else-if="doc.id !== activeTabId" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"/>
+                </svg>
+                <!-- 当前活跃：显示关闭图标（与标签栏X一致） -->
+                <svg v-else width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <path d="M9.5 3.5L8.5 2.5L6 5L3.5 2.5L2.5 3.5L5 6L2.5 8.5L3.5 9.5L6 7L8.5 9.5L9.5 8.5L7 6L9.5 3.5Z"/>
+                </svg>
+              </button>
+              <button
+                class="doc-action-btn"
+                @click.stop="importMarkdownToDocument(doc.id)"
+                :title="t('documents.importMD')"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                </svg>
+              </button>
+              <button
+                class="doc-action-btn"
+                @click.stop="exportMarkdownFromDocument(doc.id)"
+                :title="t('documents.exportMD')"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                </svg>
+              </button>
+              <button
+                class="doc-action-btn"
+                @click.stop="duplicateDocument(doc.id)"
+                :title="t('documents.duplicateDocument')"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                  <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+                </svg>
+              </button>
+              <button
+                class="doc-action-btn danger"
+                @click.stop="confirmDeleteDocument(doc.id)"
+                :title="t('documents.deleteDocument')"
+                :disabled="allDocuments.length <= 1"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                  <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载更多按钮 -->
+        <div v-if="showLoadMore" class="load-more-container">
+          <button class="load-more-btn" @click="loadMoreDocuments">
+            <span>{{ $t('common.loadMore') || '加载更多' }}</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.646 9.646a.5.5 0 0 1 .708 0L12 13.293V2.5a.5.5 0 0 1 1 0v10.793l3.646-3.647a.5.5 0 0 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑器 -->
+    <div class="editor-container">
+      <div ref="elRef" class="vditor-host"></div>
+    </div>
+
+    <!-- 删除确认对话框 -->
+    <div v-if="showDeleteConfirm" class="modal-overlay" @click="cancelDelete">
+      <div class="modal-dialog" @click.stop>
+        <div class="modal-header">
+          <h3>{{ t('documents.confirmDelete') }}</h3>
+        </div>
+        <div class="modal-body">
+          <p>{{ t('documents.confirmDeleteMessage', { title: getDocument(documentToDelete)?.title }) }}</p>
+          <p class="warning-text">{{ t('documents.warningNotRecoverable') }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="cancelDelete">{{ t('common.cancel') }}</button>
+          <button class="btn btn-danger" @click="deleteDocument">{{ t('common.confirm') }}</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导入覆盖确认对话框 -->
+    <div v-if="showImportConfirm" class="modal-overlay" @click="cancelImport">
+      <div class="modal-dialog" @click.stop>
+        <div class="modal-header">
+          <h3>{{ t('documents.confirmImport') }}</h3>
+        </div>
+        <div class="modal-body">
+          <p>{{ t('documents.confirmImportMessage', { title: getDocument(importTargetDocId)?.title }) }}</p>
+          <p>{{ t('documents.confirmImportSubMessage') }}</p>
+          <p class="warning-text">{{ t('documents.warningNotRecoverable') }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="cancelImport">{{ t('common.cancel') }}</button>
+          <button class="btn btn-primary" @click="confirmImport">{{ t('documents.confirmImportAction') }}</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, defineExpose } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import zhMessages from '../locales/zh.js'
 import enMessages from '../locales/en.js'
+import {
+  saveImage,
+  convertContentForEditor,
+  convertContentForStorage,
+  clearImageCache,
+  extractImageIdsFromContent,
+  cleanupUnusedImages,
+  hasIndexedDBSupport
+} from '../utils/imageStore.js'
 
 const props = defineProps({
-  pageTheme: { type: String, default: 'theme-dark' }, // 'theme-light' | 'theme-dark'
+  pageTheme: { type: String, default: 'theme-dark' }
 })
 const emit = defineEmits(['update:html', 'editorScroll'])
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const elRef = ref(null)
 let vd = null
 let isVditorReady = false
 const scrollCleanups = []
-let cleanupModeListener = null
 
-const CACHE_KEY = 'uni-editor-content'
-const MODE_CACHE_KEY = 'uni-editor-mode'
+// 文档管理状态
+const allDocuments = ref([]) // 所有文档缓存
+const openTabs = ref([]) // 当前打开的标签页
+const activeTabId = ref('') // 当前活跃的标签
+const selectedDocumentId = ref('') // 在文档管理器中选中的文档
+const showDocumentManager = ref(false) // 是否显示文档管理器
+const showDeleteConfirm = ref(false) // 删除确认对话框
+const documentToDelete = ref('') // 待删除的文档ID
+const showImportConfirm = ref(false) // 导入确认对话框
+const importTargetDocId = ref('') // 导入目标文档ID
+const pendingImportFile = ref(null) // 待导入的文件
 
-function loadCachedContent() {
+// 搜索相关状态
+const searchQuery = ref('') // 搜索关键词
+const searchDebounceTimer = ref(null) // 防抖定时器
+
+// 分页相关状态
+const currentPage = ref(1) // 当前页码
+const pageSize = ref(20) // 每页显示数量
+const showLoadMore = ref(false) // 是否显示加载更多按钮
+
+// 文档修改状态跟踪
+const documentModifications = ref(new Map())
+
+// 滚动条相关
+const tabsScrollRef = ref(null)
+const showScrollbar = ref(false)
+const scrollbarThumbWidth = ref(100)
+const scrollbarThumbPosition = ref(0)
+
+// 计算属性：按修改时间倒序排列的文档列表
+const sortedDocuments = computed(() => {
+  return [...allDocuments.value].sort((a, b) => b.updatedAt - a.updatedAt)
+})
+
+// 计算属性：筛选后的文档列表（完整）
+const filteredDocumentsAll = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return sortedDocuments.value
+  }
+
+  const query = searchQuery.value.toLowerCase().trim()
+  return sortedDocuments.value.filter(doc => {
+    return doc.title.toLowerCase().includes(query) ||
+           (doc.content && doc.content.toLowerCase().includes(query))
+  })
+})
+
+// 计算属性：当前页显示的文档列表
+const filteredDocuments = computed(() => {
+  const allDocs = filteredDocumentsAll.value
+  const maxItems = currentPage.value * pageSize.value
+
+  // 更新是否显示加载更多按钮
+  showLoadMore.value = allDocs.length > maxItems
+
+  return allDocs.slice(0, maxItems)
+})
+
+// 初始化文档管理
+function initializeDocuments() {
   try {
-    return localStorage.getItem(CACHE_KEY) || getDefaultContent()
+    // 加载所有文档
+    const savedDocs = localStorage.getItem('uni.allDocuments')
+    if (savedDocs) {
+      const parsed = JSON.parse(savedDocs)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        allDocuments.value = parsed
+      }
+    }
+
+    // 加载打开的标签页
+    const savedTabs = localStorage.getItem('uni.openTabs')
+    if (savedTabs && allDocuments.value.length > 0) {
+      const parsed = JSON.parse(savedTabs)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // 过滤掉不存在的文档标签
+        const validTabs = parsed.filter(tab =>
+          allDocuments.value.find(doc => doc.id === tab.id)
+        )
+
+        if (validTabs.length > 0) {
+          openTabs.value = validTabs
+          const activeId = localStorage.getItem('uni.activeTabId')
+          if (activeId && validTabs.find(tab => tab.id === activeId)) {
+            activeTabId.value = activeId
+          } else {
+            activeTabId.value = validTabs[0].id
+          }
+          return
+        }
+      }
+    }
   } catch (e) {
-    return getDefaultContent()
+    console.warn('Failed to load documents from localStorage:', e)
+  }
+
+  // 如果没有有效数据，创建默认文档
+  if (allDocuments.value.length === 0) {
+    createDefaultDocument()
+  } else {
+    // 如果有文档但没有打开的标签，打开第一个文档
+    openTabs.value = [{ id: allDocuments.value[0].id }]
+    activeTabId.value = allDocuments.value[0].id
   }
 }
 
-function loadCachedMode() {
-  try {
-    const savedMode = localStorage.getItem(MODE_CACHE_KEY)
-    // Vditor 支持的模式: 'wysiwyg', 'ir', 'sv'
-    return ['wysiwyg', 'ir', 'sv'].includes(savedMode) ? savedMode : 'wysiwyg'
-  } catch (e) {
-    return 'wysiwyg'
+function createDefaultDocument() {
+  const defaultDoc = {
+    id: generateId(),
+    title: t('editor.welcome'),
+    content: getDefaultContent(),
+    mode: 'wysiwyg',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
   }
+
+  allDocuments.value = [defaultDoc]
+  openTabs.value = [{ id: defaultDoc.id }]
+  activeTabId.value = defaultDoc.id
+  saveToLocalStorage()
 }
 
-function saveModeToCache(mode) {
-  try {
-    localStorage.setItem(MODE_CACHE_KEY, mode)
-  } catch (e) {
-    console.warn('Failed to save editor mode to localStorage:', e)
-  }
+function generateId() {
+  return 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
 }
 
 function getDefaultContent() {
-  // 根据当前语言返回默认内容
   const currentLocale = locale.value
-
-  // 获取对应语言的默认模板
   const messages = {
-    'zh': zhMessages,
-    'en': enMessages
+    'zh': zhMessages.defaultTemplate,
+    'en': enMessages.defaultTemplate
   }
-
-  const message = messages[currentLocale] || messages['en']
-  return message.defaultTemplate
+  return messages[currentLocale] || messages['zh']
 }
 
-function saveContent(content) {
+function saveToLocalStorage() {
   try {
-    localStorage.setItem(CACHE_KEY, content)
+    localStorage.setItem('uni.allDocuments', JSON.stringify(allDocuments.value))
+    localStorage.setItem('uni.openTabs', JSON.stringify(openTabs.value))
+    localStorage.setItem('uni.activeTabId', activeTabId.value)
   } catch (e) {
-    console.warn('Failed to save content to localStorage:', e)
+    console.warn('Failed to save documents to localStorage:', e)
+  }
+
+  scheduleImageCleanup()
+}
+
+let imageCleanupTimer = null
+
+function scheduleImageCleanup() {
+  if (typeof window === 'undefined' || !hasIndexedDBSupport()) return
+  if (imageCleanupTimer) {
+    clearTimeout(imageCleanupTimer)
+  }
+
+  imageCleanupTimer = window.setTimeout(async () => {
+    imageCleanupTimer = null
+    await performImageCleanup()
+  }, 800)
+}
+
+async function performImageCleanup() {
+  try {
+    const usedIds = new Set()
+    allDocuments.value.forEach(doc => {
+      if (!doc?.content) return
+      const normalized = convertContentForStorage(doc.content)
+      const ids = extractImageIdsFromContent(normalized)
+      ids.forEach(id => usedIds.add(id))
+    })
+
+    // Include current editor content if it differs from stored value
+    if (vd && isVditorReady) {
+      const editorContent = convertContentForStorage(vd.getValue())
+      const ids = extractImageIdsFromContent(editorContent)
+      ids.forEach(id => usedIds.add(id))
+    }
+
+    await cleanupUnusedImages(usedIds)
+  } catch (error) {
+    console.warn('Image cleanup failed:', error)
   }
 }
 
-const initial = loadCachedContent()
-const initialMode = loadCachedMode()
-let lastSavedMode = initialMode
+function getDocument(docId) {
+  return allDocuments.value.find(d => d.id === docId)
+}
+
+function getActiveDocument() {
+  return getDocument(activeTabId.value)
+}
+
+function isTabOpen(docId) {
+  return openTabs.value.some(tab => tab.id === docId)
+}
+
+function isDocumentModified(docId) {
+  return documentModifications.value.has(docId)
+}
+
+function markDocumentModified(docId) {
+  documentModifications.value.set(docId, true)
+}
+
+function markDocumentSaved(docId) {
+  documentModifications.value.delete(docId)
+}
+
+async function createNewDocument() {
+  const newDoc = {
+    id: generateId(),
+    title: `${t('documents.untitled')} ${allDocuments.value.length + 1}`,
+    content: '',
+    mode: 'wysiwyg',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  }
+
+  allDocuments.value.push(newDoc)
+  await openDocument(newDoc.id)
+  saveToLocalStorage()
+  // 更新滚动条
+  nextTick(() => updateScrollbar())
+}
+
+// 选中文档（如果已有标签页则切换，否则只选中）
+async function selectDocument(docId) {
+  selectedDocumentId.value = docId
+
+  // 如果文档已经打开了标签页，则切换到该标签页
+  if (isTabOpen(docId)) {
+    await selectTab(docId)
+  }
+}
+
+async function openDocument(docId) {
+  // 如果标签页未打开，则打开它
+  if (!isTabOpen(docId)) {
+    openTabs.value.push({ id: docId })
+  }
+
+  await selectTab(docId)
+  saveToLocalStorage()
+  // 更新滚动条
+  nextTick(() => updateScrollbar())
+}
+
+async function selectTab(docId) {
+  if (docId === activeTabId.value) return
+
+  // 保存当前文档状态
+  saveCurrentDocumentState()
+
+  // 切换到新文档
+  activeTabId.value = docId
+  const newDoc = getActiveDocument()
+
+  if (newDoc && vd && isVditorReady) {
+    const displayContent = await convertContentForEditor(newDoc.content || '')
+
+    // 预处理内容中的分页符，避免闪现
+    const processedContent = preprocessPageBreaks(displayContent)
+
+    // 更新编辑器内容
+    vd.setValue(processedContent, false)
+
+    // 立即应用分页符样式，减少延迟
+    nextTick(() => {
+      updatePageBreakDisplay()
+    })
+
+    // 如果文档有内容但标题是默认的，尝试提取标题
+    if (newDoc.content && newDoc.title.startsWith(t('documents.untitled'))) {
+      updateDocumentTitle(newDoc.id, newDoc.content)
+    }
+
+    // 发送HTML更新
+    emit('update:html', vd.getHTML())
+  }
+
+  saveToLocalStorage()
+}
+
+async function closeTab(docId) {
+  if (openTabs.value.length <= 1) return
+
+  const index = openTabs.value.findIndex(tab => tab.id === docId)
+  if (index === -1) return
+
+  // 如果有未保存的更改，提示用户
+  if (isDocumentModified(docId)) {
+    if (!confirm(t('documents.unsavedChanges') + '，' + t('documents.confirmClose'))) {
+      return
+    }
+  }
+
+  openTabs.value.splice(index, 1)
+
+  // 如果关闭的是当前活跃标签，切换到其他标签
+  if (docId === activeTabId.value) {
+    const newIndex = Math.min(index, openTabs.value.length - 1)
+    await selectTab(openTabs.value[newIndex].id)
+  }
+
+  saveToLocalStorage()
+  // 更新滚动条
+  nextTick(() => updateScrollbar())
+}
+
+async function duplicateDocument(docId) {
+  const originalDoc = getDocument(docId)
+  if (!originalDoc) return
+
+  const newDoc = {
+    id: generateId(),
+    title: originalDoc.title + ' - ' + t('documents.copy'),
+    content: originalDoc.content,
+    mode: originalDoc.mode,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  }
+
+  allDocuments.value.push(newDoc)
+  await openDocument(newDoc.id)
+  saveToLocalStorage()
+}
+
+function confirmDeleteDocument(docId) {
+  if (allDocuments.value.length <= 1) return
+
+  documentToDelete.value = docId
+  showDeleteConfirm.value = true
+}
+
+function deleteDocument() {
+  const docId = documentToDelete.value
+
+  // 从所有文档中删除
+  const docIndex = allDocuments.value.findIndex(d => d.id === docId)
+  if (docIndex !== -1) {
+    allDocuments.value.splice(docIndex, 1)
+  }
+
+  // 从打开的标签中删除
+  const tabIndex = openTabs.value.findIndex(tab => tab.id === docId)
+  if (tabIndex !== -1) {
+    openTabs.value.splice(tabIndex, 1)
+  }
+
+  // 清除修改状态
+  documentModifications.value.delete(docId)
+
+  // 如果删除的是当前活跃文档，切换到其他文档
+  if (docId === activeTabId.value && openTabs.value.length > 0) {
+    const newIndex = Math.min(tabIndex, openTabs.value.length - 1)
+    selectTab(openTabs.value[newIndex].id)
+  } else if (openTabs.value.length === 0 && allDocuments.value.length > 0) {
+    // 如果没有打开的标签但还有文档，打开第一个文档
+    openDocument(allDocuments.value[0].id)
+  }
+
+  showDeleteConfirm.value = false
+  documentToDelete.value = ''
+  saveToLocalStorage()
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false
+  documentToDelete.value = ''
+}
+
+function toggleDocumentManager() {
+  showDocumentManager.value = !showDocumentManager.value
+}
+
+function saveCurrentDocumentState(preparedContent) {
+  const activeDoc = getActiveDocument()
+  if (activeDoc && vd && isVditorReady) {
+    const currentEditorValue = vd.getValue()
+    const currentContent = typeof preparedContent === 'string'
+      ? preparedContent
+      : convertContentForStorage(currentEditorValue)
+    const currentMode = vd.getCurrentMode()
+
+    if (activeDoc.content !== currentContent) {
+      activeDoc.content = currentContent
+      activeDoc.updatedAt = Date.now()
+      markDocumentModified(activeDoc.id)
+
+      // 更新文档标题
+      updateDocumentTitle(activeDoc.id, currentContent)
+    }
+
+    if (activeDoc.mode !== currentMode) {
+      activeDoc.mode = currentMode
+    }
+  }
+}
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+
+  if (diff < 60000) return t('documents.timeJustNow')
+  if (diff < 3600000) return t('documents.timeMinutesAgo', { minutes: Math.floor(diff / 60000) })
+  if (diff < 86400000) return t('documents.timeHoursAgo', { hours: Math.floor(diff / 3600000) })
+  if (diff < 604800000) return t('documents.timeDaysAgo', { days: Math.floor(diff / 86400000) })
+
+  return date.toLocaleDateString()
+}
 
 function getEditorTheme(v) {
   return v === 'theme-dark' ? 'dark' : 'classic'
@@ -92,59 +693,393 @@ function getVditorLang(locale) {
   return langMap[locale] || 'en_US'
 }
 
-onMounted(async () => {
+// 初始化编辑器
+async function initVditor() {
+  if (!elRef.value) return
+
+  const activeDoc = getActiveDocument()
+  const initialContent = activeDoc?.content || getDefaultContent()
+  const initialMode = activeDoc?.mode || 'wysiwyg'
+  let editorReadyContent = await convertContentForEditor(initialContent || '')
+
+  // 预处理分页符，避免初始化时的闪现
+  editorReadyContent = preprocessPageBreaks(editorReadyContent)
+
   vd = new Vditor(elRef.value, {
-    value: initial,
+    value: editorReadyContent,
     cache: { enable: false },
     height: '100%',
     mode: initialMode,
     lang: getVditorLang(locale.value),
+    theme: getEditorTheme(props.pageTheme),
     toolbarConfig: { pin: true },
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
-      'quote', 'line', 'code', 'inline-code',
-      'table', 'insert-before', 'insert-after', '|',
-      'line', 'link', 'emoji', '|', //'upload',
+      'upload',{
+        name: 'page-break',
+        icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3.5a.5.5 0 0 1-1 0V3H3v3.5a.5.5 0 0 1-1 0V3z"/>
+          <path d="M2 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>
+          <path d="M10.5 9a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+          <path d="M2 13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2.5a.5.5 0 0 0-1 0V13H3v-2.5a.5.5 0 0 0-1 0V13z"/>
+          <path d="M5 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 8z" fill-rule="evenodd"/>
+        </svg>`,
+        tip: t('editor.pageBreak'),
+        click: handlePageBreak
+      },'line', 'code', 'inline-code', 'quote', 'table', 'link',  'emoji', 'insert-before', 'insert-after', '|',
       'undo', 'redo', '|',
+      
       'edit-mode',
-      // 'devtools', '|'
     ],
     counter: { enable: true },
-    upload: { accept: 'image/*' },
-    input: () => emitHtml(),
+    upload: {
+      accept: 'image/*',
+      multiple: true,
+      handler: handleImageUpload
+    },
+    preview: {
+      theme: {
+        current: getEditorTheme(props.pageTheme),
+        path: 'https://unpkg.com/vditor/dist/css/content-theme'
+      },
+      hljs: {
+        style: getEditorTheme(props.pageTheme) === 'dark' ? 'github-dark' : 'github'
+      }
+    },
+    hint: { delay: 500 },
+    typewriterMode: false,
     after: () => {
       isVditorReady = true
-      vd.setTheme(getEditorTheme(props.pageTheme))
-      emitHtml()
-      // 添加模式变化监听
-      addModeChangeListener()
-      setupScrollSync()
+      console.log('Vditor ready')
+
+      // 绑定滚动事件
+      bindScrollEvents()
+
+      // 立即初始化分页符显示
+      nextTick(() => updatePageBreakDisplay())
+
+      // 初始化时发送内容
+      if (vd) {
+        emit('update:html', vd.getHTML())
+      }
     },
+    input: (value) => {
+      if (isVditorReady) {
+        const storageContent = convertContentForStorage(value)
+
+        // 标记当前文档为已修改
+        const activeDoc = getActiveDocument()
+        if (activeDoc && activeDoc.content !== storageContent) {
+          markDocumentModified(activeDoc.id)
+          activeDoc.updatedAt = Date.now()
+
+          // 更新文档标题
+          updateDocumentTitle(activeDoc.id, storageContent)
+        }
+
+        // 更新分页符显示
+        setTimeout(() => updatePageBreakDisplay(), 100)
+
+        emit('update:html', vd.getHTML())
+      }
+    },
+    select: () => {
+      if (isVditorReady) {
+        emit('update:html', vd.getHTML())
+      }
+    },
+    blur: () => {
+      if (isVditorReady) {
+        const storageContent = convertContentForStorage(vd.getValue())
+        // 保存当前文档状态
+        saveCurrentDocumentState(storageContent)
+
+        // 标记文档为已保存
+        const activeDoc = getActiveDocument()
+        if (activeDoc) {
+          markDocumentSaved(activeDoc.id)
+          // 最终确认标题更新
+          updateDocumentTitle(activeDoc.id, storageContent)
+        }
+
+        saveToLocalStorage()
+
+        // 立即重新应用分页符样式（保存后可能丢失）
+        nextTick(() => updatePageBreakDisplay())
+
+        emit('update:html', vd.getHTML())
+      }
+    }
   })
-  window.addEventListener('keydown', onKey)
+}
+
+async function handleImageUpload(files) {
+  if (!files) return
+  const fileList = Array.from(files).filter(file => file instanceof File)
+  if (fileList.length === 0) return
+
+  const fragments = []
+
+  for (const file of fileList) {
+    try {
+      const { url, name } = await saveImage(file)
+      if (!url) continue
+
+      const rawName = name || file.name || 'image'
+      const alt = rawName.replace(/\.[^/.]+$/, '') || 'image'
+      fragments.push(`![${alt}](${url})`)
+    } catch (error) {
+      console.warn('Image upload failed:', error)
+    }
+  }
+
+  if (fragments.length > 0 && vd) {
+    const markdown = fragments.join('\n\n') + '\n'
+    vd.insertValue(markdown)
+    emit('update:html', vd.getHTML())
+  }
+}
+
+// 预处理内容中的分页符，将PAGE_BREAK文本转换为带样式的HTML
+function preprocessPageBreaks(content) {
+  if (!content) return content
+
+  // 将包含PAGE_BREAK的段落预处理为带样式的分页符
+  return content.replace(
+    /<p([^>]*)>\s*PAGE_BREAK\s*<\/p>/g,
+    `<p$1 class="page-break-styled" contenteditable="false" style="margin: 16px 0 !important; padding: 8px 12px !important; border: 1px dashed var(--accent) !important; border-radius: 6px !important; background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important; text-align: center !important; font-size: 12px !important; font-weight: 600 !important; color: var(--accent) !important; user-select: none !important; cursor: default !important;">✂️ ${t('editor.pageBreakLabel')}</p>`
+  )
+}
+
+function handlePageBreak() {
+  if (!vd) return
+
+  // 使用特殊的注释语法作为分页符标记
+  // 这种方式在所有模式下都能正常工作，并且会被保留在HTML中
+  const pageBreakMarkdown = `\n<!-- PAGE_BREAK -->\n`
+
+  // 在当前光标位置插入分页符标记
+  vd.insertValue(pageBreakMarkdown)
+
+  // 延迟一点时间后更新分页符显示
+  setTimeout(() => {
+    updatePageBreakDisplay()
+    emit('update:html', vd.getHTML())
+  }, 100)
+}
+
+// 更新编辑器中分页符的显示
+function updatePageBreakDisplay() {
+  if (!vd || !vd.vditor?.element) return
+
+  const editor = vd.vditor.element
+
+  // 1. 处理HTML注释形式的分页符
+  const comments = []
+  const walker = document.createTreeWalker(
+    editor,
+    NodeFilter.SHOW_COMMENT,
+    null,
+    false
+  )
+
+  let node
+  while (node = walker.nextNode()) {
+    if (node.nodeValue && node.nodeValue.trim() === 'PAGE_BREAK') {
+      comments.push(node)
+    }
+  }
+
+  // 为每个分页符注释添加可视化元素
+  comments.forEach(comment => {
+    // 检查是否已经有可视化元素
+    if (comment.nextSibling && comment.nextSibling.classList?.contains('page-break-visual')) {
+      return
+    }
+
+    // 创建可视化元素
+    const visual = document.createElement('div')
+    visual.className = 'page-break-visual'
+    visual.contentEditable = 'false'
+    visual.style.cssText = `
+      margin: 16px 0;
+      padding: 8px 12px;
+      border: 1px dashed var(--accent);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    `
+
+    const line = document.createElement('div')
+    line.style.cssText = `
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--accent) 20%, var(--accent) 50%, var(--accent) 80%, transparent);
+      position: relative;
+    `
+
+    const text = document.createElement('div')
+    text.textContent = t('editor.pageBreakLabel')
+    text.style.cssText = `
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    `
+
+    visual.appendChild(line)
+    visual.appendChild(text)
+
+    // 插入到注释节点后面
+    comment.parentNode.insertBefore(visual, comment.nextSibling)
+  })
+
+  // 2. 处理段落形式的分页符 (例如: <p data-block="0">PAGE_BREAK</p>)
+  const paragraphs = editor.querySelectorAll('p')
+  paragraphs.forEach(p => {
+    const textContent = p.textContent?.trim()
+    const hasPageBreak = textContent === 'PAGE_BREAK' ||
+                        textContent.includes('分页符') ||
+                        textContent.includes('Page Break')
+
+    if (hasPageBreak) {
+      // 重新标记和应用样式（无论是否已处理过）
+      p.classList.add('page-break-styled')
+
+      // 应用分页符样式
+      p.style.cssText = `
+        margin: 16px 0 !important;
+        padding: 8px 12px !important;
+        border: 1px dashed var(--accent) !important;
+        border-radius: 6px !important;
+        background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: var(--accent) !important;
+        user-select: none !important;
+        cursor: default !important;
+        position: relative !important;
+      `
+
+      // 替换文本内容
+      p.innerHTML = `✂️ ${t('editor.pageBreakLabel')}`
+
+      // 防止编辑
+      p.contentEditable = 'false'
+    }
+  })
+}
+
+// 绑定滚动事件
+function bindScrollEvents() {
+  if (!vd || !vd.vditor?.element) return
+
+  // 清理之前的事件监听
+  scrollCleanups.forEach(cleanup => cleanup())
+  scrollCleanups.length = 0
+
+  const containers = new Set()
+  const content = vd.vditor?.element?.querySelector?.('.vditor-content')
+  if (content) containers.add(content)
+
+  const wysiwyg = vd.vditor?.wysiwyg?.element?.parentElement
+  if (wysiwyg) containers.add(wysiwyg)
+
+  const ir = vd.vditor?.ir?.element?.parentElement
+  if (ir) containers.add(ir)
+
+  const sv = vd.vditor?.sv?.element?.parentElement
+  if (sv) containers.add(sv)
+
+  const preview = vd.vditor?.preview?.element
+  if (preview) containers.add(preview)
+
+  const resetNodes = vd.vditor?.element?.querySelectorAll?.('.vditor-reset') || []
+  resetNodes.forEach(node => containers.add(node))
+
+  containers.forEach(container => {
+    if (!container) return
+
+    const scrollHandler = () => {
+      const scrollTop = container.scrollTop
+      const maxScroll = container.scrollHeight - container.clientHeight
+      const scrollRatio = maxScroll > 0 ? scrollTop / maxScroll : 0
+      emit('editorScroll', {
+        scrollRatio,
+        ratio: scrollRatio,
+        scrollTop
+      })
+    }
+
+    container.addEventListener('scroll', scrollHandler, { passive: true })
+    scrollCleanups.push(() => {
+      container.removeEventListener('scroll', scrollHandler)
+    })
+  })
+}
+
+// 搜索相关函数
+function handleSearch() {
+  // 搜索无需防抖，因为computed会自动处理
+  // filteredDocuments计算属性会立即反映搜索结果
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  // 重置分页
+  currentPage.value = 1
+}
+
+function loadMoreDocuments() {
+  currentPage.value += 1
+}
+
+// 监听搜索查询变化，重置分页
+watch(searchQuery, () => {
+  currentPage.value = 1
 })
 
-watch(() => props.pageTheme, async (v) => {
+// 监听主题变化
+watch(() => props.pageTheme, (newTheme) => {
   if (vd && isVditorReady) {
-    try {
-      vd.setTheme(getEditorTheme(v))
-    } catch (error) {
-      console.warn('Failed to set Vditor theme:', error)
-    }
+    vd.setTheme(
+      getEditorTheme(newTheme),
+      getEditorTheme(newTheme),
+      getEditorTheme(newTheme) === 'dark' ? 'github-dark' : 'github'
+    )
   }
 })
 
-// 监听语言变化，重新初始化Vditor（因为Vditor没有动态切换语言的API）
+// 监听语言变化
 watch(locale, async (newLocale) => {
   if (vd && isVditorReady) {
     // 保存当前内容
-    const currentContent = vd.getValue()
+    saveCurrentDocumentState()
+    const activeDoc = getActiveDocument()
+    const storedContent = activeDoc?.content || ''
 
     // 销毁当前实例
     try {
-      cleanupScrollSync()
-      cleanupModeChangeListener()
+      scrollCleanups.forEach(cleanup => cleanup())
+      scrollCleanups.length = 0
       vd.destroy()
     } catch (error) {
       console.warn('Failed to destroy Vditor:', error)
@@ -152,498 +1087,392 @@ watch(locale, async (newLocale) => {
 
     // 重新初始化
     await nextTick()
-    const cachedMode = loadCachedMode()
-    lastSavedMode = cachedMode
-    vd = new Vditor(elRef.value, {
-      value: currentContent,
-      cache: { enable: false },
-      height: '100%',
-      mode: cachedMode, // 使用缓存的模式
-      lang: getVditorLang(newLocale),
-      toolbarConfig: { pin: true },
-      toolbar: [
-        'headings', 'bold', 'italic', 'strike', '|',
-        'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
-        'quote', 'line', 'code', 'inline-code', '|',
-        'table', 'insert-before', 'insert-after', '|',
-        'line', 'link', 'emoji', '|', //'upload',
-        'undo', 'redo', '|',
-        'edit-mode', 'both',
-        'code-theme', 'content-theme', '|',
-        'export'
-        // 'devtools', '|'
-      ],
-      counter: { enable: true },
-      upload: { accept: 'image/*' },
-      input: () => emitHtml(),
-      after: () => {
-        isVditorReady = true
-        vd.setTheme(getEditorTheme(props.pageTheme))
-        emitHtml()
-        // 重新添加模式变化监听
-        addModeChangeListener()
-        setupScrollSync()
-      },
-    })
+    await initVditor()
+
+    if (vd && isVditorReady) {
+      const displayContent = await convertContentForEditor(storedContent)
+      // 预处理分页符，避免闪现
+      const processedContent = preprocessPageBreaks(displayContent)
+      vd.setValue(processedContent, false)
+
+      // 立即应用分页符样式
+      nextTick(() => updatePageBreakDisplay())
+
+      emit('update:html', vd.getHTML())
+    }
   }
 })
 
-function emitHtml() {
-  if (!vd) return
-  try {
-    const html = vd.getHTML()
-    emit('update:html', html)
-    // 保存内容到localStorage
-    const content = vd.getValue()
-    saveContent(content)
-  } catch (e) {
-    // 某些版本如返回 Promise，可兼容处理
-    Promise.resolve(vd.getHTML()).then((html) => {
-      emit('update:html', html)
-      const content = vd.getValue()
-      saveContent(content)
-    })
-  }
-}
-
-function getHTML() {
-  return vd?.getHTML?.() || Promise.resolve('')
-}
-
-function exportMarkdown() {
-  if (!vd) return Promise.reject('Editor not ready')
-
-  try {
-    const markdownContent = vd.getValue()
-    if (!markdownContent) {
-      return Promise.reject('No content to export')
+// 销毁编辑器
+function destroyVditor() {
+  if (vd) {
+    try {
+      scrollCleanups.forEach(cleanup => cleanup())
+      scrollCleanups.length = 0
+      vd.destroy()
+    } catch (error) {
+      console.warn('Error destroying Vditor:', error)
     }
-
-    // 提取文件名
-    let filename = getFilenameFromContent(markdownContent)
-
-    // 创建下载链接
-    const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-
-    // 触发下载
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-
-    return Promise.resolve()
-  } catch (error) {
-    return Promise.reject(error)
+    clearImageCache()
+    vd = null
+    isVditorReady = false
   }
 }
 
-function importMarkdown() {
+// 导出功能
+async function exportMarkdown() {
+  const activeDoc = getActiveDocument()
+  if (!activeDoc || !activeDoc.content) {
+    throw new Error('No content to export')
+  }
+
+  const blob = new Blob([activeDoc.content], { type: 'text/markdown' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${activeDoc.title || 'document'}.md`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+// 导入功能
+async function importMarkdown() {
   return new Promise((resolve, reject) => {
-    if (!vd) {
-      reject('Editor not ready')
-      return
-    }
-
-    // 创建文件输入元素
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.md,.markdown,text/markdown'
-    input.style.display = 'none'
+    input.accept = '.md,.markdown,.txt'
 
-    input.onchange = (event) => {
-      const file = event.target.files?.[0]
+    input.onchange = async (e) => {
+      const file = e.target.files[0]
       if (!file) {
         reject('No file selected')
         return
       }
 
-      // 验证文件类型
-      const fileExtension = file.name.toLowerCase().split('.').pop()
-      if (!['md', 'markdown'].includes(fileExtension)) {
+      if (!file.name.match(/\.(md|markdown|txt)$/i)) {
         reject('Invalid file type')
         return
       }
 
-      // 读取文件内容
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result
-          if (typeof content === 'string') {
-            // 设置编辑器内容
-            vd.setValue(content)
-            // 手动触发HTML更新，确保右侧预览区域更新
-            setTimeout(() => {
-              emitHtml()
-            }, 100)
-            resolve(content)
-          } else {
-            reject('Failed to read file content')
-          }
-        } catch (error) {
-          reject(error)
+      try {
+        const content = await file.text()
+        const fileName = file.name.replace(/\.(md|markdown|txt)$/i, '')
+
+        // 创建新文档
+        const newDoc = {
+          id: generateId(),
+          title: fileName,
+          content: content,
+          mode: 'wysiwyg',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
         }
-      }
 
-      reader.onerror = () => {
-        reject('Failed to read file')
-      }
+        allDocuments.value.push(newDoc)
+        openDocument(newDoc.id)
+        saveToLocalStorage()
 
-      reader.readAsText(file, 'utf-8')
+        resolve()
+      } catch (error) {
+        reject(error)
+      }
     }
 
     input.oncancel = () => {
       reject('Import cancelled')
     }
 
-    // 触发文件选择
-    document.body.appendChild(input)
     input.click()
-    document.body.removeChild(input)
   })
 }
 
-function getFilenameFromContent(content) {
-  // 查找第一个标题（# 或 ## 等）
-  const lines = content.split('\n')
-
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    // 匹配 markdown 标题格式：# 标题, ## 标题, ### 标题 等
-    const headerMatch = trimmedLine.match(/^#{1,6}\s+(.+)$/)
-    if (headerMatch) {
-      let title = headerMatch[1].trim()
-
-      // 清理标题，移除不适合作为文件名的字符
-      title = title
-        .replace(/[<>:"/\\|?*]/g, '') // 移除Windows不支持的字符
-        .replace(/\s+/g, '_') // 空格替换为下划线
-        .replace(/[^\w\u4e00-\u9fa5_-]/g, '') // 只保留字母、数字、中文、下划线和连字符
-        .substring(0, 50) // 限制长度
-
-      if (title) {
-        return `${title}.md`
-      }
-    }
-  }
-
-  // 如果没有找到标题，使用时间戳格式
-  const now = new Date()
-  const timestamp = now.toISOString().slice(0, 19).replace(/[:-]/g, '').replace('T', '_')
-  return `uni-editor-export_${timestamp}.md`
-}
-
-onBeforeUnmount(() => {
-  isVditorReady = false
-  cleanupModeChangeListener()
-  cleanupScrollSync()
-  if (vd) {
-    vd.destroy?.()
-    vd = null
-  }
-  window.removeEventListener('keydown', onKey)
-})
-
-function addModeChangeListener() {
-  if (!vd || !vd.vditor) return
-
-  cleanupModeChangeListener()
-
-  const editModeElement = vd.vditor.toolbar?.elements?.['edit-mode']
-    || vd.vditor.element?.querySelector?.('.vditor-toolbar__item button[data-type="edit-mode"]')?.parentElement
-
-  if (!(editModeElement instanceof HTMLElement)) {
-    return
-  }
-
-  const resolveCurrentMode = () => {
-    if (typeof vd.getCurrentMode === 'function') {
-      const mode = vd.getCurrentMode()
-      if (mode) return mode
-    }
-
-    const active = editModeElement.querySelector('button.vditor-menu--current')
-    return active?.dataset?.mode || lastSavedMode || 'wysiwyg'
-  }
-
-  const persistModeIfNeeded = () => {
-    const mode = resolveCurrentMode()
-    if (!mode || mode === lastSavedMode) {
+// 针对特定文档的导出功能
+async function exportMarkdownFromDocument(docId) {
+  try {
+    const doc = getDocument(docId)
+    if (!doc) {
+      console.error('Document not found:', docId)
       return
     }
-    lastSavedMode = mode
-    saveModeToCache(mode)
-    setupScrollSync()
-  }
 
-  const handleModeButtonClick = () => {
-    // 等待 Vditor 完成模式切换后再读取状态
-    setTimeout(persistModeIfNeeded, 0)
-  }
+    const blob = new Blob([doc.content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${doc.title || '无标题文档'}.md`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
 
-  const modeButtons = Array.from(editModeElement.querySelectorAll('button[data-mode]'))
-  modeButtons.forEach(button => {
-    button.addEventListener('click', handleModeButtonClick)
-  })
-
-  const observer = new MutationObserver(() => {
-    persistModeIfNeeded()
-  })
-
-  observer.observe(editModeElement, {
-    attributes: true,
-    attributeFilter: ['class'],
-    subtree: true,
-  })
-
-  // 初始化时同步一次，处理程序化模式切换
-  persistModeIfNeeded()
-
-  cleanupModeListener = () => {
-    observer.disconnect()
-    modeButtons.forEach(button => {
-      button.removeEventListener('click', handleModeButtonClick)
-    })
+    console.log('Markdown exported successfully')
+  } catch (error) {
+    console.error('Export failed:', error)
   }
 }
 
-function cleanupModeChangeListener() {
-  if (typeof cleanupModeListener === 'function') {
+// 针对特定文档的导入功能
+async function importMarkdownToDocument(docId) {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.md,.markdown,.txt'
+
+  input.onchange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
     try {
-      cleanupModeListener()
+      const doc = getDocument(docId)
+      if (!doc) {
+        console.error('Document not found:', docId)
+        return
+      }
+
+      // 检查文档是否有内容，如果有则显示确认对话框
+      if (doc.content && doc.content.trim().length > 0) {
+        importTargetDocId.value = docId
+        pendingImportFile.value = file
+        showImportConfirm.value = true
+        return
+      }
+
+      // 如果文档为空，直接导入
+      await performImport(docId, file)
     } catch (error) {
-      console.warn('Failed to cleanup editor mode listener:', error)
+      console.error('Import failed:', error)
     }
   }
-  cleanupModeListener = null
+
+  input.click()
 }
 
-function onKey(e) {
-  const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.userAgent)
-  const z = e.key.toLowerCase() === 'z'
-  if ((isMac ? e.metaKey : e.ctrlKey) && z) {
-    e.preventDefault()
-    if (e.shiftKey) document.execCommand('redo')
-    else document.execCommand('undo')
+// 执行实际的导入操作
+async function performImport(docId, file) {
+  try {
+    const rawContent = await file.text()
+    const content = convertContentForStorage(rawContent)
+    const fileName = file.name.replace(/\.(md|markdown|txt)$/i, '')
+
+    const doc = getDocument(docId)
+    if (!doc) {
+      console.error('Document not found:', docId)
+      return
+    }
+
+    // 更新文档内容
+    doc.content = content
+    doc.title = fileName || doc.title
+    doc.updatedAt = Date.now()
+
+    // 如果是当前活跃文档，更新编辑器内容
+    if (docId === activeTabId.value && vd && isVditorReady) {
+      const displayContent = await convertContentForEditor(content)
+      vd.setValue(displayContent)
+      emit('update:html', vd.getHTML())
+    }
+
+    // 标记文档已修改
+    markDocumentModified(docId)
+    saveToLocalStorage()
+
+    console.log('Markdown imported successfully')
+  } catch (error) {
+    console.error('Import failed:', error)
   }
 }
 
-function setupScrollSync() {
-  cleanupScrollSync()
-  if (!vd || !vd.vditor) return
+// 确认导入
+function confirmImport() {
+  if (importTargetDocId.value && pendingImportFile.value) {
+    performImport(importTargetDocId.value, pendingImportFile.value)
+  }
+  cancelImport()
+}
 
-  const modes = ['wysiwyg', 'ir', 'sv']
-  const state = {
-    rafId: 0,
-    lastMode: '',
-    lastTop: -1,
-    lastRatio: -1,
-    lastMax: -1,
+// 取消导入
+function cancelImport() {
+  showImportConfirm.value = false
+  importTargetDocId.value = ''
+  pendingImportFile.value = null
+}
+
+// 处理文档标签页操作
+function handleDocumentTabAction(docId) {
+  if (!isTabOpen(docId)) {
+    // 文档未打开，打开标签页
+    openDocument(docId)
+  } else if (docId !== activeTabId.value) {
+    // 文档已打开但非活跃，切换到该标签
+    selectTab(docId)
+  } else {
+    // 当前活跃文档，关闭标签页（但不删除文档）
+    closeTab(docId)
+  }
+}
+
+// 获取标签页操作的提示文本
+function getTabActionTitle(docId) {
+  if (!isTabOpen(docId)) {
+    return t('documents.openDocument')
+  } else if (docId !== activeTabId.value) {
+    return t('documents.locateTab')
+  } else {
+    return t('documents.closeTabTitle')
+  }
+}
+
+
+// 提取文档标题
+function extractTitleFromContent(content) {
+  if (!content) return null
+
+  // 尝试匹配 markdown 标题
+  const headingMatch = content.match(/^#+\s*(.+)$/m)
+  if (headingMatch) {
+    return headingMatch[1].trim()
   }
 
-  const tick = () => {
-    const mode = vd.vditor.currentMode || modes.find(m => vd.vditor[m]) || 'wysiwyg'
-    const modeData = vd.vditor[mode]
-    const element = modeData?.element
-
-    if (element instanceof HTMLElement) {
-      const container = resolveScrollableContainer(element, mode)
-      if (container instanceof HTMLElement) {
-        const maxScroll = container.scrollHeight - container.clientHeight
-        const currentTop = container.scrollTop
-        const ratio = maxScroll > 0 ? currentTop / maxScroll : 0
-
-        const ratioChanged = Math.abs(ratio - state.lastRatio) > 0.001
-        const modeChanged = mode !== state.lastMode
-        const topChanged = Math.abs(currentTop - state.lastTop) > 0.5
-        const sizeChanged = Math.abs(maxScroll - state.lastMax) > 0.5
-
-        if (ratioChanged || modeChanged || topChanged || sizeChanged) {
-          emit('editorScroll', {
-            mode,
-            ratio,
-            scrollTop: currentTop,
-            scrollHeight: container.scrollHeight,
-            clientHeight: container.clientHeight,
-          })
-          state.lastRatio = ratio
-          state.lastMode = mode
-          state.lastTop = currentTop
-          state.lastMax = maxScroll
-        }
+  // 尝试匹配第一行非空内容
+  const lines = content.split('\n')
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed && !trimmed.startsWith('#')) {
+      // 移除markdown格式并限制长度
+      const cleaned = trimmed.replace(/[*_`~\[\]]/g, '').trim()
+      if (cleaned) {
+        return cleaned.length > 50 ? cleaned.substring(0, 50) + '...' : cleaned
       }
     }
-
-    state.rafId = requestAnimationFrame(tick)
   }
 
-  state.rafId = requestAnimationFrame(tick)
-  scrollCleanups.push(() => {
-    cancelAnimationFrame(state.rafId)
+  return null
+}
+
+// 更新文档标题
+function updateDocumentTitle(docId, content) {
+  const doc = getDocument(docId)
+  if (!doc) return
+
+  const extractedTitle = extractTitleFromContent(content)
+
+  if (extractedTitle) {
+    // 情况1：文档标题是默认的"无标题文档"格式，直接更新
+    if (doc.title.startsWith(t('documents.untitled'))) {
+      doc.title = extractedTitle
+      saveToLocalStorage()
+      return
+    }
+
+    // 情况2：当前标题与提取的标题不同，且提取的是markdown标题，则更新
+    const headingMatch = content.match(/^#+\s*(.+)$/m)
+    if (headingMatch && doc.title !== extractedTitle) {
+      doc.title = extractedTitle
+      saveToLocalStorage()
+    }
+  } else if (!content.trim() && !doc.title.startsWith(t('documents.untitled'))) {
+    // 情况3：内容为空但标题不是默认的，保持当前标题不变
+    // 这样用户手动设置的标题在清空内容时不会丢失
+  }
+}
+
+// 更新滚动条
+function updateScrollbar() {
+  if (!tabsScrollRef.value) return
+
+  const scrollEl = tabsScrollRef.value
+  const scrollWidth = scrollEl.scrollWidth
+  const clientWidth = scrollEl.clientWidth
+
+  // 判断是否需要显示滚动条
+  showScrollbar.value = scrollWidth > clientWidth
+
+  if (showScrollbar.value) {
+    // 计算滚动条thumb的宽度（百分比）
+    scrollbarThumbWidth.value = (clientWidth / scrollWidth) * 100
+
+    // 计算滚动条thumb的位置
+    const scrollPercentage = scrollEl.scrollLeft / (scrollWidth - clientWidth)
+    const maxThumbPosition = clientWidth - (clientWidth * scrollbarThumbWidth.value / 100)
+    scrollbarThumbPosition.value = scrollPercentage * maxThumbPosition
+  }
+}
+
+// 绑定滚动条事件
+function bindScrollbarEvents() {
+  if (!tabsScrollRef.value) return
+
+  const scrollEl = tabsScrollRef.value
+
+  // 监听滚动事件
+  const handleScroll = () => {
+    updateScrollbar()
+  }
+
+  // 监听尺寸变化
+  const resizeObserver = new ResizeObserver(() => {
+    updateScrollbar()
   })
+
+  scrollEl.addEventListener('scroll', handleScroll)
+  resizeObserver.observe(scrollEl)
+
+  // 清理函数
+  const cleanup = () => {
+    scrollEl.removeEventListener('scroll', handleScroll)
+    resizeObserver.disconnect()
+  }
+
+  scrollCleanups.push(cleanup)
 }
 
-function cleanupScrollSync() {
-  while (scrollCleanups.length) {
-    const dispose = scrollCleanups.pop()
-    try {
-      dispose?.()
-    } catch (error) {
-      console.warn('Failed to cleanup editor scroll listener:', error)
-    }
+// 获取HTML内容
+function getHTML() {
+  if (vd && isVditorReady) {
+    return vd.getHTML()
   }
+  return ''
 }
 
-function resolveScrollableContainer(element, mode) {
-  const candidates = []
+onMounted(() => {
+  initializeDocuments()
+  nextTick(() => {
+    initVditor()
+    // 初始化滚动条
+    setTimeout(() => {
+      bindScrollbarEvents()
+      updateScrollbar()
+    }, 100)
+  })
+})
 
-  if (element.closest) {
-    candidates.push(element.closest(`.vditor-${mode}`))
-    candidates.push(element.closest('.vditor-content'))
-    candidates.push(element.closest('.vditor'))
+onBeforeUnmount(() => {
+  // 保存当前状态
+  saveCurrentDocumentState()
+  saveToLocalStorage()
+  if (imageCleanupTimer) {
+    clearTimeout(imageCleanupTimer)
+    imageCleanupTimer = null
   }
+  destroyVditor()
+})
 
-  if (element.parentElement) {
-    candidates.push(element.parentElement)
-  }
-
-  candidates.push(element)
-
-  for (const candidate of candidates) {
-    if (!(candidate instanceof HTMLElement)) continue
-    if (isScrollable(candidate)) {
-      return candidate
-    }
-  }
-
-  let current = element.parentElement
-  while (current && current !== document.body) {
-    if (isScrollable(current)) {
-      return current
-    }
-    current = current.parentElement
-  }
-
-  return element
-}
-
-function isScrollable(el) {
-  if (!(el instanceof HTMLElement)) return false
-  if (el === document.body || el === document.documentElement) return false
-  const style = window.getComputedStyle(el)
-  const overflowY = style.overflowY
-  if (overflowY === 'hidden') return false
-  if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
-    return el.scrollHeight > el.clientHeight + 2
-  }
-  return el.scrollHeight > el.clientHeight + 2
-}
-
-defineExpose({ getHTML, exportMarkdown, importMarkdown })
+// 暴露方法给父组件
+defineExpose({
+  getHTML,
+  createNewDocument,
+  openDocument,
+  closeTab,
+  duplicateDocument
+})
 </script>
 
 <style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
 @import '../styles/less/variables/layout.less';
-.editor-wrap {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-}
-
-.vditor-host {
-  border-top: 1px solid var(--border);
-  flex: 1;
-  min-height: 0;
-}
-
-:deep(.vditor) {
-  background: var(--panel);
-  color: var(--text);
-  border: none;
-}
-
-:deep(.vditor .vditor-toolbar) {
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-}
-
-/* 提升深色模式下工具栏可读性 */
-:deep(.vditor .vditor-toolbar) .vditor-tooltipped,
-:deep(.vditor .vditor-toolbar) button,
-:deep(.vditor .vditor-toolbar) svg,
-:deep(.vditor .vditor-toolbar) path {
-  color: var(--text) !important;
-  fill: var(--text) !important;
-  stroke: var(--text) !important;
-}
-
-/* Vditor 工具栏按钮悬停和激活状态，使用统一主题色 */
-:deep(.vditor .vditor-toolbar button:hover) {
-  background: color-mix(in srgb, var(--accent) 15%, var(--panel)) !important;
-  border-color: var(--accent) !important;
-  color: var(--text) !important;
-  fill: var(--text) !important;
-  stroke: var(--text) !important;
-  transform: translateY(-1px);
-}
-
-:deep(.vditor .vditor-toolbar button:active) {
-  background: color-mix(in srgb, var(--accent) 25%, var(--panel)) !important;
-  transform: translateY(0px);
-}
-
-/* Vditor 工具栏按钮激活状态（选中状态）*/
-:deep(.vditor .vditor-toolbar button.vditor-toolbar--current) {
-  background: color-mix(in srgb, var(--accent) 20%, var(--panel)) !important;
-  border-color: var(--accent) !important;
-  color: var(--text) !important;
-}
-
-/* Vditor 分隔符样式 */
-:deep(.vditor .vditor-toolbar .vditor-toolbar__divider) {
-  background: var(--border) !important;
-}
-
-/* Vditor 下拉菜单样式 */
-:deep(.vditor .vditor-panel) {
-  background: var(--panel) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 15%, transparent) !important;
-}
-
-:deep(.vditor .vditor-panel button) {
-  color: var(--text) !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-:deep(.vditor .vditor-panel button:hover) {
-  background: color-mix(in srgb, var(--accent) 15%, var(--panel)) !important;
-}
-
-/* Vditor tooltip 样式 */
-:deep(.vditor-tooltipped__tip) {
-  background: var(--panel) !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 10%, transparent) !important;
-}
-
-:deep(.vditor-reset) {
-  color: var(--text);
-}
-
-:deep(.vditor-reset a) {
-  color: var(--accent);
-}
-
-:deep(.vditor-reset blockquote) {
-  padding: @general-content-padding;
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
+// Import the UniEditor component styles
+@import '../styles/less/components/uni-editor.less';
 </style>

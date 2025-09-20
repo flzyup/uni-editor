@@ -23,7 +23,11 @@ const features = ref(completedFeatures || [])
 const showDropdown = ref(false)
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .features-toolbar {
   position: relative;
 }

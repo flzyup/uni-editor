@@ -96,7 +96,9 @@ export default {
       'Preview long articles as cards and export high-resolution images'
     ],
     saveSuccess: 'Content saved locally',
-    loadError: 'Failed to load content'
+    loadError: 'Failed to load content',
+    pageBreak: 'Insert Page Break',
+    pageBreakLabel: 'Page Break'
   },
 
   // Feature list (completed)
@@ -194,6 +196,51 @@ export default {
     sand: 'Sand'
   },
 
+  // Document Management
+  documents: {
+    newDocument: 'New Document',
+    untitled: 'Untitled Document',
+    welcome: 'Welcome Document',
+    copy: 'Copy',
+    rename: 'Rename',
+    duplicate: 'Duplicate',
+    close: 'Close',
+    renameTitle: 'Rename Document',
+    renamePlaceholder: 'Enter document name',
+    exportAll: 'Export All Documents',
+    importDocuments: 'Import Documents',
+    confirmClose: 'Confirm close document?',
+    unsavedChanges: 'Document has unsaved changes',
+    // Multi-tab management
+    manager: 'Document Manager',
+    documentCount: '{count} documents',
+    charactersCount: '{count} characters',
+    closeTabTitle: 'Close tab',
+    unsavedChangesTitle: 'Document has unsaved changes',
+    showManager: 'Show document manager',
+    hideManager: 'Hide document manager',
+    // Document operations
+    openDocument: 'Open document',
+    locateTab: 'Locate tab',
+    duplicateDocument: 'Duplicate document',
+    deleteDocument: 'Delete document',
+    importMD: 'Import MD file',
+    exportMD: 'Export MD file',
+    // Confirmation dialogs
+    confirmDelete: 'Confirm Delete',
+    confirmDeleteMessage: 'Are you sure you want to delete document "{title}"?',
+    confirmImport: 'Confirm Import',
+    confirmImportMessage: 'Document "{title}" already has content.',
+    confirmImportSubMessage: 'Are you sure you want to overwrite the current document with imported content?',
+    warningNotRecoverable: 'This action cannot be undone.',
+    confirmImportAction: 'Confirm Import',
+    // Time format
+    timeJustNow: 'just now',
+    timeMinutesAgo: '{minutes} minutes ago',
+    timeHoursAgo: '{hours} hours ago',
+    timeDaysAgo: '{days} days ago'
+  },
+
   // Common
   common: {
     expand: 'Expand',
@@ -203,7 +250,11 @@ export default {
     cancel: 'Cancel',
     loading: 'Loading...',
     error: 'Error',
-    success: 'Success'
+    success: 'Success',
+    search: 'Search documents...',
+    loadMore: 'Load More',
+    previous: 'Previous',
+    next: 'Next'
   },
 
   // Default template content

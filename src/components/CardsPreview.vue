@@ -287,30 +287,40 @@
 
       <!-- 卡片导航（仅在卡片页面显示） -->
       <div v-if="cards.length > 0 && !isGenerating" class="card-navigation">
-        <div class="nav-dots">
-          <button
-            v-for="(card, idx) in cards"
-            :key="idx"
-            class="nav-dot"
-            :class="{ active: idx === currentCardIndex }"
-            @click="scrollToCard(idx)"
-          >
-            {{ idx + 1 }}
-          </button>
-        </div>
         <div class="nav-controls">
+          <!-- 上一页按钮 -->
           <button
             class="nav-btn"
             :disabled="currentCardIndex === 0"
             @click="scrollToCard(currentCardIndex - 1)"
+            :title="t('common.previous')"
           >
             ◀
           </button>
-          <span class="nav-info">{{ currentCardIndex + 1 }} / {{ cards.length }}</span>
+
+          <!-- 智能分页导航 -->
+          <div class="pagination" v-if="cards.length > 1">
+            <template v-for="item in paginationItems" :key="item.type + item.page">
+              <!-- 页码按钮 -->
+              <button
+                v-if="item.type === 'page'"
+                class="page-btn"
+                :class="{ active: item.page === currentCardIndex + 1 }"
+                @click="scrollToCard(item.page - 1)"
+              >
+                {{ item.page }}
+              </button>
+              <!-- 省略号 -->
+              <span v-else-if="item.type === 'ellipsis'" class="ellipsis">...</span>
+            </template>
+          </div>
+
+          <!-- 下一页按钮 -->
           <button
             class="nav-btn"
             :disabled="currentCardIndex === cards.length - 1"
             @click="scrollToCard(currentCardIndex + 1)"
+            :title="t('common.next')"
           >
             ▶
           </button>
@@ -396,6 +406,48 @@ const truncatedSummary = computed(() => {
     return cover.value.summary.substring(0, maxLength) + '...'
   }
   return cover.value.summary
+})
+
+// 智能分页导航
+const paginationItems = computed(() => {
+  const currentPage = currentCardIndex.value + 1
+  const totalPages = cards.value.length
+  const items = []
+
+  if (totalPages <= 7) {
+    // 如果总页数不超过7页，显示所有页码
+    for (let i = 1; i <= totalPages; i++) {
+      items.push({ type: 'page', page: i })
+    }
+  } else {
+    // 总是显示第一页
+    items.push({ type: 'page', page: 1 })
+
+    if (currentPage <= 4) {
+      // 当前页在前部：1 2 3 4 5 ... 最后页
+      for (let i = 2; i <= 5; i++) {
+        items.push({ type: 'page', page: i })
+      }
+      items.push({ type: 'ellipsis' })
+      items.push({ type: 'page', page: totalPages })
+    } else if (currentPage >= totalPages - 3) {
+      // 当前页在后部：1 ... 倒数4 倒数3 倒数2 倒数1 最后页
+      items.push({ type: 'ellipsis' })
+      for (let i = totalPages - 4; i <= totalPages; i++) {
+        items.push({ type: 'page', page: i })
+      }
+    } else {
+      // 当前页在中部：1 ... 当前页-1 当前页 当前页+1 ... 最后页
+      items.push({ type: 'ellipsis' })
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        items.push({ type: 'page', page: i })
+      }
+      items.push({ type: 'ellipsis' })
+      items.push({ type: 'page', page: totalPages })
+    }
+  }
+
+  return items
 })
 
 // 背景图片样式（填充/对齐）
@@ -581,10 +633,37 @@ async function generate(shouldShowLoading = false) {
     }
 
     // Apply syntax highlighting before processing
-    const highlightedHtml = highlightCodeBlocks(props.html)
+    let highlightedHtml = highlightCodeBlocks(props.html)
+
+
+    // 预处理：处理多种形式的分页符标记
+    highlightedHtml = highlightedHtml.replace(
+      /<!--\s*PAGE_BREAK\s*-->/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理被转换为段落的分页符
+    highlightedHtml = highlightedHtml.replace(
+      /<p>\s*PAGE_BREAK\s*<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理带样式的分页符段落（中文和英文）
+    highlightedHtml = highlightedHtml.replace(
+      /<p[^>]*class="page-break-styled"[^>]*>.*?(分页符|Page Break).*?<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理包含分页符文本的段落（中文和英文）
+    highlightedHtml = highlightedHtml.replace(
+      /<p[^>]*>✂️\s*(分页符|Page Break)[^<]*<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
   const parser = new DOMParser()
   const doc = parser.parseFromString(highlightedHtml, 'text/html')
   const content = doc.body
+
 
   // 将列表转换为平级div结构，便于独立分割
   const convertListToDiv = (listEl) => {
@@ -689,6 +768,28 @@ async function generate(shouldShowLoading = false) {
         const el = node
         const tag = el.tagName.toLowerCase()
 
+        // 检测分页符
+        const isPageBreak = (tag === 'div' && el.classList.contains('page-break')) ||
+                           (tag === 'div' && el.classList.contains('page-break-marker')) ||
+                           (tag === 'div' && el.hasAttribute('data-page-break'))
+        if (isPageBreak) {
+          // 添加特殊的分页符标记，用于强制创建新卡片
+          blocks.push({ type: 'page-break', html: '', element: el, forceNewCard: true })
+          return
+        }
+      } else if (node.nodeType === 8) {
+        // 检测HTML注释节点中的分页符标记
+        const comment = node.nodeValue || ''
+        if (comment.trim() === 'PAGE_BREAK') {
+          blocks.push({ type: 'page-break', html: '', element: node, forceNewCard: true })
+          return
+        }
+      }
+
+      if (node.nodeType === 1) {
+        const el = node
+        const tag = el.tagName.toLowerCase()
+
         const isListDiv = tag === 'div' && (
           el.classList.contains('list-div-item') ||
           el.classList.contains('list-div-container') ||
@@ -725,6 +826,7 @@ async function generate(shouldShowLoading = false) {
     total: blocks.length,
     typeCounts,
   })
+
 
   // Fixed card size (324x540), inner padding 16
   const cardW = 324
@@ -784,6 +886,17 @@ async function generate(shouldShowLoading = false) {
     if (blocks.length > 10000) {
       console.error('Blocks array grew too large, breaking loop to prevent infinite recursion')
       break
+    }
+
+    // 如果遇到分页符，强制创建新卡片
+    if (block.forceNewCard && block.type === 'page-break') {
+      // 完成当前卡片（如果有内容）
+      if (acc.length) {
+        generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
+        acc = []
+      }
+      // 跳过分页符本身，继续处理下一个块
+      continue
     }
 
     // 快速估算：先用当前累积内容 + 新块测量
@@ -974,25 +1087,28 @@ function scrollToCard(index) {
   const targetCard = cardElements[index]
   if (targetCard) {
     // 计算目标卡片应该滚动到的位置，使其居中显示
-    const stripWidth = stripRef.value.clientWidth
+    const stripEl = stripRef.value
+    const stripWidth = stripEl.clientWidth
     const cardWidth = 324 + 16 // 卡片宽度 + gap
     const cardOffsetLeft = index * cardWidth + 16 // 加上左padding
     const scrollLeft = cardOffsetLeft - (stripWidth / 2) + (324 / 2) // 居中计算
-    
+
     // 计算最大滚动距离，确保最后一张卡片能完全显示
     const totalWidth = cards.value.length * cardWidth + 16 + 32 // 总宽度包括左右padding
     const maxScrollLeft = Math.max(0, totalWidth - stripWidth)
-    
+
     const finalLeft = Math.max(0, Math.min(scrollLeft, maxScrollLeft))
-    stripRef.value.scrollTo({ left: finalLeft, behavior: 'smooth' })
+    stripEl.scrollTo({ left: finalLeft, behavior: 'smooth' })
     // 兜底：直接设置 scrollLeft，避免影响其他容器
     setTimeout(() => {
-      const actual = stripRef.value?.scrollLeft ?? 0
-      if (Math.abs(actual - finalLeft) > 10 && stripRef.value) {
-        stripRef.value.scrollLeft = finalLeft
+      const currentStrip = stripRef.value
+      if (!currentStrip) return
+      const actual = currentStrip.scrollLeft
+      if (Math.abs(actual - finalLeft) > 10) {
+        currentStrip.scrollLeft = finalLeft
       }
     }, 180)
-    
+
     // 等待滚动完成后重置标记
     setTimeout(() => {
       isUserClick = false
@@ -1053,9 +1169,11 @@ function handleScroll() {
   clearTimeout(scrollTimeout)
   scrollTimeout = setTimeout(() => {
     if (isUserClick) return // 再次检查，确保不会覆盖用户选择
-    
-    const stripScrollLeft = stripRef.value.scrollLeft
-    const stripWidth = stripRef.value.clientWidth
+    const stripEl = stripRef.value
+    if (!stripEl) return
+
+    const stripScrollLeft = stripEl.scrollLeft
+    const stripWidth = stripEl.clientWidth
     const stripCenter = stripScrollLeft + stripWidth / 2
     
     // 计算哪个卡片最接近中心
@@ -1887,7 +2005,11 @@ function restoreShowMeta() {
 defineExpose({ exportAll, setActiveCardByRatio })
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .cards-loading {
   position: absolute;
   top: 0;

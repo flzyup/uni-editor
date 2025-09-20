@@ -96,7 +96,9 @@ export default {
       '预览长文卡片并导出高清图片'
     ],
     saveSuccess: '内容已保存到本地',
-    loadError: '加载内容失败'
+    loadError: '加载内容失败',
+    pageBreak: '插入分页符',
+    pageBreakLabel: '分页符'
   },
 
   // 功能列表（已完成）
@@ -194,6 +196,51 @@ export default {
     sand: '沙漠'
   },
 
+  // 文档管理
+  documents: {
+    newDocument: '新建文档',
+    untitled: '无标题文档',
+    welcome: '欢迎文档',
+    copy: '副本',
+    rename: '重命名',
+    duplicate: '复制',
+    close: '关闭',
+    renameTitle: '重命名文档',
+    renamePlaceholder: '请输入文档名称',
+    exportAll: '导出所有文档',
+    importDocuments: '导入文档',
+    confirmClose: '确认关闭文档？',
+    unsavedChanges: '文档有未保存的更改',
+    // 多标签页管理
+    manager: '文档管理器',
+    documentCount: '{count} 个文档',
+    charactersCount: '{count} 字符',
+    closeTabTitle: '关闭标签',
+    unsavedChangesTitle: '文档有未保存的更改',
+    showManager: '显示文档管理器',
+    hideManager: '隐藏文档管理器',
+    // 文档操作
+    openDocument: '打开文档',
+    locateTab: '定位标签',
+    duplicateDocument: '复制文档',
+    deleteDocument: '删除文档',
+    importMD: '导入MD文件',
+    exportMD: '导出MD文件',
+    // 确认对话框
+    confirmDelete: '确认删除',
+    confirmDeleteMessage: '确定要删除文档 "{title}" 吗？',
+    confirmImport: '确认导入',
+    confirmImportMessage: '文档 "{title}" 已有内容。',
+    confirmImportSubMessage: '确定要用导入的内容覆盖当前文档吗？',
+    warningNotRecoverable: '此操作不可恢复。',
+    confirmImportAction: '确认导入',
+    // 时间格式
+    timeJustNow: '刚刚',
+    timeMinutesAgo: '{minutes}分钟前',
+    timeHoursAgo: '{hours}小时前',
+    timeDaysAgo: '{days}天前'
+  },
+
   // 通用
   common: {
     expand: '展开',
@@ -203,7 +250,11 @@ export default {
     cancel: '取消',
     loading: '加载中...',
     error: '错误',
-    success: '成功'
+    success: '成功',
+    search: '搜索文档...',
+    loadMore: '加载更多',
+    previous: '上一页',
+    next: '下一页'
   },
 
   // 默认模板内容

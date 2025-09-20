@@ -140,6 +140,52 @@
     }
   }
 
+  hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in srgb, var(--card-accent) 30%, transparent) 20%,
+      var(--card-accent) 50%,
+      color-mix(in srgb, var(--card-accent) 30%, transparent) 80%,
+      transparent
+    );
+    margin: 32px 0;
+    position: relative;
+    border-radius: 1px;
+
+    // 添加装饰元素
+    &::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: var(--card-accent);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 3px var(--card-bg),
+        0 0 0 4px color-mix(in srgb, var(--card-accent) 20%, transparent);
+    }
+
+    // 响应式调整
+    @media (max-width: @mobile-max) {
+      margin: 24px 0;
+
+      &::before {
+        width: 10px;
+        height: 10px;
+        top: -5px;
+        box-shadow:
+          0 0 0 2px var(--card-bg),
+          0 0 0 3px color-mix(in srgb, var(--card-accent) 20%, transparent);
+      }
+    }
+  }
+
   pre {
     background: color-mix(in srgb, var(--card-muted) 15%, var(--card-bg));
     color: var(--card-text);
@@ -455,6 +501,102 @@
 
     &:nth-child(even):hover td {
       background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+    }
+  }
+
+  // 分页符样式
+  .page-break {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 24px 0;
+    padding: 12px 0;
+    user-select: none;
+    pointer-events: none;
+    cursor: default;
+
+    .page-break-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        color-mix(in srgb, var(--card-accent) 50%, transparent) 20%,
+        var(--card-accent) 50%,
+        color-mix(in srgb, var(--card-accent) 50%, transparent) 80%,
+        transparent
+      );
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 12px;
+        height: 12px;
+        background: var(--card-accent);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 3px var(--card-bg),
+          0 0 0 4px color-mix(in srgb, var(--card-accent) 30%, transparent);
+      }
+    }
+
+    .page-break-text {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card-bg);
+      color: color-mix(in srgb, var(--card-accent) 80%, var(--card-text));
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border: 1px solid color-mix(in srgb, var(--card-accent) 30%, transparent);
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    // 在编辑器中的特殊样式
+    &.editor-page-break {
+      margin: 16px 0;
+      padding: 8px 0;
+      border: 1px dashed color-mix(in srgb, var(--card-accent) 40%, transparent);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--card-accent) 5%, transparent);
+
+      .page-break-line {
+        opacity: 0.7;
+      }
+
+      .page-break-text {
+        background: color-mix(in srgb, var(--card-accent) 10%, var(--card-bg));
+        font-size: 11px;
+        border-color: color-mix(in srgb, var(--card-accent) 50%, transparent);
+      }
+    }
+
+    // 响应式调整
+    @media (max-width: @mobile-max) {
+      margin: 16px 0;
+
+      .page-break-line::before {
+        width: 10px;
+        height: 10px;
+        box-shadow:
+          0 0 0 2px var(--card-bg),
+          0 0 0 3px color-mix(in srgb, var(--card-accent) 25%, transparent);
+      }
+
+      .page-break-text {
+        font-size: 9px;
+        padding: 1px 6px;
+      }
     }
   }
 
