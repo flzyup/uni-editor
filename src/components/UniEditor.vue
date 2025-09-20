@@ -18,13 +18,13 @@
               <div class="tab-content">
                 <div class="tab-icon">📝</div>
                 <div class="tab-title" :title="getDocument(tab.id)?.title">
-                  {{ getDocument(tab.id)?.title || '无标题文档' }}
+                  {{ getDocument(tab.id)?.title || t('documents.untitled') }}
                 </div>
                 <div
                   class="tab-close"
                   @click.stop="closeTab(tab.id)"
                   v-if="openTabs.length > 1"
-                  :title="isDocumentModified(tab.id) ? '文档有未保存的更改' : '关闭标签'"
+                  :title="isDocumentModified(tab.id) ? t('documents.unsavedChangesTitle') : t('documents.closeTabTitle')"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
                     <path d="M9.5 3.5L8.5 2.5L6 5L3.5 2.5L2.5 3.5L5 6L2.5 8.5L3.5 9.5L6 7L8.5 9.5L9.5 8.5L7 6L9.5 3.5Z"/>
@@ -34,12 +34,12 @@
             </div>
           </div>
           <div class="tabs-actions">
-            <button class="action-btn" @click="toggleDocumentManager" :title="showDocumentManager ? '隐藏文档管理器' : '显示文档管理器'">
+            <button class="action-btn" @click="toggleDocumentManager" :title="showDocumentManager ? t('documents.hideManager') : t('documents.showManager')">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V5h12V3.5a.5.5 0 0 0-.5-.5h-11zM14 6H2v6.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V6z"/>
               </svg>
             </button>
-            <button class="action-btn" @click="createNewDocument" title="新建文档">
+            <button class="action-btn" @click="createNewDocument" :title="t('documents.newDocument')">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
               </svg>
@@ -61,8 +61,8 @@
     <!-- 文档管理器 -->
     <div class="document-manager" v-if="showDocumentManager">
       <div class="manager-header">
-        <h3>文档管理器</h3>
-        <span class="document-count">{{ allDocuments.length }} 个文档</span>
+        <h3>{{ t('documents.manager') }}</h3>
+        <span class="document-count">{{ t('documents.documentCount', { count: allDocuments.length }) }}</span>
       </div>
       <div class="manager-content">
         <div class="document-list">
@@ -85,7 +85,7 @@
               </div>
               <div class="document-meta">
                 <span class="doc-date">{{ formatDate(doc.updatedAt) }}</span>
-                <span class="doc-size">{{ doc.content?.length || 0 }} 字符</span>
+                <span class="doc-size">{{ t('documents.charactersCount', { count: doc.content?.length || 0 }) }}</span>
               </div>
             </div>
             <div class="document-actions" @click.stop>
@@ -111,7 +111,7 @@
               <button
                 class="doc-action-btn"
                 @click.stop="importMarkdownToDocument(doc.id)"
-                title="导入MD文件"
+                :title="t('documents.importMD')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
@@ -121,7 +121,7 @@
               <button
                 class="doc-action-btn"
                 @click.stop="exportMarkdownFromDocument(doc.id)"
-                title="导出MD文件"
+                :title="t('documents.exportMD')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
@@ -131,7 +131,7 @@
               <button
                 class="doc-action-btn"
                 @click.stop="duplicateDocument(doc.id)"
-                title="复制文档"
+                :title="t('documents.duplicateDocument')"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
@@ -141,7 +141,7 @@
               <button
                 class="doc-action-btn danger"
                 @click.stop="confirmDeleteDocument(doc.id)"
-                title="删除文档"
+                :title="t('documents.deleteDocument')"
                 :disabled="allDocuments.length <= 1"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -164,15 +164,15 @@
     <div v-if="showDeleteConfirm" class="modal-overlay" @click="cancelDelete">
       <div class="modal-dialog" @click.stop>
         <div class="modal-header">
-          <h3>确认删除</h3>
+          <h3>{{ t('documents.confirmDelete') }}</h3>
         </div>
         <div class="modal-body">
-          <p>确定要删除文档 "{{ getDocument(documentToDelete)?.title }}" 吗？</p>
-          <p class="warning-text">此操作不可恢复。</p>
+          <p>{{ t('documents.confirmDeleteMessage', { title: getDocument(documentToDelete)?.title }) }}</p>
+          <p class="warning-text">{{ t('documents.warningNotRecoverable') }}</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="cancelDelete">取消</button>
-          <button class="btn btn-danger" @click="deleteDocument">删除</button>
+          <button class="btn btn-secondary" @click="cancelDelete">{{ t('common.cancel') }}</button>
+          <button class="btn btn-danger" @click="deleteDocument">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </div>
@@ -181,16 +181,16 @@
     <div v-if="showImportConfirm" class="modal-overlay" @click="cancelImport">
       <div class="modal-dialog" @click.stop>
         <div class="modal-header">
-          <h3>确认导入</h3>
+          <h3>{{ t('documents.confirmImport') }}</h3>
         </div>
         <div class="modal-body">
-          <p>文档 "{{ getDocument(importTargetDocId)?.title }}" 已有内容。</p>
-          <p>确定要用导入的内容覆盖当前文档吗？</p>
-          <p class="warning-text">此操作不可恢复。</p>
+          <p>{{ t('documents.confirmImportMessage', { title: getDocument(importTargetDocId)?.title }) }}</p>
+          <p>{{ t('documents.confirmImportSubMessage') }}</p>
+          <p class="warning-text">{{ t('documents.warningNotRecoverable') }}</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" @click="cancelImport">取消</button>
-          <button class="btn btn-primary" @click="confirmImport">确认导入</button>
+          <button class="btn btn-secondary" @click="cancelImport">{{ t('common.cancel') }}</button>
+          <button class="btn btn-primary" @click="confirmImport">{{ t('documents.confirmImportAction') }}</button>
         </div>
       </div>
     </div>
@@ -210,7 +210,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:html', 'editorScroll'])
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const elRef = ref(null)
 let vd = null
@@ -293,7 +293,7 @@ function initializeDocuments() {
 function createDefaultDocument() {
   const defaultDoc = {
     id: generateId(),
-    title: '欢迎使用 Uni Editor ✨',
+    title: t('editor.welcome'),
     content: getDefaultContent(),
     mode: 'wysiwyg',
     createdAt: Date.now(),
@@ -313,8 +313,8 @@ function generateId() {
 function getDefaultContent() {
   const currentLocale = locale.value
   const messages = {
-    'zh': zhMessages.editor.template,
-    'en': enMessages.editor.template
+    'zh': zhMessages.defaultTemplate,
+    'en': enMessages.defaultTemplate
   }
   return messages[currentLocale] || messages['zh']
 }
@@ -356,7 +356,7 @@ function markDocumentSaved(docId) {
 function createNewDocument() {
   const newDoc = {
     id: generateId(),
-    title: `无标题文档 ${allDocuments.value.length + 1}`,
+    title: `${t('documents.untitled')} ${allDocuments.value.length + 1}`,
     content: '',
     mode: 'wysiwyg',
     createdAt: Date.now(),
@@ -397,7 +397,7 @@ function selectTab(docId) {
     vd.setValue(newDoc.content || '', false)
 
     // 如果文档有内容但标题是默认的，尝试提取标题
-    if (newDoc.content && newDoc.title.startsWith('无标题文档')) {
+    if (newDoc.content && newDoc.title.startsWith(t('documents.untitled'))) {
       updateDocumentTitle(newDoc.id, newDoc.content)
     }
 
@@ -416,7 +416,7 @@ function closeTab(docId) {
 
   // 如果有未保存的更改，提示用户
   if (isDocumentModified(docId)) {
-    if (!confirm('文档有未保存的更改，确定要关闭吗？')) {
+    if (!confirm(t('documents.unsavedChanges') + '，' + t('documents.confirmClose'))) {
       return
     }
   }
@@ -440,7 +440,7 @@ function duplicateDocument(docId) {
 
   const newDoc = {
     id: generateId(),
-    title: originalDoc.title + ' - 副本',
+    title: originalDoc.title + ' - ' + t('documents.copy'),
     content: originalDoc.content,
     mode: originalDoc.mode,
     createdAt: Date.now(),
@@ -526,10 +526,10 @@ function formatDate(timestamp) {
   const now = new Date()
   const diff = now.getTime() - date.getTime()
 
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前'
-  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前'
-  if (diff < 604800000) return Math.floor(diff / 86400000) + '天前'
+  if (diff < 60000) return t('documents.timeJustNow')
+  if (diff < 3600000) return t('documents.timeMinutesAgo', { minutes: Math.floor(diff / 60000) })
+  if (diff < 86400000) return t('documents.timeHoursAgo', { hours: Math.floor(diff / 3600000) })
+  if (diff < 604800000) return t('documents.timeDaysAgo', { days: Math.floor(diff / 86400000) })
 
   return date.toLocaleDateString()
 }
@@ -915,11 +915,11 @@ function handleDocumentTabAction(docId) {
 // 获取标签页操作的提示文本
 function getTabActionTitle(docId) {
   if (!isTabOpen(docId)) {
-    return '在标签栏中打开'
+    return t('documents.openDocument')
   } else if (docId !== activeTabId.value) {
-    return '切换到此标签'
+    return t('documents.locateTab')
   } else {
-    return '关闭标签页'
+    return t('documents.closeTabTitle')
   }
 }
 
@@ -959,7 +959,7 @@ function updateDocumentTitle(docId, content) {
 
   if (extractedTitle) {
     // 情况1：文档标题是默认的"无标题文档"格式，直接更新
-    if (doc.title.startsWith('无标题文档')) {
+    if (doc.title.startsWith(t('documents.untitled'))) {
       doc.title = extractedTitle
       saveToLocalStorage()
       return
@@ -971,7 +971,7 @@ function updateDocumentTitle(docId, content) {
       doc.title = extractedTitle
       saveToLocalStorage()
     }
-  } else if (!content.trim() && !doc.title.startsWith('无标题文档')) {
+  } else if (!content.trim() && !doc.title.startsWith(t('documents.untitled'))) {
     // 情况3：内容为空但标题不是默认的，保持当前标题不变
     // 这样用户手动设置的标题在清空内容时不会丢失
   }

@@ -208,7 +208,35 @@ export default {
     exportAll: '导出所有文档',
     importDocuments: '导入文档',
     confirmClose: '确认关闭文档？',
-    unsavedChanges: '文档有未保存的更改'
+    unsavedChanges: '文档有未保存的更改',
+    // 多标签页管理
+    manager: '文档管理器',
+    documentCount: '{count} 个文档',
+    charactersCount: '{count} 字符',
+    closeTabTitle: '关闭标签',
+    unsavedChangesTitle: '文档有未保存的更改',
+    showManager: '显示文档管理器',
+    hideManager: '隐藏文档管理器',
+    // 文档操作
+    openDocument: '打开文档',
+    locateTab: '定位标签',
+    duplicateDocument: '复制文档',
+    deleteDocument: '删除文档',
+    importMD: '导入MD文件',
+    exportMD: '导出MD文件',
+    // 确认对话框
+    confirmDelete: '确认删除',
+    confirmDeleteMessage: '确定要删除文档 "{title}" 吗？',
+    confirmImport: '确认导入',
+    confirmImportMessage: '文档 "{title}" 已有内容。',
+    confirmImportSubMessage: '确定要用导入的内容覆盖当前文档吗？',
+    warningNotRecoverable: '此操作不可恢复。',
+    confirmImportAction: '确认导入',
+    // 时间格式
+    timeJustNow: '刚刚',
+    timeMinutesAgo: '{minutes}分钟前',
+    timeHoursAgo: '{hours}小时前',
+    timeDaysAgo: '{days}天前'
   },
 
   // 通用

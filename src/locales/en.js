@@ -208,7 +208,35 @@ export default {
     exportAll: 'Export All Documents',
     importDocuments: 'Import Documents',
     confirmClose: 'Confirm close document?',
-    unsavedChanges: 'Document has unsaved changes'
+    unsavedChanges: 'Document has unsaved changes',
+    // Multi-tab management
+    manager: 'Document Manager',
+    documentCount: '{count} documents',
+    charactersCount: '{count} characters',
+    closeTabTitle: 'Close tab',
+    unsavedChangesTitle: 'Document has unsaved changes',
+    showManager: 'Show document manager',
+    hideManager: 'Hide document manager',
+    // Document operations
+    openDocument: 'Open document',
+    locateTab: 'Locate tab',
+    duplicateDocument: 'Duplicate document',
+    deleteDocument: 'Delete document',
+    importMD: 'Import MD file',
+    exportMD: 'Export MD file',
+    // Confirmation dialogs
+    confirmDelete: 'Confirm Delete',
+    confirmDeleteMessage: 'Are you sure you want to delete document "{title}"?',
+    confirmImport: 'Confirm Import',
+    confirmImportMessage: 'Document "{title}" already has content.',
+    confirmImportSubMessage: 'Are you sure you want to overwrite the current document with imported content?',
+    warningNotRecoverable: 'This action cannot be undone.',
+    confirmImportAction: 'Confirm Import',
+    // Time format
+    timeJustNow: 'just now',
+    timeMinutesAgo: '{minutes} minutes ago',
+    timeHoursAgo: '{hours} hours ago',
+    timeDaysAgo: '{days} days ago'
   },
 
   // Common
