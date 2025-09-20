@@ -96,7 +96,9 @@ export default {
       'Preview long articles as cards and export high-resolution images'
     ],
     saveSuccess: 'Content saved locally',
-    loadError: 'Failed to load content'
+    loadError: 'Failed to load content',
+    pageBreak: 'Insert Page Break',
+    pageBreakLabel: 'Page Break'
   },
 
   // Feature list (completed)

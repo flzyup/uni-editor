@@ -96,7 +96,9 @@ export default {
       '预览长文卡片并导出高清图片'
     ],
     saveSuccess: '内容已保存到本地',
-    loadError: '加载内容失败'
+    loadError: '加载内容失败',
+    pageBreak: '插入分页符',
+    pageBreakLabel: '分页符'
   },
 
   // 功能列表（已完成）

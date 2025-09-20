@@ -631,10 +631,37 @@ async function generate(shouldShowLoading = false) {
     }
 
     // Apply syntax highlighting before processing
-    const highlightedHtml = highlightCodeBlocks(props.html)
+    let highlightedHtml = highlightCodeBlocks(props.html)
+
+
+    // 预处理：处理多种形式的分页符标记
+    highlightedHtml = highlightedHtml.replace(
+      /<!--\s*PAGE_BREAK\s*-->/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理被转换为段落的分页符
+    highlightedHtml = highlightedHtml.replace(
+      /<p>\s*PAGE_BREAK\s*<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理带样式的分页符段落（中文和英文）
+    highlightedHtml = highlightedHtml.replace(
+      /<p[^>]*class="page-break-styled"[^>]*>.*?(分页符|Page Break).*?<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
+    // 处理包含分页符文本的段落（中文和英文）
+    highlightedHtml = highlightedHtml.replace(
+      /<p[^>]*>✂️\s*(分页符|Page Break)[^<]*<\/p>/g,
+      '<div class="page-break-marker" data-page-break="true" style="display:none;"></div>'
+    )
+
   const parser = new DOMParser()
   const doc = parser.parseFromString(highlightedHtml, 'text/html')
   const content = doc.body
+
 
   // 将列表转换为平级div结构，便于独立分割
   const convertListToDiv = (listEl) => {
@@ -739,6 +766,28 @@ async function generate(shouldShowLoading = false) {
         const el = node
         const tag = el.tagName.toLowerCase()
 
+        // 检测分页符
+        const isPageBreak = (tag === 'div' && el.classList.contains('page-break')) ||
+                           (tag === 'div' && el.classList.contains('page-break-marker')) ||
+                           (tag === 'div' && el.hasAttribute('data-page-break'))
+        if (isPageBreak) {
+          // 添加特殊的分页符标记，用于强制创建新卡片
+          blocks.push({ type: 'page-break', html: '', element: el, forceNewCard: true })
+          return
+        }
+      } else if (node.nodeType === 8) {
+        // 检测HTML注释节点中的分页符标记
+        const comment = node.nodeValue || ''
+        if (comment.trim() === 'PAGE_BREAK') {
+          blocks.push({ type: 'page-break', html: '', element: node, forceNewCard: true })
+          return
+        }
+      }
+
+      if (node.nodeType === 1) {
+        const el = node
+        const tag = el.tagName.toLowerCase()
+
         const isListDiv = tag === 'div' && (
           el.classList.contains('list-div-item') ||
           el.classList.contains('list-div-container') ||
@@ -775,6 +824,7 @@ async function generate(shouldShowLoading = false) {
     total: blocks.length,
     typeCounts,
   })
+
 
   // Fixed card size (324x540), inner padding 16
   const cardW = 324
@@ -834,6 +884,17 @@ async function generate(shouldShowLoading = false) {
     if (blocks.length > 10000) {
       console.error('Blocks array grew too large, breaking loop to prevent infinite recursion')
       break
+    }
+
+    // 如果遇到分页符，强制创建新卡片
+    if (block.forceNewCard && block.type === 'page-break') {
+      // 完成当前卡片（如果有内容）
+      if (acc.length) {
+        generated.push({ type: 'content', html: assembleBlocksHtml(acc) })
+        acc = []
+      }
+      // 跳过分页符本身，继续处理下一个块
+      continue
     }
 
     // 快速估算：先用当前累积内容 + 新块测量

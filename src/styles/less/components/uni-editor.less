@@ -456,6 +456,115 @@
   overflow: hidden;
   border: 0;
   border-radius: 0;
+
+  // 编辑器内分页符的特殊样式
+  .page-break {
+    margin: 16px 0;
+    padding: 8px 12px;
+    border: 1px dashed var(--accent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+      border-color: color-mix(in srgb, var(--accent) 80%, transparent);
+    }
+
+    .page-break-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        color-mix(in srgb, var(--accent) 40%, transparent) 20%,
+        var(--accent) 50%,
+        color-mix(in srgb, var(--accent) 40%, transparent) 80%,
+        transparent
+      );
+      position: relative;
+      opacity: 0.8;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+      }
+    }
+
+    .page-break-text {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+  }
+
+  // 分页符可视化元素的样式
+  .page-break-visual {
+    margin: 16px 0 !important;
+    padding: 8px 12px !important;
+    border: 1px dashed var(--accent) !important;
+    border-radius: 6px !important;
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    user-select: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 10%, var(--bg)) !important;
+      border-color: color-mix(in srgb, var(--accent) 80%, transparent) !important;
+    }
+  }
+
+  // 分页符段落的样式（由JavaScript动态应用）
+  .page-break-styled {
+    margin: 16px 0 !important;
+    padding: 8px 12px !important;
+    border: 1px dashed var(--accent) !important;
+    border-radius: 6px !important;
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important;
+    text-align: center !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--accent) !important;
+    user-select: none !important;
+    cursor: default !important;
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 10%, var(--bg)) !important;
+      border-color: color-mix(in srgb, var(--accent) 80%, transparent) !important;
+    }
+  }
 }
 
 // 模态对话框样式

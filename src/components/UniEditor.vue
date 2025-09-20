@@ -528,8 +528,17 @@ async function selectTab(docId) {
 
   if (newDoc && vd && isVditorReady) {
     const displayContent = await convertContentForEditor(newDoc.content || '')
+
+    // 预处理内容中的分页符，避免闪现
+    const processedContent = preprocessPageBreaks(displayContent)
+
     // 更新编辑器内容
-    vd.setValue(displayContent, false)
+    vd.setValue(processedContent, false)
+
+    // 立即应用分页符样式，减少延迟
+    nextTick(() => {
+      updatePageBreakDisplay()
+    })
 
     // 如果文档有内容但标题是默认的，尝试提取标题
     if (newDoc.content && newDoc.title.startsWith(t('documents.untitled'))) {
@@ -691,7 +700,10 @@ async function initVditor() {
   const activeDoc = getActiveDocument()
   const initialContent = activeDoc?.content || getDefaultContent()
   const initialMode = activeDoc?.mode || 'wysiwyg'
-  const editorReadyContent = await convertContentForEditor(initialContent || '')
+  let editorReadyContent = await convertContentForEditor(initialContent || '')
+
+  // 预处理分页符，避免初始化时的闪现
+  editorReadyContent = preprocessPageBreaks(editorReadyContent)
 
   vd = new Vditor(elRef.value, {
     value: editorReadyContent,
@@ -704,8 +716,21 @@ async function initVditor() {
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
-      'upload','line', 'code', 'inline-code', 'quote', 'table', 'link',  'emoji', 'insert-before', 'insert-after', '|',
-      'undo', 'redo',  'edit-mode',
+      'upload',{
+        name: 'page-break',
+        icon: `<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v3.5a.5.5 0 0 1-1 0V3H3v3.5a.5.5 0 0 1-1 0V3z"/>
+          <path d="M2 9.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5z"/>
+          <path d="M10.5 9a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+          <path d="M2 13a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2.5a.5.5 0 0 0-1 0V13H3v-2.5a.5.5 0 0 0-1 0V13z"/>
+          <path d="M5 8a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 8z" fill-rule="evenodd"/>
+        </svg>`,
+        tip: t('editor.pageBreak'),
+        click: handlePageBreak
+      },'line', 'code', 'inline-code', 'quote', 'table', 'link',  'emoji', 'insert-before', 'insert-after', '|',
+      'undo', 'redo', '|',
+      
+      'edit-mode',
     ],
     counter: { enable: true },
     upload: {
@@ -731,6 +756,9 @@ async function initVditor() {
       // 绑定滚动事件
       bindScrollEvents()
 
+      // 立即初始化分页符显示
+      nextTick(() => updatePageBreakDisplay())
+
       // 初始化时发送内容
       if (vd) {
         emit('update:html', vd.getHTML())
@@ -749,6 +777,9 @@ async function initVditor() {
           // 更新文档标题
           updateDocumentTitle(activeDoc.id, storageContent)
         }
+
+        // 更新分页符显示
+        setTimeout(() => updatePageBreakDisplay(), 100)
 
         emit('update:html', vd.getHTML())
       }
@@ -773,6 +804,10 @@ async function initVditor() {
         }
 
         saveToLocalStorage()
+
+        // 立即重新应用分页符样式（保存后可能丢失）
+        nextTick(() => updatePageBreakDisplay())
+
         emit('update:html', vd.getHTML())
       }
     }
@@ -804,6 +839,153 @@ async function handleImageUpload(files) {
     vd.insertValue(markdown)
     emit('update:html', vd.getHTML())
   }
+}
+
+// 预处理内容中的分页符，将PAGE_BREAK文本转换为带样式的HTML
+function preprocessPageBreaks(content) {
+  if (!content) return content
+
+  // 将包含PAGE_BREAK的段落预处理为带样式的分页符
+  return content.replace(
+    /<p([^>]*)>\s*PAGE_BREAK\s*<\/p>/g,
+    `<p$1 class="page-break-styled" contenteditable="false" style="margin: 16px 0 !important; padding: 8px 12px !important; border: 1px dashed var(--accent) !important; border-radius: 6px !important; background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important; text-align: center !important; font-size: 12px !important; font-weight: 600 !important; color: var(--accent) !important; user-select: none !important; cursor: default !important;">✂️ ${t('editor.pageBreakLabel')}</p>`
+  )
+}
+
+function handlePageBreak() {
+  if (!vd) return
+
+  // 使用特殊的注释语法作为分页符标记
+  // 这种方式在所有模式下都能正常工作，并且会被保留在HTML中
+  const pageBreakMarkdown = `\n<!-- PAGE_BREAK -->\n`
+
+  // 在当前光标位置插入分页符标记
+  vd.insertValue(pageBreakMarkdown)
+
+  // 延迟一点时间后更新分页符显示
+  setTimeout(() => {
+    updatePageBreakDisplay()
+    emit('update:html', vd.getHTML())
+  }, 100)
+}
+
+// 更新编辑器中分页符的显示
+function updatePageBreakDisplay() {
+  if (!vd || !vd.vditor?.element) return
+
+  const editor = vd.vditor.element
+
+  // 1. 处理HTML注释形式的分页符
+  const comments = []
+  const walker = document.createTreeWalker(
+    editor,
+    NodeFilter.SHOW_COMMENT,
+    null,
+    false
+  )
+
+  let node
+  while (node = walker.nextNode()) {
+    if (node.nodeValue && node.nodeValue.trim() === 'PAGE_BREAK') {
+      comments.push(node)
+    }
+  }
+
+  // 为每个分页符注释添加可视化元素
+  comments.forEach(comment => {
+    // 检查是否已经有可视化元素
+    if (comment.nextSibling && comment.nextSibling.classList?.contains('page-break-visual')) {
+      return
+    }
+
+    // 创建可视化元素
+    const visual = document.createElement('div')
+    visual.className = 'page-break-visual'
+    visual.contentEditable = 'false'
+    visual.style.cssText = `
+      margin: 16px 0;
+      padding: 8px 12px;
+      border: 1px dashed var(--accent);
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      user-select: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    `
+
+    const line = document.createElement('div')
+    line.style.cssText = `
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--accent) 20%, var(--accent) 50%, var(--accent) 80%, transparent);
+      position: relative;
+    `
+
+    const text = document.createElement('div')
+    text.textContent = t('editor.pageBreakLabel')
+    text.style.cssText = `
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    `
+
+    visual.appendChild(line)
+    visual.appendChild(text)
+
+    // 插入到注释节点后面
+    comment.parentNode.insertBefore(visual, comment.nextSibling)
+  })
+
+  // 2. 处理段落形式的分页符 (例如: <p data-block="0">PAGE_BREAK</p>)
+  const paragraphs = editor.querySelectorAll('p')
+  paragraphs.forEach(p => {
+    const textContent = p.textContent?.trim()
+    const hasPageBreak = textContent === 'PAGE_BREAK' ||
+                        textContent.includes('分页符') ||
+                        textContent.includes('Page Break')
+
+    if (hasPageBreak) {
+      // 重新标记和应用样式（无论是否已处理过）
+      p.classList.add('page-break-styled')
+
+      // 应用分页符样式
+      p.style.cssText = `
+        margin: 16px 0 !important;
+        padding: 8px 12px !important;
+        border: 1px dashed var(--accent) !important;
+        border-radius: 6px !important;
+        background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: var(--accent) !important;
+        user-select: none !important;
+        cursor: default !important;
+        position: relative !important;
+      `
+
+      // 替换文本内容
+      p.innerHTML = `✂️ ${t('editor.pageBreakLabel')}`
+
+      // 防止编辑
+      p.contentEditable = 'false'
+    }
+  })
 }
 
 // 绑定滚动事件
@@ -909,7 +1091,13 @@ watch(locale, async (newLocale) => {
 
     if (vd && isVditorReady) {
       const displayContent = await convertContentForEditor(storedContent)
-      vd.setValue(displayContent, false)
+      // 预处理分页符，避免闪现
+      const processedContent = preprocessPageBreaks(displayContent)
+      vd.setValue(processedContent, false)
+
+      // 立即应用分页符样式
+      nextTick(() => updatePageBreakDisplay())
+
       emit('update:html', vd.getHTML())
     }
   }

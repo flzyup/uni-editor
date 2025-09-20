@@ -32,9 +32,23 @@ const isExporting = ref(false)
 const loadingText = ref('')
 let scrollAnimationFrame = null
 
-// Apply syntax highlighting to HTML
+// Apply syntax highlighting to HTML and hide page breaks in article mode
 const highlightedHtml = computed(() => {
-  return highlightCodeBlocks(props.html)
+  let processedHtml = highlightCodeBlocks(props.html)
+
+  // 在长文模式下隐藏分页符
+  // 1. 隐藏HTML注释形式的分页符和其可视化元素
+  processedHtml = processedHtml.replace(/<!--\s*PAGE_BREAK\s*-->/g, '')
+
+  // 2. 隐藏段落形式的分页符
+  processedHtml = processedHtml.replace(/<p[^>]*class="[^"]*page-break-styled[^"]*"[^>]*>.*?<\/p>/g, '')
+
+  // 3. 隐藏其他可能的分页符格式
+  processedHtml = processedHtml.replace(/<p[^>]*>\s*PAGE_BREAK\s*<\/p>/g, '')
+  processedHtml = processedHtml.replace(/<p[^>]*>\s*✂️\s*[^<]*分页符[^<]*\s*<\/p>/g, '')
+  processedHtml = processedHtml.replace(/<p[^>]*>\s*✂️\s*[^<]*Page Break[^<]*\s*<\/p>/g, '')
+
+  return processedHtml
 })
 
 // Export article as image
