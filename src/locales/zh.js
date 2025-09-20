@@ -248,7 +248,9 @@ export default {
     cancel: '取消',
     loading: '加载中...',
     error: '错误',
-    success: '成功'
+    success: '成功',
+    search: '搜索文档...',
+    loadMore: '加载更多'
   },
 
   // 默认模板内容

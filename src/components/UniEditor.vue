@@ -35,7 +35,11 @@
           </div>
           <div class="tabs-actions">
             <button class="action-btn" @click="toggleDocumentManager" :title="showDocumentManager ? t('documents.hideManager') : t('documents.showManager')">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <svg v-if="showDocumentManager" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 6.5A1.5 1.5 0 0 1 2.5 5h3.38a1.5 1.5 0 0 1 1.06.44L8.38 7H13.5A1.5 1.5 0 0 1 15 8.354l-.8 5.32A1.5 1.5 0 0 1 12.72 15H3.28a1.5 1.5 0 0 1-1.48-1.326L1 6.5Z"/>
+                <path d="M15 6.5H1V3.5A1.5 1.5 0 0 1 2.5 2h3.38a1.5 1.5 0 0 1 1.06.44L8.38 4H13.5A1.5 1.5 0 0 1 15 5.5v1Z"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9zM2.5 3a.5.5 0 0 0-.5.5V5h12V3.5a.5.5 0 0 0-.5-.5h-11zM14 6H2v6.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5V6z"/>
               </svg>
             </button>
@@ -61,27 +65,57 @@
     <!-- 文档管理器 -->
     <div class="document-manager" v-if="showDocumentManager">
       <div class="manager-header">
-        <h3>{{ t('documents.manager') }}</h3>
-        <span class="document-count">{{ t('documents.documentCount', { count: allDocuments.length }) }}</span>
+        <div class="header-title">
+          <h3>{{ t('documents.manager') }}</h3>
+          <span class="document-count">
+            <template v-if="searchQuery.trim()">
+              {{ t('documents.documentCount', { count: filteredDocumentsAll.length }) }}/{{ allDocuments.length }}
+            </template>
+            <template v-else>
+              {{ t('documents.documentCount', { count: filteredDocuments.length }) }}
+              <span v-if="showLoadMore">
+                /{{ allDocuments.length }}
+              </span>
+            </template>
+          </span>
+        </div>
+        <div class="header-search">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            :placeholder="$t('common.search') || '搜索文档...'"
+            @input="handleSearch"
+          >
+          <svg v-if="!searchQuery" class="search-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+          </svg>
+          <button v-else class="search-clear" @click="clearSearch" title="清除搜索">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="manager-content">
         <div class="document-list">
           <div
-            v-for="doc in sortedDocuments"
+            v-for="doc in filteredDocuments"
             :key="doc.id"
             class="document-item"
             :class="{
               active: doc.id === activeTabId,
               closed: !isTabOpen(doc.id),
-              modified: isDocumentModified(doc.id)
+              modified: isDocumentModified(doc.id),
+              selected: selectedDocumentId === doc.id
             }"
-            @click="openDocument(doc.id)"
+            @click="selectDocument(doc.id)"
+            @dblclick="openDocument(doc.id)"
           >
             <div class="document-info">
               <div class="document-title">
                 <span class="doc-icon">📝</span>
                 <span class="title-text">{{ doc.title }}</span>
-                <span v-if="isDocumentModified(doc.id)" class="modified-indicator">●</span>
               </div>
               <div class="document-meta">
                 <span class="doc-date">{{ formatDate(doc.updatedAt) }}</span>
@@ -152,6 +186,16 @@
             </div>
           </div>
         </div>
+
+        <!-- 加载更多按钮 -->
+        <div v-if="showLoadMore" class="load-more-container">
+          <button class="load-more-btn" @click="loadMoreDocuments">
+            <span>{{ $t('common.loadMore') || '加载更多' }}</span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.646 9.646a.5.5 0 0 1 .708 0L12 13.293V2.5a.5.5 0 0 1 1 0v10.793l3.646-3.647a.5.5 0 0 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -204,6 +248,15 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import zhMessages from '../locales/zh.js'
 import enMessages from '../locales/en.js'
+import {
+  saveImage,
+  convertContentForEditor,
+  convertContentForStorage,
+  clearImageCache,
+  extractImageIdsFromContent,
+  cleanupUnusedImages,
+  hasIndexedDBSupport
+} from '../utils/imageStore.js'
 
 const props = defineProps({
   pageTheme: { type: String, default: 'theme-dark' }
@@ -221,12 +274,22 @@ const scrollCleanups = []
 const allDocuments = ref([]) // 所有文档缓存
 const openTabs = ref([]) // 当前打开的标签页
 const activeTabId = ref('') // 当前活跃的标签
+const selectedDocumentId = ref('') // 在文档管理器中选中的文档
 const showDocumentManager = ref(false) // 是否显示文档管理器
 const showDeleteConfirm = ref(false) // 删除确认对话框
 const documentToDelete = ref('') // 待删除的文档ID
 const showImportConfirm = ref(false) // 导入确认对话框
 const importTargetDocId = ref('') // 导入目标文档ID
 const pendingImportFile = ref(null) // 待导入的文件
+
+// 搜索相关状态
+const searchQuery = ref('') // 搜索关键词
+const searchDebounceTimer = ref(null) // 防抖定时器
+
+// 分页相关状态
+const currentPage = ref(1) // 当前页码
+const pageSize = ref(20) // 每页显示数量
+const showLoadMore = ref(false) // 是否显示加载更多按钮
 
 // 文档修改状态跟踪
 const documentModifications = ref(new Map())
@@ -240,6 +303,30 @@ const scrollbarThumbPosition = ref(0)
 // 计算属性：按修改时间倒序排列的文档列表
 const sortedDocuments = computed(() => {
   return [...allDocuments.value].sort((a, b) => b.updatedAt - a.updatedAt)
+})
+
+// 计算属性：筛选后的文档列表（完整）
+const filteredDocumentsAll = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return sortedDocuments.value
+  }
+
+  const query = searchQuery.value.toLowerCase().trim()
+  return sortedDocuments.value.filter(doc => {
+    return doc.title.toLowerCase().includes(query) ||
+           (doc.content && doc.content.toLowerCase().includes(query))
+  })
+})
+
+// 计算属性：当前页显示的文档列表
+const filteredDocuments = computed(() => {
+  const allDocs = filteredDocumentsAll.value
+  const maxItems = currentPage.value * pageSize.value
+
+  // 更新是否显示加载更多按钮
+  showLoadMore.value = allDocs.length > maxItems
+
+  return allDocs.slice(0, maxItems)
 })
 
 // 初始化文档管理
@@ -327,6 +414,45 @@ function saveToLocalStorage() {
   } catch (e) {
     console.warn('Failed to save documents to localStorage:', e)
   }
+
+  scheduleImageCleanup()
+}
+
+let imageCleanupTimer = null
+
+function scheduleImageCleanup() {
+  if (typeof window === 'undefined' || !hasIndexedDBSupport()) return
+  if (imageCleanupTimer) {
+    clearTimeout(imageCleanupTimer)
+  }
+
+  imageCleanupTimer = window.setTimeout(async () => {
+    imageCleanupTimer = null
+    await performImageCleanup()
+  }, 800)
+}
+
+async function performImageCleanup() {
+  try {
+    const usedIds = new Set()
+    allDocuments.value.forEach(doc => {
+      if (!doc?.content) return
+      const normalized = convertContentForStorage(doc.content)
+      const ids = extractImageIdsFromContent(normalized)
+      ids.forEach(id => usedIds.add(id))
+    })
+
+    // Include current editor content if it differs from stored value
+    if (vd && isVditorReady) {
+      const editorContent = convertContentForStorage(vd.getValue())
+      const ids = extractImageIdsFromContent(editorContent)
+      ids.forEach(id => usedIds.add(id))
+    }
+
+    await cleanupUnusedImages(usedIds)
+  } catch (error) {
+    console.warn('Image cleanup failed:', error)
+  }
 }
 
 function getDocument(docId) {
@@ -353,7 +479,7 @@ function markDocumentSaved(docId) {
   documentModifications.value.delete(docId)
 }
 
-function createNewDocument() {
+async function createNewDocument() {
   const newDoc = {
     id: generateId(),
     title: `${t('documents.untitled')} ${allDocuments.value.length + 1}`,
@@ -364,25 +490,25 @@ function createNewDocument() {
   }
 
   allDocuments.value.push(newDoc)
-  openDocument(newDoc.id)
+  await openDocument(newDoc.id)
   saveToLocalStorage()
   // 更新滚动条
   nextTick(() => updateScrollbar())
 }
 
-function openDocument(docId) {
+async function openDocument(docId) {
   // 如果标签页未打开，则打开它
   if (!isTabOpen(docId)) {
     openTabs.value.push({ id: docId })
   }
 
-  selectTab(docId)
+  await selectTab(docId)
   saveToLocalStorage()
   // 更新滚动条
   nextTick(() => updateScrollbar())
 }
 
-function selectTab(docId) {
+async function selectTab(docId) {
   if (docId === activeTabId.value) return
 
   // 保存当前文档状态
@@ -393,8 +519,9 @@ function selectTab(docId) {
   const newDoc = getActiveDocument()
 
   if (newDoc && vd && isVditorReady) {
+    const displayContent = await convertContentForEditor(newDoc.content || '')
     // 更新编辑器内容
-    vd.setValue(newDoc.content || '', false)
+    vd.setValue(displayContent, false)
 
     // 如果文档有内容但标题是默认的，尝试提取标题
     if (newDoc.content && newDoc.title.startsWith(t('documents.untitled'))) {
@@ -408,7 +535,7 @@ function selectTab(docId) {
   saveToLocalStorage()
 }
 
-function closeTab(docId) {
+async function closeTab(docId) {
   if (openTabs.value.length <= 1) return
 
   const index = openTabs.value.findIndex(tab => tab.id === docId)
@@ -426,7 +553,7 @@ function closeTab(docId) {
   // 如果关闭的是当前活跃标签，切换到其他标签
   if (docId === activeTabId.value) {
     const newIndex = Math.min(index, openTabs.value.length - 1)
-    selectTab(openTabs.value[newIndex].id)
+    await selectTab(openTabs.value[newIndex].id)
   }
 
   saveToLocalStorage()
@@ -434,7 +561,7 @@ function closeTab(docId) {
   nextTick(() => updateScrollbar())
 }
 
-function duplicateDocument(docId) {
+async function duplicateDocument(docId) {
   const originalDoc = getDocument(docId)
   if (!originalDoc) return
 
@@ -448,7 +575,7 @@ function duplicateDocument(docId) {
   }
 
   allDocuments.value.push(newDoc)
-  openDocument(newDoc.id)
+  await openDocument(newDoc.id)
   saveToLocalStorage()
 }
 
@@ -500,10 +627,13 @@ function toggleDocumentManager() {
   showDocumentManager.value = !showDocumentManager.value
 }
 
-function saveCurrentDocumentState() {
+function saveCurrentDocumentState(preparedContent) {
   const activeDoc = getActiveDocument()
   if (activeDoc && vd && isVditorReady) {
-    const currentContent = vd.getValue()
+    const currentEditorValue = vd.getValue()
+    const currentContent = typeof preparedContent === 'string'
+      ? preparedContent
+      : convertContentForStorage(currentEditorValue)
     const currentMode = vd.getCurrentMode()
 
     if (activeDoc.content !== currentContent) {
@@ -553,9 +683,10 @@ async function initVditor() {
   const activeDoc = getActiveDocument()
   const initialContent = activeDoc?.content || getDefaultContent()
   const initialMode = activeDoc?.mode || 'wysiwyg'
+  const editorReadyContent = await convertContentForEditor(initialContent || '')
 
   vd = new Vditor(elRef.value, {
-    value: initialContent,
+    value: editorReadyContent,
     cache: { enable: false },
     height: '100%',
     mode: initialMode,
@@ -564,14 +695,18 @@ async function initVditor() {
     toolbarConfig: { pin: true },
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
-      'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
-      'quote', 'line', 'code', 'inline-code', '|',
-      'table', 'link', 'emoji', '|',
+      'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
+      'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
+      'table', 'link', 'upload', 'emoji', '|',
       'undo', 'redo', '|',
       'edit-mode',
     ],
     counter: { enable: true },
-    upload: { accept: 'image/*' },
+    upload: {
+      accept: 'image/*',
+      multiple: true,
+      handler: handleImageUpload
+    },
     preview: {
       theme: {
         current: getEditorTheme(props.pageTheme),
@@ -597,14 +732,16 @@ async function initVditor() {
     },
     input: (value) => {
       if (isVditorReady) {
+        const storageContent = convertContentForStorage(value)
+
         // 标记当前文档为已修改
         const activeDoc = getActiveDocument()
-        if (activeDoc && activeDoc.content !== value) {
+        if (activeDoc && activeDoc.content !== storageContent) {
           markDocumentModified(activeDoc.id)
           activeDoc.updatedAt = Date.now()
 
           // 更新文档标题
-          updateDocumentTitle(activeDoc.id, value)
+          updateDocumentTitle(activeDoc.id, storageContent)
         }
 
         emit('update:html', vd.getHTML())
@@ -617,15 +754,16 @@ async function initVditor() {
     },
     blur: () => {
       if (isVditorReady) {
+        const storageContent = convertContentForStorage(vd.getValue())
         // 保存当前文档状态
-        saveCurrentDocumentState()
+        saveCurrentDocumentState(storageContent)
 
         // 标记文档为已保存
         const activeDoc = getActiveDocument()
         if (activeDoc) {
           markDocumentSaved(activeDoc.id)
           // 最终确认标题更新
-          updateDocumentTitle(activeDoc.id, vd.getValue())
+          updateDocumentTitle(activeDoc.id, storageContent)
         }
 
         saveToLocalStorage()
@@ -633,6 +771,33 @@ async function initVditor() {
       }
     }
   })
+}
+
+async function handleImageUpload(files) {
+  if (!files) return
+  const fileList = Array.from(files).filter(file => file instanceof File)
+  if (fileList.length === 0) return
+
+  const fragments = []
+
+  for (const file of fileList) {
+    try {
+      const { url, name } = await saveImage(file)
+      if (!url) continue
+
+      const rawName = name || file.name || 'image'
+      const alt = rawName.replace(/\.[^/.]+$/, '') || 'image'
+      fragments.push(`![${alt}](${url})`)
+    } catch (error) {
+      console.warn('Image upload failed:', error)
+    }
+  }
+
+  if (fragments.length > 0 && vd) {
+    const markdown = fragments.join('\n\n') + '\n'
+    vd.insertValue(markdown)
+    emit('update:html', vd.getHTML())
+  }
 }
 
 // 绑定滚动事件
@@ -670,6 +835,27 @@ function bindScrollEvents() {
   })
 }
 
+// 搜索相关函数
+function handleSearch() {
+  // 搜索无需防抖，因为computed会自动处理
+  // filteredDocuments计算属性会立即反映搜索结果
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  // 重置分页
+  currentPage.value = 1
+}
+
+function loadMoreDocuments() {
+  currentPage.value += 1
+}
+
+// 监听搜索查询变化，重置分页
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
 // 监听主题变化
 watch(() => props.pageTheme, (newTheme) => {
   if (vd && isVditorReady) {
@@ -686,7 +872,8 @@ watch(locale, async (newLocale) => {
   if (vd && isVditorReady) {
     // 保存当前内容
     saveCurrentDocumentState()
-    const currentContent = vd.getValue()
+    const activeDoc = getActiveDocument()
+    const storedContent = activeDoc?.content || ''
 
     // 销毁当前实例
     try {
@@ -702,7 +889,9 @@ watch(locale, async (newLocale) => {
     await initVditor()
 
     if (vd && isVditorReady) {
-      vd.setValue(currentContent, false)
+      const displayContent = await convertContentForEditor(storedContent)
+      vd.setValue(displayContent, false)
+      emit('update:html', vd.getHTML())
     }
   }
 })
@@ -717,6 +906,7 @@ function destroyVditor() {
     } catch (error) {
       console.warn('Error destroying Vditor:', error)
     }
+    clearImageCache()
     vd = null
     isVditorReady = false
   }
@@ -854,7 +1044,8 @@ async function importMarkdownToDocument(docId) {
 // 执行实际的导入操作
 async function performImport(docId, file) {
   try {
-    const content = await file.text()
+    const rawContent = await file.text()
+    const content = convertContentForStorage(rawContent)
     const fileName = file.name.replace(/\.(md|markdown|txt)$/i, '')
 
     const doc = getDocument(docId)
@@ -870,7 +1061,9 @@ async function performImport(docId, file) {
 
     // 如果是当前活跃文档，更新编辑器内容
     if (docId === activeTabId.value && vd && isVditorReady) {
-      vd.setValue(content)
+      const displayContent = await convertContentForEditor(content)
+      vd.setValue(displayContent)
+      emit('update:html', vd.getHTML())
     }
 
     // 标记文档已修改
@@ -1051,6 +1244,10 @@ onBeforeUnmount(() => {
   // 保存当前状态
   saveCurrentDocumentState()
   saveToLocalStorage()
+  if (imageCleanupTimer) {
+    clearTimeout(imageCleanupTimer)
+    imageCleanupTimer = null
+  }
   destroyVditor()
 })
 

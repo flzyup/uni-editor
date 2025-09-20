@@ -3,6 +3,7 @@
 // with classes: `editor-theme <theme>`, then generate minimal content CSS.
 
 import juice from 'juice'
+import { replaceImageSrcWithDataUrls } from './imageStore.js'
 
 // Utility function for converting camelCase to kebab-case (currently unused but kept for future use)
 // function camelToKebab(s){return s.replace(/[A-Z]/g, m=>'-'+m.toLowerCase())}
@@ -32,7 +33,7 @@ function mergeCss(html) {
 }
 
 // Process themed content element for WeChat compatibility
-function processThemedContentForWechat(contentElement, pageTheme, cardTheme) {
+async function processThemedContentForWechat(contentElement, pageTheme, cardTheme) {
   // Clone the element to avoid modifying the original
   const clonedElement = contentElement.cloneNode(true)
 
@@ -42,6 +43,9 @@ function processThemedContentForWechat(contentElement, pageTheme, cardTheme) {
   // Create a temporary container to process the HTML
   const tempDiv = document.createElement('div')
   tempDiv.innerHTML = clonedElement.innerHTML
+
+  // Replace blob URLs with Data URLs so that pasted content remains visible outside the app
+  await replaceImageSrcWithDataUrls(tempDiv)
 
   // Apply inline styles to preserve formatting in WeChat
   enhanceInlineStyles(tempDiv, pageTheme, cardTheme)
@@ -239,7 +243,7 @@ export async function copyToWechat(cardTheme, appTheme = 'light') {
   const pageTheme = appTheme === 'dark' ? 'theme-dark' : 'theme-light'
 
   // Process the themed content for WeChat compatibility
-  const processedFragment = processThemedContentForWechat(contentElement, pageTheme, cardTheme)
+  const processedFragment = await processThemedContentForWechat(contentElement, pageTheme, cardTheme)
   const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>${processedFragment}</body></html>`
 
   try {

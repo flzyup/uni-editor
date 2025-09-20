@@ -248,7 +248,9 @@ export default {
     cancel: 'Cancel',
     loading: 'Loading...',
     error: 'Error',
-    success: 'Success'
+    success: 'Success',
+    search: 'Search documents...',
+    loadMore: 'Load More'
   },
 
   // Default template content

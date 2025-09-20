@@ -179,17 +179,33 @@
 
 // 文档管理器样式
 .document-manager {
+  .flex-column();
   flex-shrink: 0;
   background: var(--panel);
   border-bottom: 1px solid var(--border);
   max-height: 300px;
-  overflow-y: auto;
+  overflow: hidden; // 防止整体滚动
 }
 
 .manager-header {
   .flex-between();
+  align-items: center;
   padding: 12px @panel-padding;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0; // 固定头部，不参与滚动
+  background: var(--panel);
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2; // 确保头部在内容上方
+}
+
+.header-title {
+  .flex-start();
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
 
   h3 {
     margin: 0;
@@ -202,10 +218,119 @@
 .document-count {
   font-size: @font-size-sm;
   color: var(--muted);
+  white-space: nowrap;
+}
+
+.header-search {
+  position: relative;
+  min-width: 140px;
+  max-width: 200px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 10px;
+  padding-right: 28px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: @content-border-radius;
+  font-size: @font-size-xs;
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+.search-icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-clear {
+  .flex-center();
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+    color: var(--accent);
+  }
 }
 
 .manager-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: @general-content-padding;
+  min-height: 0; // 确保flex子元素能够正确收缩
+
+  // 自定义滚动条样式
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--muted);
+    }
+  }
+}
+
+.load-more-container {
+  padding: @general-content-padding 0;
+  text-align: center;
+}
+
+.load-more-btn {
+  .flex-center();
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: @content-border-radius;
+  color: var(--muted);
+  font-size: @font-size-sm;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+    border-color: var(--accent);
+    color: var(--accent);
+  }
 }
 
 .document-list {
@@ -278,11 +403,6 @@
   .text-truncate();
 }
 
-.modified-indicator {
-  color: var(--accent);
-  font-size: @font-size-sm;
-  font-weight: @font-weight-bold;
-}
 
 .document-meta {
   .flex-start();
