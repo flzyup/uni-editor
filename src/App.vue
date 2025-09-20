@@ -223,7 +223,13 @@ function clampRatio(value) {
 
 function onEditorScroll(payload) {
   if (!payload) return
-  const nextRatio = clampRatio(typeof payload.ratio === 'number' ? payload.ratio : 0)
+  const ratioInput =
+    typeof payload.scrollRatio === 'number'
+      ? payload.scrollRatio
+      : typeof payload.ratio === 'number'
+        ? payload.ratio
+        : 0
+  const nextRatio = clampRatio(ratioInput)
   lastEditorScrollRatio.value = nextRatio
   if (previewMode.value === 'article') {
     scheduleArticleScroll(nextRatio)

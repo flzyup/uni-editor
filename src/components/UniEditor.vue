@@ -704,10 +704,8 @@ async function initVditor() {
     toolbar: [
       'headings', 'bold', 'italic', 'strike', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', 'outline', '|',
-      'quote', 'line', 'code', 'inline-code', 'insert-before', 'insert-after', '|',
-      'table', 'link', 'upload', 'emoji', '|',
-      'undo', 'redo', '|',
-      'edit-mode',
+      'upload','line', 'code', 'inline-code', 'quote', 'table', 'link',  'emoji', 'insert-before', 'insert-after', '|',
+      'undo', 'redo',  'edit-mode',
     ],
     counter: { enable: true },
     upload: {
@@ -816,30 +814,43 @@ function bindScrollEvents() {
   scrollCleanups.forEach(cleanup => cleanup())
   scrollCleanups.length = 0
 
-  // 查找所有可能的滚动容器
-  const scrollContainers = [
-    vd.vditor.element.querySelector('.vditor-content'),
-    vd.vditor.element.querySelector('.vditor-ir'),
-    vd.vditor.element.querySelector('.vditor-wysiwyg'),
-    vd.vditor.element.querySelector('.vditor-sv'),
-    vd.vditor.element.querySelector('.vditor-preview'),
-  ].filter(Boolean)
+  const containers = new Set()
+  const content = vd.vditor?.element?.querySelector?.('.vditor-content')
+  if (content) containers.add(content)
 
-  scrollContainers.forEach(container => {
-    if (container) {
-      const scrollHandler = () => {
-        const scrollTop = container.scrollTop
-        const scrollHeight = container.scrollHeight
-        const clientHeight = container.clientHeight
-        const scrollRatio = scrollHeight > clientHeight ? scrollTop / (scrollHeight - clientHeight) : 0
-        emit('editorScroll', { scrollRatio, scrollTop })
-      }
+  const wysiwyg = vd.vditor?.wysiwyg?.element?.parentElement
+  if (wysiwyg) containers.add(wysiwyg)
 
-      container.addEventListener('scroll', scrollHandler, { passive: true })
-      scrollCleanups.push(() => {
-        container.removeEventListener('scroll', scrollHandler)
+  const ir = vd.vditor?.ir?.element?.parentElement
+  if (ir) containers.add(ir)
+
+  const sv = vd.vditor?.sv?.element?.parentElement
+  if (sv) containers.add(sv)
+
+  const preview = vd.vditor?.preview?.element
+  if (preview) containers.add(preview)
+
+  const resetNodes = vd.vditor?.element?.querySelectorAll?.('.vditor-reset') || []
+  resetNodes.forEach(node => containers.add(node))
+
+  containers.forEach(container => {
+    if (!container) return
+
+    const scrollHandler = () => {
+      const scrollTop = container.scrollTop
+      const maxScroll = container.scrollHeight - container.clientHeight
+      const scrollRatio = maxScroll > 0 ? scrollTop / maxScroll : 0
+      emit('editorScroll', {
+        scrollRatio,
+        ratio: scrollRatio,
+        scrollTop
       })
     }
+
+    container.addEventListener('scroll', scrollHandler, { passive: true })
+    scrollCleanups.push(() => {
+      container.removeEventListener('scroll', scrollHandler)
+    })
   })
 }
 

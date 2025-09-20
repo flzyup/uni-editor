@@ -250,7 +250,9 @@ export default {
     error: '错误',
     success: '成功',
     search: '搜索文档...',
-    loadMore: '加载更多'
+    loadMore: '加载更多',
+    previous: '上一页',
+    next: '下一页'
   },
 
   // 默认模板内容

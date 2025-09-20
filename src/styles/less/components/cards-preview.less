@@ -1423,7 +1423,7 @@
 
 // 卡片导航样式
 .card-navigation {
-  .flex-between();
+  .flex-center();
   padding: 12px @card-content-padding;
   border-top: 1px solid var(--border);
   background: var(--panel);
@@ -1431,42 +1431,10 @@
   overflow: hidden; // 固定底部区域不随内容横向滚动
 }
 
-.nav-dots {
-  .flex-start();
-  gap: 8px;
-  overflow-x: auto;
-  flex: 1;        // 占满剩余空间
-  min-width: 0;   // 允许收缩，不把右侧控件挤出去
-}
-
-.nav-dot {
-  min-width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--muted);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: @font-size-sm;
-  font-weight: 500;
-  .flex-center();
-  transition: all 0.2s ease;
-  .focus-ring();
-  
-  &:hover {
-    border-color: var(--accent);
-    color: var(--text);
-  }
-  
-  &.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-  }
-}
 
 .nav-controls {
   .flex-start();
+  align-items: center;
   gap: 12px;
   flex-shrink: 0; // 固定宽度，不被挤压
 }
@@ -1494,6 +1462,49 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
+
+// 智能分页导航
+.pagination {
+  .flex-start();
+  align-items: center;
+  gap: 4px;
+  margin: 0 8px;
+}
+
+.page-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+  .flex-center();
+  transition: all 0.2s ease;
+  font-size: @font-size-sm;
+  font-weight: 500;
+  .focus-ring();
+
+  &:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+    color: var(--accent);
+  }
+
+  &.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    font-weight: 600;
+  }
+}
+
+.ellipsis {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: @font-size-sm;
+  user-select: none;
 }
 
 .nav-info {

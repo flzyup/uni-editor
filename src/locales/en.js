@@ -250,7 +250,9 @@ export default {
     error: 'Error',
     success: 'Success',
     search: 'Search documents...',
-    loadMore: 'Load More'
+    loadMore: 'Load More',
+    previous: 'Previous',
+    next: 'Next'
   },
 
   // Default template content

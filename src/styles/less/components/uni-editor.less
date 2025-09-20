@@ -100,16 +100,6 @@
     z-index: 1;
   }
 
-  &.modified::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    right: 24px;
-    width: 6px;
-    height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-  }
 }
 
 .tab-content {
@@ -370,16 +360,6 @@
     }
   }
 
-  &.modified::before {
-    content: '';
-    position: absolute;
-    top: 8px;
-    left: 4px;
-    width: 4px;
-    height: 4px;
-    background: var(--accent);
-    border-radius: 50%;
-  }
 }
 
 .document-info {
@@ -474,6 +454,8 @@
 .vditor-host {
   .full-height();
   overflow: hidden;
+  border: 0;
+  border-radius: 0;
 }
 
 // 模态对话框样式
