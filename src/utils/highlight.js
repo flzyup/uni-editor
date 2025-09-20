@@ -1,15 +1,47 @@
-import hljs from 'highlight.js'
-// 不导入默认样式，使用自定义样式
+import hljs from 'highlight.js/lib/core'
+// 按需导入常用语言，减少包体积
+import javascript from 'highlight.js/lib/languages/javascript'
+import typescript from 'highlight.js/lib/languages/typescript'
+import python from 'highlight.js/lib/languages/python'
+import java from 'highlight.js/lib/languages/java'
+import cpp from 'highlight.js/lib/languages/cpp'
+import c from 'highlight.js/lib/languages/c'
+import csharp from 'highlight.js/lib/languages/csharp'
+import php from 'highlight.js/lib/languages/php'
+import go from 'highlight.js/lib/languages/go'
+import rust from 'highlight.js/lib/languages/rust'
+import html from 'highlight.js/lib/languages/xml' // xml包含html
+import css from 'highlight.js/lib/languages/css'
+import json from 'highlight.js/lib/languages/json'
+import yaml from 'highlight.js/lib/languages/yaml'
+import bash from 'highlight.js/lib/languages/bash'
+import sql from 'highlight.js/lib/languages/sql'
+import markdown from 'highlight.js/lib/languages/markdown'
 
-// Initialize highlight.js
+// 注册语言
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('java', java)
+hljs.registerLanguage('cpp', cpp)
+hljs.registerLanguage('c', c)
+hljs.registerLanguage('csharp', csharp)
+hljs.registerLanguage('php', php)
+hljs.registerLanguage('go', go)
+hljs.registerLanguage('rust', rust)
+hljs.registerLanguage('html', html)
+hljs.registerLanguage('xml', html)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('yaml', yaml)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('shell', bash)
+hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('markdown', markdown)
+
+// 配置
 hljs.configure({
-  ignoreUnescapedHTML: true,
-  languages: [
-    'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp',
-    'php', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'scala',
-    'html', 'css', 'scss', 'less', 'xml', 'json', 'yaml',
-    'bash', 'shell', 'powershell', 'sql', 'markdown'
-  ]
+  ignoreUnescapedHTML: true
 })
 
 // Highlight code blocks in HTML content

@@ -271,6 +271,8 @@ let cleanupModeListener = null
 
 const CACHE_KEY = 'uni-editor-content'
 const MODE_CACHE_KEY = 'uni-editor-mode'
+const CACHE_VERSION_KEY = 'uni.cacheVersion'
+const CURRENT_CACHE_VERSION = 2 // v1: single document, v2: multi-document
 
 // 文档管理状态
 const allDocuments = ref([]) // 所有文档缓存
@@ -331,9 +333,87 @@ const filteredDocuments = computed(() => {
   return allDocs.slice(0, maxItems)
 })
 
+// 缓存版本管理和迁移
+function getCacheVersion() {
+  try {
+    const version = localStorage.getItem(CACHE_VERSION_KEY)
+    return version ? parseInt(version, 10) : 1 // 默认为v1（旧版本）
+  } catch (e) {
+    return 1
+  }
+}
+
+function setCacheVersion(version) {
+  try {
+    localStorage.setItem(CACHE_VERSION_KEY, version.toString())
+  } catch (e) {
+    console.warn('Failed to save cache version:', e)
+  }
+}
+
+function migrateCacheFromV1ToV2() {
+  try {
+    console.log('Migrating cache from v1 to v2...')
+
+    // 读取旧版本的单文档内容
+    const oldContent = localStorage.getItem(CACHE_KEY)
+    const oldMode = localStorage.getItem(MODE_CACHE_KEY) || 'wysiwyg'
+
+    if (oldContent) {
+      // 从内容中提取标题
+      const extractedTitle = extractTitleFromContent(oldContent) || t('editor.welcome')
+
+      // 创建新的文档对象
+      const migratedDoc = {
+        id: generateId(),
+        title: extractedTitle,
+        content: oldContent,
+        mode: oldMode,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+
+      // 保存到新的多文档格式
+      allDocuments.value = [migratedDoc]
+      openTabs.value = [{ id: migratedDoc.id }]
+      activeTabId.value = migratedDoc.id
+
+      // 保存到localStorage
+      localStorage.setItem('uni.allDocuments', JSON.stringify(allDocuments.value))
+      localStorage.setItem('uni.openTabs', JSON.stringify(openTabs.value))
+      localStorage.setItem('uni.activeTabId', activeTabId.value)
+
+      // 清理旧缓存
+      localStorage.removeItem(CACHE_KEY)
+      // 保留 MODE_CACHE_KEY，因为它在新版本中仍然有用
+
+      console.log('Cache migration completed successfully')
+    } else {
+      // 如果没有旧内容，创建默认文档
+      createDefaultDocument()
+    }
+
+    // 更新缓存版本
+    setCacheVersion(CURRENT_CACHE_VERSION)
+  } catch (e) {
+    console.warn('Cache migration failed:', e)
+    // 迁移失败时，创建默认文档
+    createDefaultDocument()
+    setCacheVersion(CURRENT_CACHE_VERSION)
+  }
+}
+
 // 初始化文档管理
 function initializeDocuments() {
   try {
+    // 检查缓存版本并执行迁移
+    const currentVersion = getCacheVersion()
+    if (currentVersion < CURRENT_CACHE_VERSION) {
+      console.log(`Cache version ${currentVersion} detected, migrating to version ${CURRENT_CACHE_VERSION}`)
+      migrateCacheFromV1ToV2()
+      return // 迁移后直接返回，不需要继续执行下面的加载逻辑
+    }
+
     // 加载所有文档
     const savedDocs = localStorage.getItem('uni.allDocuments')
     if (savedDocs) {
@@ -413,6 +493,9 @@ function saveToLocalStorage() {
     localStorage.setItem('uni.allDocuments', JSON.stringify(allDocuments.value))
     localStorage.setItem('uni.openTabs', JSON.stringify(openTabs.value))
     localStorage.setItem('uni.activeTabId', activeTabId.value)
+
+    // 确保缓存版本始终是最新的
+    setCacheVersion(CURRENT_CACHE_VERSION)
   } catch (e) {
     console.warn('Failed to save documents to localStorage:', e)
   }
