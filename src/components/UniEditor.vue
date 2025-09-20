@@ -16,7 +16,6 @@
               @click="selectTab(tab.id)"
             >
               <div class="tab-content">
-                <div class="tab-icon">📝</div>
                 <div class="tab-title" :title="getDocument(tab.id)?.title">
                   {{ getDocument(tab.id)?.title || t('documents.untitled') }}
                 </div>
@@ -114,7 +113,6 @@
           >
             <div class="document-info">
               <div class="document-title">
-                <span class="doc-icon">📝</span>
                 <span class="title-text">{{ doc.title }}</span>
               </div>
               <div class="document-meta">
@@ -494,6 +492,16 @@ async function createNewDocument() {
   saveToLocalStorage()
   // 更新滚动条
   nextTick(() => updateScrollbar())
+}
+
+// 选中文档（如果已有标签页则切换，否则只选中）
+async function selectDocument(docId) {
+  selectedDocumentId.value = docId
+
+  // 如果文档已经打开了标签页，则切换到该标签页
+  if (isTabOpen(docId)) {
+    await selectTab(docId)
+  }
 }
 
 async function openDocument(docId) {

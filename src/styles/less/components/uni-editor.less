@@ -114,16 +114,11 @@
 
 .tab-content {
   .flex-start();
-  gap: 6px;
   padding: 0 @general-content-padding;
   width: 100%;
   min-width: 0;
 }
 
-.tab-icon {
-  font-size: @font-size-sm;
-  flex-shrink: 0;
-}
 
 .tab-title {
   flex: 1;
@@ -358,12 +353,20 @@
     background: color-mix(in srgb, var(--accent) 10%, var(--bg));
   }
 
+  &.selected {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, var(--bg));
+  }
+
   &.closed {
-    opacity: 0.6;
     border-style: dashed;
 
     .document-info {
-      opacity: 1;
+      opacity: 0.6; // 只对文档信息部分应用透明度
+    }
+
+    .document-actions {
+      // 按钮保持正常透明度，不应用任何opacity
     }
   }
 
@@ -386,14 +389,9 @@
 
 .document-title {
   .flex-start();
-  gap: 6px;
   margin-bottom: 4px;
 }
 
-.doc-icon {
-  font-size: @font-size-sm;
-  flex-shrink: 0;
-}
 
 .title-text {
   flex: 1;
@@ -446,6 +444,14 @@
       background: transparent;
       border-color: var(--border);
       color: var(--muted);
+    }
+  }
+
+  &.primary {
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+      border-color: var(--accent);
+      color: var(--accent);
     }
   }
 
