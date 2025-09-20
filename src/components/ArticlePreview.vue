@@ -237,35 +237,6 @@ async function exportArticle() {
     const exportNumbers = articleContentRef.value.querySelectorAll('.export-list-number')
     exportNumbers.forEach(span => span.remove())
 
-    // 恢复列表项的原始样式
-    listItemData.forEach((olData, olIndex) => {
-      olData.forEach((itemData, liIndex) => {
-        itemData.element.style.removeProperty('--before-display')
-      })
-    })
-
-    // 恢复所有元素的原始样式
-    allElements.forEach((el, index) => {
-      if (elementStyles[index]) {
-        el.style.transform = elementStyles[index].transform || ''
-        el.style.transformOrigin = elementStyles[index].transformOrigin || ''
-        el.style.position = elementStyles[index].position || ''
-        el.style.top = elementStyles[index].top || ''
-        el.style.left = elementStyles[index].left || ''
-        el.style.right = elementStyles[index].right || ''
-        el.style.bottom = elementStyles[index].bottom || ''
-      }
-    })
-
-    // 恢复原始样式
-    articleContentRef.value.style.borderRadius = original.borderRadius
-    articleContentRef.value.style.boxShadow = original.boxShadow
-    articleContentRef.value.style.width = original.width
-    articleContentRef.value.style.maxWidth = original.maxWidth
-    articleContentRef.value.style.minWidth = original.minWidth
-    articleContentRef.value.style.transform = original.transform
-    articleContentRef.value.style.transformOrigin = original.transformOrigin
-
     loadingText.value = t('loading.articleSaving')
 
     // 创建下载链接
@@ -279,6 +250,87 @@ async function exportArticle() {
     console.error('导出长文失败:', err)
     error(t('messages.exportFailed') || '导出长文失败，请重试')
   } finally {
+    // 无论成功还是失败，都要恢复样式
+    try {
+      if (articleContentRef.value) {
+        // 恢复列表项的原始样式
+        listItemData.forEach((olData, olIndex) => {
+          olData.forEach((itemData, liIndex) => {
+            itemData.element.style.removeProperty('--before-display')
+          })
+        })
+
+        // 恢复所有元素的原始样式
+        allElements.forEach((el, index) => {
+          if (elementStyles[index]) {
+            el.style.transform = elementStyles[index].transform || ''
+            el.style.transformOrigin = elementStyles[index].transformOrigin || ''
+            el.style.position = elementStyles[index].position || ''
+            el.style.top = elementStyles[index].top || ''
+            el.style.left = elementStyles[index].left || ''
+            el.style.right = elementStyles[index].right || ''
+            el.style.bottom = elementStyles[index].bottom || ''
+          }
+        })
+
+        // 恢复原始样式，如果原始样式为空，则移除内联样式让CSS类样式生效
+        if (original.borderRadius) {
+          articleContentRef.value.style.borderRadius = original.borderRadius
+        } else {
+          articleContentRef.value.style.removeProperty('border-radius')
+        }
+
+        if (original.boxShadow) {
+          articleContentRef.value.style.boxShadow = original.boxShadow
+        } else {
+          articleContentRef.value.style.removeProperty('box-shadow')
+        }
+
+        if (original.width) {
+          articleContentRef.value.style.width = original.width
+        } else {
+          articleContentRef.value.style.removeProperty('width')
+        }
+
+        if (original.maxWidth) {
+          articleContentRef.value.style.maxWidth = original.maxWidth
+        } else {
+          articleContentRef.value.style.removeProperty('max-width')
+        }
+
+        if (original.minWidth) {
+          articleContentRef.value.style.minWidth = original.minWidth
+        } else {
+          articleContentRef.value.style.removeProperty('min-width')
+        }
+
+        if (original.transform) {
+          articleContentRef.value.style.transform = original.transform
+        } else {
+          articleContentRef.value.style.removeProperty('transform')
+        }
+
+        if (original.transformOrigin) {
+          articleContentRef.value.style.transformOrigin = original.transformOrigin
+        } else {
+          articleContentRef.value.style.removeProperty('transform-origin')
+        }
+      }
+    } catch (styleError) {
+      console.error('恢复样式时出错:', styleError)
+      // 备用方案：强制重新应用CSS类样式
+      if (articleContentRef.value) {
+        // 移除所有内联样式，让CSS类样式重新生效
+        const stylesToRemove = [
+          'border-radius', 'box-shadow', 'width', 'max-width',
+          'min-width', 'transform', 'transform-origin'
+        ]
+        stylesToRemove.forEach(prop => {
+          articleContentRef.value.style.removeProperty(prop)
+        })
+      }
+    }
+
     isExporting.value = false
   }
 }
@@ -322,7 +374,11 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .article-preview-container {
   flex: 1;
   overflow: auto;
@@ -333,10 +389,11 @@ defineExpose({
 .article-content {
   width: 496px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: @panel-padding;
   background: var(--card-bg);
   color: var(--card-text);
-  border-radius: 8px;
+  border-radius: @panel-border-radius;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--card-accent) 20%, transparent);
+  transition: all 0.2s ease;
 }
 </style>

@@ -496,7 +496,11 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import './styles/less/variables/colors.less';
+@import './styles/less/variables/layout.less';
+@import './styles/less/variables/typography.less';
+@import './styles/less/mixins/common.less';
 /* 全局色彩主题定义已移至 /src/styles/less/themes/global.less */
 
 .editor-scope {

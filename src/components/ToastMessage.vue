@@ -104,7 +104,11 @@ onUnmounted(() => {
 defineExpose({ show, close })
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .toast-container {
   position: fixed;
   top: 20px;
@@ -113,93 +117,88 @@ defineExpose({ show, close })
   z-index: 9999;
   max-width: 320px;
   min-width: 200px;
-  background: var(--color-bg-elevated, #ffffff);
-  border: 1px solid var(--color-border, #e2e8f0);
-  border-radius: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: @panel-border-radius;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   backdrop-filter: blur(10px);
 }
 
 .toast-content {
-  display: flex;
-  align-items: center;
+  .flex-start();
   gap: 8px;
   padding: 12px 16px;
 }
 
 .toast-icon {
+  .flex-center();
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 20px;
   height: 20px;
 }
 
 .toast-text {
   flex: 1;
-  font-size: 14px;
-  line-height: 1.4;
-  color: var(--color-text, #334155);
+  font-size: @font-size-sm;
+  line-height: @line-height-base;
+  color: var(--text);
   word-wrap: break-word;
 }
 
 .toast-close {
+  .flex-center();
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 20px;
   height: 20px;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-secondary, #64748b);
+  color: var(--muted);
   border-radius: 4px;
   transition: all 0.15s ease;
-}
 
-.toast-close:hover {
-  background: var(--color-bg-secondary, #f1f5f9);
-  color: var(--color-text, #334155);
+  &:hover {
+    background: var(--bg);
+    color: var(--text);
+  }
 }
 
 .toast-dismissible {
   cursor: pointer;
 }
 
-/* Toast types */
+// Toast types
 .toast-success {
   border-left: 4px solid #10b981;
-}
 
-.toast-success .toast-icon {
-  color: #10b981;
+  .toast-icon {
+    color: #10b981;
+  }
 }
 
 .toast-error {
   border-left: 4px solid #ef4444;
-}
 
-.toast-error .toast-icon {
-  color: #ef4444;
+  .toast-icon {
+    color: #ef4444;
+  }
 }
 
 .toast-warning {
   border-left: 4px solid #f59e0b;
-}
 
-.toast-warning .toast-icon {
-  color: #f59e0b;
+  .toast-icon {
+    color: #f59e0b;
+  }
 }
 
 .toast-info {
   border-left: 4px solid #3b82f6;
-}
 
-.toast-info .toast-icon {
-  color: #3b82f6;
+  .toast-icon {
+    color: #3b82f6;
+  }
 }
 
 /* Animations */

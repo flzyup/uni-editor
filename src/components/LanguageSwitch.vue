@@ -28,10 +28,13 @@ function changeLanguage(event) {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .language-switch {
-  display: flex;
-  align-items: center;
+  .flex-start();
   gap: 6px;
 }
 
@@ -40,19 +43,20 @@ function changeLanguage(event) {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 6px 8px;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: @content-border-radius;
+  font-size: @font-size-xs;
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--accent);
+  }
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
 }
 
-.select:hover {
-  border-color: var(--accent);
-}
-
-.select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
-}
 </style>

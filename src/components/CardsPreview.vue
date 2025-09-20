@@ -1885,7 +1885,11 @@ function restoreShowMeta() {
 defineExpose({ exportAll, setActiveCardByRatio })
 </script>
 
-<style scoped>
+<style lang="less" scoped>
+@import '../styles/less/variables/colors.less';
+@import '../styles/less/variables/layout.less';
+@import '../styles/less/variables/typography.less';
+@import '../styles/less/mixins/common.less';
 .cards-loading {
   position: absolute;
   top: 0;
