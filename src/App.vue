@@ -58,13 +58,11 @@
         <div class="panel-header">
           <div class="panel-title">{{ $t('main.editor') }}</div>
         </div>
-        <MultiDocEditor
-          ref="multiDocEditorRef"
+        <UniEditor
+          ref="uniEditorRef"
           :page-theme="appThemeClass"
           @update:html="onHtml"
           @editor-scroll="onEditorScroll"
-          @import-markdown="importMarkdown"
-          @export-markdown="exportMarkdown"
         />
       </section>
 
@@ -164,7 +162,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import MultiDocEditor from './components/MultiDocEditor.vue'
+import UniEditor from './components/UniEditor.vue'
 import CardsPreview from './components/CardsPreview.vue'
 import ArticlePreview from './components/ArticlePreview.vue'
 import TodoHint from './components/TodoHint.vue'
@@ -180,7 +178,7 @@ import './styles/index.less'
 const { t: $t } = useI18n()
 const { success, error, warning } = useToast()
 
-const multiDocEditorRef = ref(null)
+const uniEditorRef = ref(null)
 const cardsPreviewRef = ref(null)
 const articlePreviewRef = ref(null)
 const mainRef = ref(null)
@@ -293,8 +291,7 @@ watch(html, () => {
 })
 
 async function copyForWeChat() {
-  const activeDoc = multiDocEditorRef.value?.getActiveDocument?.()
-  const htmlRaw = activeDoc?.content || ''
+  const htmlRaw = await uniEditorRef.value?.getHTML?.()
   if (!htmlRaw) { warning($t('messages.emptyContent')); return }
   const ok = await copyToWechat(globalColorTheme.value, appTheme.value)
   const themeName = $t(`themes.${globalColorTheme.value}`)
@@ -304,8 +301,6 @@ async function copyForWeChat() {
     error($t('messages.copyFailed'))
   }
 }
-
-
 
 async function saveCards() {
   try {
@@ -330,94 +325,6 @@ async function saveArticle() {
   }
 }
 
-async function exportMarkdown() {
-  const activeDoc = multiDocEditorRef.value?.getActiveDocument?.()
-  if (!activeDoc || !activeDoc.content) {
-    warning($t('messages.emptyContent'))
-    return
-  }
-
-  try {
-    // 简单的Markdown导出
-    const blob = new Blob([activeDoc.content], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${activeDoc.title}.md`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-
-    success($t('messages.exportMarkdownSuccess'))
-  } catch (err) {
-    console.error('导出Markdown失败:', err)
-    error($t('messages.exportMarkdownFailed'))
-  }
-}
-
-async function importMarkdown() {
-  try {
-    isImportingMarkdown.value = true
-
-    // 创建文件输入元素
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.md,.markdown,.txt'
-
-    return new Promise((resolve, reject) => {
-      input.onchange = async (e) => {
-        const file = e.target.files[0]
-        if (!file) {
-          isImportingMarkdown.value = false
-          reject('No file selected')
-          return
-        }
-
-        if (!file.name.match(/\.(md|markdown|txt)$/i)) {
-          isImportingMarkdown.value = false
-          warning($t('messages.invalidMarkdownFile'))
-          reject('Invalid file type')
-          return
-        }
-
-        try {
-          const content = await file.text()
-          const fileName = file.name.replace(/\.(md|markdown|txt)$/i, '')
-
-          // 更新当前文档
-          multiDocEditorRef.value?.updateActiveDocument(fileName, content)
-
-          isImportingMarkdown.value = false
-          success($t('messages.importMarkdownSuccess'))
-          resolve()
-        } catch (error) {
-          isImportingMarkdown.value = false
-          console.error('读取文件失败:', error)
-          error($t('messages.importMarkdownFailed'))
-          reject(error)
-        }
-      }
-
-      input.oncancel = () => {
-        isImportingMarkdown.value = false
-        reject('Import cancelled')
-      }
-
-      input.click()
-    })
-  } catch (err) {
-    isImportingMarkdown.value = false
-    if (err === 'Invalid file type') {
-      // 已经处理了
-    } else if (err === 'Import cancelled' || err === 'No file selected') {
-      // 用户取消，不显示错误
-    } else {
-      console.error('导入Markdown失败:', err)
-      error($t('messages.importMarkdownFailed'))
-    }
-  }
-}
 
 
 function persistTheme(){
@@ -597,7 +504,6 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-rows: auto 1fr;
   height: 100%;
-  overflow: hidden;
 }
 
 .mode-tabs-center {
