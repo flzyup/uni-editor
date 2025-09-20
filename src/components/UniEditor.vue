@@ -267,6 +267,10 @@ const elRef = ref(null)
 let vd = null
 let isVditorReady = false
 const scrollCleanups = []
+let cleanupModeListener = null
+
+const CACHE_KEY = 'uni-editor-content'
+const MODE_CACHE_KEY = 'uni-editor-mode'
 
 // 文档管理状态
 const allDocuments = ref([]) // 所有文档缓存
@@ -416,6 +420,26 @@ function saveToLocalStorage() {
   scheduleImageCleanup()
 }
 
+// 模式缓存相关函数
+function saveModeToCache(mode) {
+  try {
+    localStorage.setItem(MODE_CACHE_KEY, mode)
+  } catch (e) {
+    console.warn('Failed to save editor mode:', e)
+  }
+}
+
+function loadCachedMode() {
+  try {
+    return localStorage.getItem(MODE_CACHE_KEY) || 'wysiwyg'
+  } catch (e) {
+    console.warn('Failed to load cached editor mode:', e)
+    return 'wysiwyg'
+  }
+}
+
+let lastSavedMode = loadCachedMode()
+
 let imageCleanupTimer = null
 
 function scheduleImageCleanup() {
@@ -534,6 +558,12 @@ async function selectTab(docId) {
 
     // 更新编辑器内容
     vd.setValue(processedContent, false)
+
+    // 恢复文档的编辑模式 - 暂时简化，只保存模式到缓存
+    if (newDoc.mode) {
+      saveModeToCache(newDoc.mode)
+      lastSavedMode = newDoc.mode
+    }
 
     // 立即应用分页符样式，减少延迟
     nextTick(() => {
@@ -664,6 +694,9 @@ function saveCurrentDocumentState(preparedContent) {
 
     if (activeDoc.mode !== currentMode) {
       activeDoc.mode = currentMode
+      // 同时保存到全局缓存
+      saveModeToCache(currentMode)
+      lastSavedMode = currentMode
     }
   }
 }
@@ -699,7 +732,7 @@ async function initVditor() {
 
   const activeDoc = getActiveDocument()
   const initialContent = activeDoc?.content || getDefaultContent()
-  const initialMode = activeDoc?.mode || 'wysiwyg'
+  const initialMode = activeDoc?.mode || loadCachedMode()
   let editorReadyContent = await convertContentForEditor(initialContent || '')
 
   // 预处理分页符，避免初始化时的闪现
@@ -755,6 +788,9 @@ async function initVditor() {
 
       // 绑定滚动事件
       bindScrollEvents()
+
+      // 添加模式变化监听器
+      addModeChangeListener()
 
       // 立即初始化分页符显示
       nextTick(() => updatePageBreakDisplay())
@@ -988,6 +1024,81 @@ function updatePageBreakDisplay() {
   })
 }
 
+// 编辑器模式变化监听
+function addModeChangeListener() {
+  if (!vd || !vd.vditor) return
+
+  cleanupModeChangeListener()
+
+  const editModeElement = vd.vditor.toolbar?.elements?.['edit-mode']
+    || vd.vditor.element?.querySelector?.('.vditor-toolbar__item button[data-type="edit-mode"]')?.parentElement
+
+  if (!(editModeElement instanceof HTMLElement)) {
+    return
+  }
+
+  const resolveCurrentMode = () => {
+    if (typeof vd.getCurrentMode === 'function') {
+      const mode = vd.getCurrentMode()
+      if (mode) return mode
+    }
+
+    const active = editModeElement.querySelector('button.vditor-menu--current')
+    return active?.dataset?.mode || lastSavedMode || 'wysiwyg'
+  }
+
+  const persistModeIfNeeded = () => {
+    const mode = resolveCurrentMode()
+    if (!mode || mode === lastSavedMode) {
+      return
+    }
+    lastSavedMode = mode
+    saveModeToCache(mode)
+    bindScrollEvents() // setupScrollSync equivalent
+  }
+
+  const handleModeButtonClick = () => {
+    // 等待 Vditor 完成模式切换后再读取状态
+    setTimeout(persistModeIfNeeded, 0)
+  }
+
+  const modeButtons = Array.from(editModeElement.querySelectorAll('button[data-mode]'))
+  modeButtons.forEach(button => {
+    button.addEventListener('click', handleModeButtonClick)
+  })
+
+  const observer = new MutationObserver(() => {
+    persistModeIfNeeded()
+  })
+
+  observer.observe(editModeElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+    subtree: true,
+  })
+
+  // 初始化时同步一次，处理程序化模式切换
+  persistModeIfNeeded()
+
+  cleanupModeListener = () => {
+    observer.disconnect()
+    modeButtons.forEach(button => {
+      button.removeEventListener('click', handleModeButtonClick)
+    })
+  }
+}
+
+function cleanupModeChangeListener() {
+  if (typeof cleanupModeListener === 'function') {
+    try {
+      cleanupModeListener()
+    } catch (error) {
+      console.warn('Failed to cleanup editor mode listener:', error)
+    }
+  }
+  cleanupModeListener = null
+}
+
 // 绑定滚动事件
 function bindScrollEvents() {
   if (!vd || !vd.vditor?.element) return
@@ -1080,6 +1191,7 @@ watch(locale, async (newLocale) => {
     try {
       scrollCleanups.forEach(cleanup => cleanup())
       scrollCleanups.length = 0
+      cleanupModeChangeListener()
       vd.destroy()
     } catch (error) {
       console.warn('Failed to destroy Vditor:', error)
@@ -1087,6 +1199,8 @@ watch(locale, async (newLocale) => {
 
     // 重新初始化
     await nextTick()
+    const cachedMode = loadCachedMode()
+    lastSavedMode = cachedMode
     await initVditor()
 
     if (vd && isVditorReady) {
@@ -1455,6 +1569,7 @@ onBeforeUnmount(() => {
     clearTimeout(imageCleanupTimer)
     imageCleanupTimer = null
   }
+  cleanupModeChangeListener()
   destroyVditor()
 })
 

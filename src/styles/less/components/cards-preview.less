@@ -570,23 +570,7 @@
   padding-right: 32px; // 确保最后一张卡片完全可见
   align-items: center; // 垂直居中卡片
   
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: var(--panel);
-    border-radius: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 4px;
-    
-    &:hover {
-      background: var(--muted);
-    }
-  }
+  // 使用全局滚动条样式，保持一致性
 }
 
 .card {
@@ -671,24 +655,7 @@
     letter-spacing: 0.5px;
   }
 
-  // 滚动条样式
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.5);
-    }
-  }
+  // 使用全局滚动条样式，保持一致性
 }
 
 .layout-options {

@@ -272,26 +272,7 @@
   padding: @general-content-padding;
   min-height: 0; // 确保flex子元素能够正确收缩
 
-  // 自定义滚动条样式
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 3px;
-
-    &:hover {
-      background: var(--muted);
-    }
-  }
+  // 使用全局滚动条样式，保持与其他区域一致
 }
 
 .load-more-container {
