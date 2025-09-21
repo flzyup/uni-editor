@@ -26,15 +26,29 @@
   gap: 4px;
   padding: 8px;
   margin: 4px 8px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: @content-border-radius;
+  border-radius: @content-border-radius + 2;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   font-size: @font-size-xs;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text);
+  color: color-mix(in srgb, var(--text) 90%, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background:
+    linear-gradient(
+      136deg,
+      color-mix(in srgb, var(--panel) 95%, color-mix(in srgb, var(--accent) 4%, transparent)) 0%,
+      color-mix(in srgb, var(--panel) 84%, color-mix(in srgb, var(--accent) 10%, transparent)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.45) 16%, transparent),
+    0 1px 3px color-mix(in srgb, var(--border) 60%, transparent);
   .focus-ring();
+
+  svg {
+    color: inherit;
+    transition: inherit;
+  }
 
   // 设置为50px正方形
   width: 50px;
@@ -46,14 +60,33 @@
   flex-shrink: 0;
 
   &:hover {
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-    color: var(--text);
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+    background:
+      linear-gradient(
+        136deg,
+        color-mix(in srgb, var(--panel) 97%, color-mix(in srgb, var(--accent) 12%, transparent)) 0%,
+        color-mix(in srgb, var(--panel) 80%, color-mix(in srgb, var(--accent) 20%, transparent)) 100%
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.6) 18%, transparent),
+      0 6px 12px -8px color-mix(in srgb, var(--accent) 28%, transparent);
+    transform: translateY(-1px);
+    color: color-mix(in srgb, var(--accent) 45%, var(--text));
   }
 
   &.active {
-    background: var(--accent);
-    color: var(--panel);
-    font-weight: 600;
+    background:
+      linear-gradient(
+        134deg,
+        color-mix(in srgb, var(--accent) 34%, var(--panel)) 0%,
+        color-mix(in srgb, var(--accent) 50%, transparent) 100%
+      );
+    color: color-mix(in srgb, var(--text) 96%, white);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.75) 20%, transparent),
+      0 10px 18px -10px color-mix(in srgb, var(--accent) 36%, transparent);
+    transform: translateY(-2px);
   }
 
   svg {
@@ -133,7 +166,6 @@
 // 布局选择区域
 .layout-selection-section {
   background: var(--panel);
-  border-top: 1px solid var(--border);
   padding: 16px; // 减少padding
   flex-shrink: 0;
   min-height: 80px; // 进一步减少最小高度，为5个按钮提供足够空间
@@ -213,6 +245,18 @@
     max-width: 100%;
     width: 100%;
     overflow-x: auto; // 如果空间不足，允许水平滚动
+    padding: 6px 8px;
+    border-radius: (@content-border-radius + 4);
+    border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+    background:
+      linear-gradient(
+        136deg,
+        color-mix(in srgb, var(--panel) 96%, color-mix(in srgb, var(--accent) 4%, transparent)) 0%,
+        color-mix(in srgb, var(--panel) 88%, color-mix(in srgb, var(--accent) 8%, transparent)) 100%
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.45) 16%, transparent),
+      0 1px 3px color-mix(in srgb, var(--border) 55%, transparent);
   }
 
   // 在右侧编辑面板中使用单列
@@ -222,27 +266,36 @@
 }
 
 .layout-card {
-  display: flex;
+  .button-base();
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: @content-border-radius;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--background);
+  min-height: 0;
+  font-size: @font-size-xs;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
   text-align: center;
 
   &:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 5%, var(--background));
+    color: color-mix(in srgb, var(--accent) 50%, var(--text));
   }
 
   &.active {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 10%, var(--background));
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+    background:
+      linear-gradient(
+        134deg,
+        color-mix(in srgb, var(--accent) 38%, var(--panel)) 0%,
+        color-mix(in srgb, var(--accent) 55%, transparent) 100%
+      );
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--border));
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.75) 24%, transparent),
+      0 12px 20px -12px color-mix(in srgb, var(--accent) 34%, transparent);
+    color: color-mix(in srgb, var(--text) 96%, white);
   }
 
   // 在右侧编辑面板中使用水平布局
@@ -271,10 +324,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--muted) 10%, transparent);
-  border-radius: 4px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--card-bg) 88%, color-mix(in srgb, var(--card-accent) 18%, transparent)) 0%,
+      color-mix(in srgb, var(--card-bg) 78%, color-mix(in srgb, var(--card-accent) 24%, transparent)) 100%
+    );
+  border-radius: 6px;
   flex-shrink: 0;
   margin-bottom: 4px;
+  color: color-mix(in srgb, var(--card-text) 94%, white);
 
   // 在右侧编辑面板中不要下边距
   .cover-edit-panel & {
@@ -296,7 +355,7 @@
 .layout-name {
   font-size: @font-size-sm;
   font-weight: 600;
-  color: var(--text);
+  color: inherit;
   margin-bottom: 2px;
 
   // 在右侧编辑面板中使用正常字号
@@ -350,22 +409,47 @@
   }
 }
 
-.form-input, .form-textarea {
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--background);
+.form-input,
+.form-textarea {
+  padding: 10px 14px;
+  border-radius: (@content-border-radius + 4);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  background:
+    linear-gradient(
+      138deg,
+      color-mix(in srgb, var(--panel) 96%, color-mix(in srgb, var(--accent) 4%, transparent)) 0%,
+      color-mix(in srgb, var(--panel) 88%, color-mix(in srgb, var(--accent) 8%, transparent)) 100%
+    );
   color: var(--text);
   font-size: @font-size-md;
-  transition: all 0.2s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, rgba(255, 255, 255, 0.65) 18%, transparent),
+    0 1px 3px color-mix(in srgb, var(--border) 60%, transparent);
+  backdrop-filter: blur(2px);
   .focus-ring();
 
   &::placeholder {
-    color: var(--muted);
+    color: color-mix(in srgb, var(--muted) 85%, transparent);
   }
 
   &:hover {
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+    background:
+      linear-gradient(
+        138deg,
+        color-mix(in srgb, var(--panel) 97%, color-mix(in srgb, var(--accent) 10%, transparent)) 0%,
+        color-mix(in srgb, var(--panel) 82%, color-mix(in srgb, var(--accent) 18%, transparent)) 100%
+      );
+    box-shadow:
+      inset 0 1px 1px color-mix(in srgb, rgba(255, 255, 255, 0.72) 22%, transparent),
+      0 4px 10px -6px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
+  &:disabled,
+  &:read-only {
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 }
 
@@ -383,27 +467,44 @@
 }
 
 .radio-option {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: @font-size-sm;
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 82%, var(--muted));
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 
   input[type="radio"] {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--border);
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: var(--background);
+    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    background: color-mix(in srgb, var(--panel) 94%, color-mix(in srgb, var(--accent) 6%, transparent));
     cursor: pointer;
     appearance: none;
     position: relative;
-    transition: all 0.2s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    box-shadow:
+      inset 0 1px 1px color-mix(in srgb, rgba(255, 255, 255, 0.6) 18%, transparent),
+      0 1px 2px color-mix(in srgb, var(--border) 60%, transparent);
+    .focus-ring();
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+      box-shadow:
+        inset 0 1px 1px color-mix(in srgb, rgba(255, 255, 255, 0.7) 22%, transparent),
+        0 3px 6px -2px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
 
     &:checked {
-      border-color: var(--accent);
-      background: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+      background: color-mix(in srgb, var(--accent) 70%, transparent);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, rgba(255, 255, 255, 0.6) 30%, transparent),
+        0 4px 10px -4px color-mix(in srgb, var(--accent) 40%, transparent);
     }
 
     &:checked::after {
@@ -412,23 +513,30 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: white;
+      background: color-mix(in srgb, var(--panel) 96%, white 6%);
     }
 
-    &:hover {
-      border-color: var(--accent);
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   }
 
   span {
-    font-weight: 500;
+    font-weight: 600;
+    transition: color 0.18s ease;
+  }
+
+  input[type="radio"]:checked + span {
+    color: color-mix(in srgb, var(--accent) 65%, var(--text));
   }
 
   &:hover {
-    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: color-mix(in srgb, var(--accent) 55%, var(--text));
   }
 }
 
@@ -446,29 +554,15 @@
 }
 
 .sync-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  background: var(--background);
-  color: var(--muted);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  .button-base();
+  width: 34px;
+  height: 34px;
   padding: 0;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 10px;
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
   margin-left: 8px;
-
-  &:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 10%, var(--background));
-    color: var(--accent);
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
 
   svg {
     flex-shrink: 0;
@@ -669,41 +763,48 @@
   flex-direction: column;
   align-items: center;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.25s ease;
-  border: 1px solid transparent;
-  position: relative;
-  overflow: hidden;
-
-  // 添加微妙的光效
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s ease;
-  }
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  border: 1px solid color-mix(in srgb, var(--card-border) 70%, transparent);
+  background:
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--card-bg) 92%, color-mix(in srgb, var(--card-accent) 8%, transparent)) 0%,
+      color-mix(in srgb, var(--card-bg) 86%, color-mix(in srgb, var(--card-accent) 14%, transparent)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.45) 25%, transparent),
+    0 1px 3px color-mix(in srgb, var(--card-border) 60%, transparent);
+  color: color-mix(in srgb, var(--card-text) 88%, var(--text));
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
+    border-color: color-mix(in srgb, var(--card-accent) 45%, var(--card-border));
+    background:
+      linear-gradient(
+        140deg,
+        color-mix(in srgb, var(--card-bg) 95%, color-mix(in srgb, var(--card-accent) 16%, transparent)) 0%,
+        color-mix(in srgb, var(--card-bg) 80%, color-mix(in srgb, var(--card-accent) 25%, transparent)) 100%
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.6) 28%, transparent),
+      0 6px 12px -8px color-mix(in srgb, var(--card-accent) 32%, transparent);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-
-    &::before {
-      left: 100%;
-    }
   }
 
   &.active {
-    background: color-mix(in srgb, var(--card-accent) 30%, transparent);
-    border-color: var(--card-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--card-accent) 20%, transparent);
-    transform: scale(1.05);
+    border-color: color-mix(in srgb, var(--card-accent) 55%, var(--card-border));
+    background:
+      linear-gradient(
+        138deg,
+        color-mix(in srgb, var(--card-accent) 32%, var(--card-bg)) 0%,
+        color-mix(in srgb, var(--card-accent) 48%, transparent) 100%
+      );
+    color: color-mix(in srgb, var(--card-text) 96%, white);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.75) 25%, transparent),
+      0 10px 18px -10px color-mix(in srgb, var(--card-accent) 35%, transparent);
+    transform: translateY(-2px);
   }
 }
 
@@ -725,7 +826,7 @@
 }
 
 .layout-name {
-  color: var(--text);
+  color: inherit;
   font-size: 10px;
   text-align: center;
   line-height: 1.2;
@@ -1407,27 +1508,20 @@
 }
 
 .nav-btn {
+  .button-base();
   width: 32px;
   height: 32px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 6px;
-  cursor: pointer;
-  .flex-center();
-  transition: all 0.2s ease;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 10px;
   font-size: @font-size-md;
-  .focus-ring();
-  
-  &:hover:not(:disabled) {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: white;
-  }
-  
+
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 }
 
@@ -1440,30 +1534,28 @@
 }
 
 .page-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  border-radius: 4px;
-  cursor: pointer;
-  .flex-center();
-  transition: all 0.2s ease;
-  font-size: @font-size-sm;
-  font-weight: 500;
-  .focus-ring();
-
-  &:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 10%, var(--bg));
-    color: var(--accent);
-  }
+  .button-base();
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  font-size: @font-size-xs;
+  border-radius: 50%;
+  justify-content: center;
 
   &.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: white;
-    font-weight: 600;
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--accent) 48%, transparent) 0%,
+        color-mix(in srgb, var(--accent) 32%, var(--panel)) 100%
+      );
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    color: color-mix(in srgb, var(--text) 96%, white);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.7) 24%, transparent),
+      0 8px 12px -8px color-mix(in srgb, var(--accent) 28%, transparent);
   }
 }
 

@@ -38,25 +38,4 @@ function changeLanguage(event) {
   gap: 6px;
 }
 
-.select {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 8px;
-  border-radius: @content-border-radius;
-  font-size: @font-size-xs;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent);
-  }
-
-  &:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
-  }
-}
-
 </style>

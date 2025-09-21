@@ -1,9 +1,8 @@
 <template>
   <div v-if="todos.length > 0" class="todo-toolbar">
-    <button class="todo-btn" @click="showDropdown = !showDropdown">
+    <button class="todo-btn" :class="{ open: showDropdown }" @click="showDropdown = !showDropdown">
       <span class="todo-icon">📋</span>
       <span class="todo-title">{{ $t('header.todo') }}</span>
-      <span class="todo-arrow" :class="{ rotated: showDropdown }">▼</span>
     </button>
 
     <div v-if="showDropdown" class="todo-dropdown">
@@ -37,23 +36,36 @@ const showDropdown = ref(false)
 }
 
 .todo-btn {
-  display: flex;
+  .button-base();
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  outline: none;
-}
+  gap: 8px;
+  padding: 8px 44px 8px 16px;
+  min-height: 36px;
+  font-size: @font-size-sm;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--text) 94%, white);
+  position: relative;
 
-.todo-btn:hover {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  border-color: var(--accent);
+  &::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    box-sizing: border-box;
+    transform: translateY(-50%) rotate(45deg);
+    border-right: 2px solid color-mix(in srgb, var(--text) 78%, var(--accent) 22%);
+    border-bottom: 2px solid color-mix(in srgb, var(--text) 78%, var(--accent) 22%);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  &.open::after {
+    transform: translateY(-50%) rotate(225deg);
+    border-color: color-mix(in srgb, var(--accent) 70%, var(--text));
+  }
 }
 
 .todo-icon {
@@ -61,16 +73,7 @@ const showDropdown = ref(false)
 }
 
 .todo-title {
-  font-weight: 500;
-}
-
-.todo-arrow {
-  font-size: 10px;
-  transition: transform 0.2s ease;
-}
-
-.todo-arrow.rotated {
-  transform: rotate(180deg);
+  font-weight: 600;
 }
 
 .todo-dropdown {

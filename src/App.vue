@@ -548,9 +548,21 @@ onBeforeUnmount(() => {
 
 .mode-tabs {
   display: flex;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--panel) 95%, color-mix(in srgb, var(--accent) 6%, transparent)) 0%,
+      color-mix(in srgb, var(--panel) 86%, rgba(0, 0, 0, 0.22)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.65) 18%, transparent),
+    0 8px 20px -18px color-mix(in srgb, var(--accent) 35%, transparent);
+  backdrop-filter: blur(4px);
 }
 
 .toolbar-right {
@@ -562,43 +574,70 @@ onBeforeUnmount(() => {
 }
 
 .mode-tab {
-  background: var(--panel);
-  color: var(--text);
-  border: none;
-  padding: 6px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
   position: relative;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--text) 75%, var(--muted));
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  outline: none;
+}
+
+.mode-tab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  transition: inherit;
 }
 
 .mode-tab:hover {
-  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
-  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 52%, var(--text));
   transform: translateY(-1px);
+}
+
+.mode-tab:hover::after {
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .mode-tab.active {
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 30%, transparent);
+  color: color-mix(in srgb, var(--text) 92%, white);
+  background:
+    linear-gradient(
+      128deg,
+      color-mix(in srgb, var(--accent) 38%, var(--panel)) 0%,
+      color-mix(in srgb, var(--accent) 52%, transparent) 100%
+    );
+  box-shadow:
+    0 6px 18px -12px color-mix(in srgb, var(--accent) 48%, transparent),
+    0 2px 6px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.mode-tab.active::after {
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .mode-tab.active:hover {
-  background: color-mix(in srgb, var(--accent) 85%, white);
-  color: white;
-  transform: translateY(-1px);
-}
-
-.mode-tab + .mode-tab {
-  border-left: 1px solid var(--border);
+  transform: translateY(-2px);
+  color: color-mix(in srgb, var(--text) 95%, white);
+  box-shadow:
+    0 10px 22px -12px color-mix(in srgb, var(--accent) 52%, transparent),
+    0 4px 9px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .mode-tab:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--panel) 70%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 /* Logo链接样式 */
@@ -617,69 +656,38 @@ onBeforeUnmount(() => {
 }
 
 /* GitHub链接样式 */
-.github-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  margin-right: 12px;
-}
-
-.github-link:hover {
-  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
-}
-
-.github-link:hover svg {
-  color: var(--accent);
-}
-
-.github-link svg {
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-/* 反馈链接样式 */
+.github-link,
 .feedback-link {
-  display: flex;
+  .button-base();
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 0;
   text-decoration: none;
   font-size: 12px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
   margin-right: 12px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, rgba(255, 255, 255, 0.6) 16%, transparent),
+    0 6px 16px -12px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 1px 3px color-mix(in srgb, var(--border) 60%, transparent);
 }
 
+.github-link:hover,
 .feedback-link:hover {
-  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 20%, transparent);
+  transform: translateY(-2px);
 }
 
-.feedback-link:hover svg {
-  color: var(--accent);
-}
-
+.github-link svg,
 .feedback-link svg {
   flex-shrink: 0;
   transition: color 0.2s ease;
+}
+
+.github-link:hover svg,
+.feedback-link:hover svg {
+  color: color-mix(in srgb, var(--accent) 80%, var(--text));
 }
 
 /* 移动端适配 */
@@ -863,4 +871,5 @@ onBeforeUnmount(() => {
     width: 100% !important;
   }
 }
+
 </style>

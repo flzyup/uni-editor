@@ -1,9 +1,8 @@
 <template>
   <div v-if="features.length > 0" class="features-toolbar">
-    <button class="features-btn" @click="showDropdown = !showDropdown">
+    <button class="features-btn" :class="{ open: showDropdown }" @click="showDropdown = !showDropdown">
       <span class="features-icon">✅</span>
       <span class="features-title">{{ $t('header.features') }}</span>
-      <span class="features-arrow" :class="{ rotated: showDropdown }">▼</span>
     </button>
 
     <div v-if="showDropdown" class="features-dropdown">
@@ -33,23 +32,36 @@ const showDropdown = ref(false)
 }
 
 .features-btn {
-  display: flex;
+  .button-base();
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  outline: none;
-}
+  gap: 8px;
+  padding: 8px 44px 8px 16px;
+  min-height: 36px;
+  font-size: @font-size-sm;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--text) 94%, white);
+  position: relative;
 
-.features-btn:hover {
-  background: color-mix(in srgb, #22c55e 15%, transparent);
-  border-color: #22c55e;
+  &::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    box-sizing: border-box;
+    transform: translateY(-50%) rotate(45deg);
+    border-right: 2px solid color-mix(in srgb, var(--text) 78%, var(--accent) 22%);
+    border-bottom: 2px solid color-mix(in srgb, var(--text) 78%, var(--accent) 22%);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  &.open::after {
+    transform: translateY(-50%) rotate(225deg);
+    border-color: color-mix(in srgb, var(--accent) 70%, var(--text));
+  }
 }
 
 .features-icon {
@@ -57,16 +69,7 @@ const showDropdown = ref(false)
 }
 
 .features-title {
-  font-weight: 500;
-}
-
-.features-arrow {
-  font-size: 10px;
-  transition: transform 0.2s ease;
-}
-
-.features-arrow.rotated {
-  transform: rotate(180deg);
+  font-weight: 600;
 }
 
 .features-dropdown {
