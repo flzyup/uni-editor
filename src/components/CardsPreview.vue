@@ -342,6 +342,7 @@ import * as htmlToImage from 'html-to-image'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '../composables/useToast'
 import { highlightCodeBlocks } from '../utils/highlight.js'
+import { replaceImageSrcWithDataUrls } from '../utils/imageStore.js'
 import LoadingOverlay from './LoadingOverlay.vue'
 
 const { t } = useI18n()
@@ -1408,14 +1409,19 @@ async function exportSingleCard(node, suffix, isCover = false, isLastCard = fals
     // 等待DOM稳定
     await new Promise(resolve => setTimeout(resolve, 100))
 
+    // 在导出前将图片替换为 data:URL，避免 html-to-image 去拉取 blob/远程资源
+    await replaceImageSrcWithDataUrls(node)
+
     const dataUrl = await htmlToImage.toPng(node, {
       pixelRatio: 2,
       backgroundColor: bg,
       useCORS: true,
       allowTaint: true,
-      skipFonts: false,
-      cacheBust: true,
-      includeQueryParams: true,
+      // 避免内联远程字体/样式，防止读取外站 CSS 造成的 CORS 错误
+      skipFonts: true,
+      // 关闭缓存破坏和查询参数拼接，避免对 blob: URL 添加 ?xxx 导致 404
+      cacheBust: false,
+      includeQueryParams: false,
       filter: (domNode) => {
         // 确保filter属性被保留
         if (domNode.style && domNode.style.filter) {
