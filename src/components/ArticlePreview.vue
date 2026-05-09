@@ -14,6 +14,7 @@
 import { computed, ref, onBeforeUnmount } from 'vue'
 import * as htmlToImage from 'html-to-image'
 import { highlightCodeBlocks } from '../utils/highlight.js'
+import { replaceImageSrcWithDataUrls } from '../utils/imageStore.js'
 import { useToast } from '../composables/useToast.js'
 import { useI18n } from 'vue-i18n'
 import LoadingOverlay from './LoadingOverlay.vue'
@@ -61,9 +62,23 @@ async function exportArticle() {
   isExporting.value = true
   loadingText.value = t('loading.articlePreparing')
 
+  // 预先声明在函数作用域，避免异常时 finally 中引用未定义
+  let original = {
+    borderRadius: '',
+    boxShadow: '',
+    width: '',
+    maxWidth: '',
+    minWidth: '',
+    transform: '',
+    transformOrigin: ''
+  }
+  let allElements = []
+  let elementStyles = []
+  let listItemData = []
+
   try {
     // 保存原始样式
-    const original = {
+    original = {
       borderRadius: articleContentRef.value.style.borderRadius,
       boxShadow: articleContentRef.value.style.boxShadow,
       width: articleContentRef.value.style.width,
@@ -72,11 +87,6 @@ async function exportArticle() {
       transform: articleContentRef.value.style.transform,
       transformOrigin: articleContentRef.value.style.transformOrigin
     }
-
-    // 声明在更大作用域中
-    let allElements = []
-    let elementStyles = []
-    let listItemData = []
 
     loadingText.value = t('loading.articleAdjusting')
 
@@ -167,6 +177,9 @@ async function exportArticle() {
 
     loadingText.value = t('loading.articleGenerating')
 
+    // 在导出前将图片替换为 data:URL，避免 html-to-image 去拉取 blob/远程资源
+    await replaceImageSrcWithDataUrls(articleContentRef.value)
+
     // 获取当前主题的颜色值
     const computedStyle = window.getComputedStyle(articleContentRef.value)
     const cardBgColor = computedStyle.getPropertyValue('background-color') || '#ffffff'
@@ -225,9 +238,12 @@ async function exportArticle() {
       quality: 1,
       pixelRatio: 1,  // 降低像素比例避免渲染问题
       backgroundColor: cardBgColor,
-      cacheBust: true,  // 避免缓存问题
+      // 关闭 cacheBust 以避免在 blob: URL 后附加查询参数
+      cacheBust: false,
       imagePlaceholder: undefined,
       skipAutoScale: true,
+      // 避免内联远程字体/样式，防止读取外站 CSS 造成的 CORS 错误
+      skipFonts: true,
       style: {
         borderRadius: '0',
         boxShadow: 'none',

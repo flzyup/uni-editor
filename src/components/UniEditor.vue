@@ -242,7 +242,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import zhMessages from '../locales/zh.js'
 import enMessages from '../locales/en.js'
@@ -264,10 +263,19 @@ const emit = defineEmits(['update:html', 'editorScroll'])
 const { locale, t } = useI18n()
 
 const elRef = ref(null)
+let VditorCtor = null
 let vd = null
 let isVditorReady = false
 const scrollCleanups = []
 let cleanupModeListener = null
+
+async function ensureVditor() {
+  if (typeof window === 'undefined') return null
+  if (VditorCtor) return VditorCtor
+  const mod = await import('vditor')
+  VditorCtor = mod.default || mod
+  return VditorCtor
+}
 
 const CACHE_KEY = 'uni-editor-content'
 const MODE_CACHE_KEY = 'uni-editor-mode'
@@ -811,7 +819,11 @@ function getVditorLang(locale) {
 
 // 初始化编辑器
 async function initVditor() {
+  if (typeof window === 'undefined') return
   if (!elRef.value) return
+
+  const Vditor = await ensureVditor()
+  if (!Vditor) return
 
   const activeDoc = getActiveDocument()
   const initialContent = activeDoc?.content || getDefaultContent()
